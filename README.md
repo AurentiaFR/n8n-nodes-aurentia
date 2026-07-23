@@ -75,6 +75,11 @@ For **AI Agent tool usage**: on n8n 2.x no extra configuration is needed. On n8n
 
 ## Usage
 
+> **This node is data-in / data-out — never interactive.** Every operation is a
+> plain API call (the same surface Aurentia's own AI agents use). There is no
+> onboarding, wizard or UI step: anything the app walks a human through, you do
+> here as a sequence of data operations.
+
 **Capture a lead from a form into your CRM**
 Form Trigger → **Aurentia: Contact – Create** (pick your project, map name/email) → **Aurentia: Deal – Create** (link the new contact, set a title) → **Aurentia: Task – Create** (a follow-up card).
 
@@ -83,6 +88,10 @@ Form Trigger → **Aurentia: Contact – Create** (pick your project, map name/e
 
 **Weekly pipeline digest**
 Schedule Trigger (Mondays) → **Aurentia: Deal – Get Many** (Return All) → your email node with a summary.
+
+**Create a project and generate its content — no onboarding**
+The app's project onboarding is just a UI over the API. From n8n it is a data flow:
+**Aurentia: Create Project** (send name + one-sentence idea + optional details → returns the project id) → **Aurentia: Generate Project Modules** (and/or Generate Markets / Targets / Category) → poll **Aurentia: Get Generation Status** until ready. Same content, same power, zero clicks.
 
 ## AI Agent tool usage
 
