@@ -38,6 +38,8 @@
 		"dev": "n8n-node dev",
 		"lint": "n8n-node lint",
 		"lint:fix": "n8n-node lint --fix",
+		"validate:generated": "node scripts/validate-generated.mjs",
+		"test:executor": "node scripts/test-executor.mjs",
 		"release": "n8n-node release",
 		"prepublishOnly": "n8n-node prerelease"
 	},
@@ -48,10 +50,12 @@
 		"n8nNodesApiVersion": 1,
 		"strict": true,
 		"credentials": [
-			"dist/credentials/AurentiaApi.credentials.js"
+			"dist/credentials/AurentiaApi.credentials.js",
+			"dist/credentials/AurentiaOAuth2Api.credentials.js"
 		],
 		"nodes": [
-			"dist/nodes/Aurentia/Aurentia.node.js"
+			"dist/nodes/Aurentia/Aurentia.node.js",
+			"dist/nodes/AurentiaTrigger/AurentiaTrigger.node.js"
 		]
 	},
 	"devDependencies": {

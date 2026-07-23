@@ -32,6 +32,102 @@ export const projectLocator: INodeProperties = {
 	],
 };
 
+export const contactLocator: INodeProperties = {
+	displayName: 'Contact',
+	name: 'contactId',
+	type: 'resourceLocator',
+	default: { mode: 'list', value: '' },
+	required: true,
+	description: 'The contact this deal belongs to',
+	modes: [
+		{
+			displayName: 'From List',
+			name: 'list',
+			type: 'list',
+			typeOptions: { searchListMethod: 'searchContacts', searchable: true },
+		},
+		{
+			displayName: 'By ID',
+			name: 'id',
+			type: 'string',
+			placeholder: 'e.g. 1a2b3c4d-0000-0000-0000-000000000000',
+			validation: [
+				{
+					type: 'regex',
+					properties: {
+						regex: '^[0-9a-fA-F-]{36}$',
+						errorMessage: 'Not a valid UUID',
+					},
+				},
+			],
+		},
+	],
+};
+
+export const boardLocator: INodeProperties = {
+	displayName: 'Board',
+	name: 'boardId',
+	type: 'resourceLocator',
+	default: { mode: 'list', value: '' },
+	required: true,
+	description: 'The task board to operate in',
+	modes: [
+		{
+			displayName: 'From List',
+			name: 'list',
+			type: 'list',
+			typeOptions: { searchListMethod: 'searchBoards', searchable: true },
+		},
+		{
+			displayName: 'By ID',
+			name: 'id',
+			type: 'string',
+			placeholder: 'e.g. 1a2b3c4d-0000-0000-0000-000000000000',
+			validation: [
+				{
+					type: 'regex',
+					properties: {
+						regex: '^[0-9a-fA-F-]{36}$',
+						errorMessage: 'Not a valid UUID',
+					},
+				},
+			],
+		},
+	],
+};
+
+export const baseLocator: INodeProperties = {
+	displayName: 'Base',
+	name: 'baseId',
+	type: 'resourceLocator',
+	default: { mode: 'list', value: '' },
+	required: true,
+	description: 'The Aurentia database (Bases) to operate in',
+	modes: [
+		{
+			displayName: 'From List',
+			name: 'list',
+			type: 'list',
+			typeOptions: { searchListMethod: 'searchBases', searchable: true },
+		},
+		{
+			displayName: 'By ID',
+			name: 'id',
+			type: 'string',
+			placeholder: 'e.g. 1a2b3c4d-0000-0000-0000-000000000000',
+			validation: [
+				{
+					type: 'regex',
+					properties: {
+						regex: '^[0-9a-fA-F-]{36}$',
+						errorMessage: 'Not a valid UUID',
+					},
+				},
+			],
+		},
+	],
+};
+
 export const returnAllAndLimit: INodeProperties[] = [
 	{
 		displayName: 'Return All',

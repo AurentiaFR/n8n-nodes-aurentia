@@ -17,6 +17,30 @@ type AurentiaContext =
 	| IHookFunctions;
 
 /**
+ * Resolve which credential this node instance uses, based on the
+ * `authentication` selector. Works across execute/loadOptions/poll contexts:
+ * IExecuteFunctions expects an item index, while ILoadOptions/IPoll do not.
+ * Any resolution issue falls back to the API key credential.
+ */
+function resolveCredentialType(context: AurentiaContext): 'aurentiaApi' | 'aurentiaOAuth2Api' {
+	let authentication = 'apiKey';
+	try {
+		// IExecuteFunctions requires an item index; the other contexts reject one.
+		if ('getInputData' in context) {
+			authentication = context.getNodeParameter('authentication', 0, 'apiKey') as string;
+		} else {
+			authentication = (context as ILoadOptionsFunctions | IPollFunctions).getNodeParameter(
+				'authentication',
+				'apiKey',
+			) as string;
+		}
+	} catch {
+		authentication = 'apiKey';
+	}
+	return authentication === 'oAuth2' ? 'aurentiaOAuth2Api' : 'aurentiaApi';
+}
+
+/**
  * Perform an authenticated request against the Aurentia API and unwrap the
  * `{ success, data }` envelope. Throws a mapped NodeApiError on failure.
  */
@@ -27,7 +51,8 @@ export async function aurentiaApiRequest(
 	body: IDataObject = {},
 	qs: IDataObject = {},
 ): Promise<IDataObject> {
-	const credentials = await this.getCredentials('aurentiaApi');
+	const credentialType = resolveCredentialType(this);
+	const credentials = await this.getCredentials(credentialType);
 	const baseUrl = (credentials.baseUrl as string).replace(/\/+$/, '');
 
 	const options: IHttpRequestOptions = {
@@ -47,7 +72,7 @@ export async function aurentiaApiRequest(
 	try {
 		const response = (await this.helpers.httpRequestWithAuthentication.call(
 			this,
-			'aurentiaApi',
+			credentialType,
 			options,
 		)) as IDataObject;
 		// Envelope: { success: true, data: <T> }
@@ -142,7 +167,9 @@ export async function aurentiaRecordsRequestPaged(
 			{},
 			{ ...qs, offset, limit: pageSize },
 		);
-		const items = (res.data as IDataObject[]) ?? [];
+		// C18: the records endpoint returns `data: { records: [...], total }`
+		// (NOT `{ data, total }` like the page/limit endpoints).
+		const items = (res.records as IDataObject[]) ?? [];
 		all.push(...items);
 		const total = typeof res.total === 'number' ? res.total : all.length;
 		if (!returnAll && all.length >= limit) return all.slice(0, limit);

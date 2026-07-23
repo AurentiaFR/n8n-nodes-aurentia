@@ -10,6 +10,8 @@ import { NodeApiError } from 'n8n-workflow';
 
 import { router } from './actions/router';
 import { versionDescription } from './actions/versionDescription';
+import * as listSearch from './methods/listSearch';
+import * as loadOptions from './methods/loadOptions';
 
 export class Aurentia implements INodeType {
 	description: INodeTypeDescription = {
@@ -21,6 +23,8 @@ export class Aurentia implements INodeType {
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		usableAsTool: true,
 	};
+
+	methods = { listSearch, loadOptions };
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
