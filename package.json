@@ -40,6 +40,7 @@
 		"lint:fix": "n8n-node lint --fix",
 		"validate:generated": "node scripts/validate-generated.mjs",
 		"test:executor": "node scripts/test-executor.mjs",
+		"test:invariants": "node scripts/test-generated-invariants.mjs",
 		"release": "n8n-node release",
 		"prepublishOnly": "n8n-node prerelease"
 	},

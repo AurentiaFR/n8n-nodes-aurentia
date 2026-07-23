@@ -34,6 +34,18 @@ jobs:
       - name: Run build
         run: 'npm run build'
 
+      - name: Validate generated operations
+        run: 'npm run validate:generated'
+
+      - name: Test generic executor
+        run: 'npm run test:executor'
+
+      - name: Assert generated invariants (no onboarding/UI fields)
+        run: 'npm run test:invariants'
+
+      # NOTE: coverage:audit needs the Aurentia MCP registry (monorepo-only) and
+      # is therefore run in the monorepo's `generate:check`, not here.
+      #
       # NOTE: @n8n/scan-community-package resolves packages by their published
       # npm name, not from a local path, so it cannot run in pre-publish CI.
       # Run it manually against the published package after each release:
