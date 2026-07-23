@@ -1,0 +1,67 @@
+{
+	"name": "n8n-nodes-aurentia",
+	"version": "0.1.0",
+	"description": "n8n community node for Aurentia — the AI-native business OS for entrepreneurs (CRM, tasks, databases, social media, projects)",
+	"license": "MIT",
+	"homepage": "https://aurentia.fr",
+	"keywords": [
+		"n8n-community-node-package",
+		"aurentia",
+		"crm",
+		"sales pipeline",
+		"kanban",
+		"tasks",
+		"project management",
+		"database",
+		"airtable alternative",
+		"social media",
+		"scheduling",
+		"entrepreneur",
+		"startup",
+		"business os",
+		"ai agent tool"
+	],
+	"author": {
+		"name": "Aurentia",
+		"email": "admin@aurentia.fr"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/AurentiaFR/n8n-nodes-aurentia.git"
+	},
+	"engines": {
+		"node": ">=22"
+	},
+	"scripts": {
+		"build": "n8n-node build",
+		"build:watch": "tsc --watch",
+		"dev": "n8n-node dev",
+		"lint": "n8n-node lint",
+		"lint:fix": "n8n-node lint --fix",
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
+	},
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": true,
+		"credentials": [
+			"dist/credentials/AurentiaApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/Aurentia/Aurentia.node.js"
+		]
+	},
+	"devDependencies": {
+		"@n8n/node-cli": "*",
+		"eslint": "9.32.0",
+		"prettier": "3.6.2",
+		"release-it": "^19.0.4",
+		"typescript": "5.9.2"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
+}
