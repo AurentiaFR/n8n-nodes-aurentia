@@ -7,7 +7,6 @@ import { aiResource } from './ai.generated';
 import { analyticsResource } from './analytics.generated';
 import { artifactsResource } from './artifacts.generated';
 import { assistantResource } from './assistant.generated';
-import { automationsResource } from './automations.generated';
 import { basesResource } from './bases.generated';
 import { bookingResource } from './booking.generated';
 import { brandDnaResource } from './brand-dna.generated';
@@ -78,7 +77,6 @@ export const GENERATED_RESOURCES: GeneratedResource[] = [
 	analyticsResource,
 	artifactsResource,
 	assistantResource,
-	automationsResource,
 	basesResource,
 	bookingResource,
 	brandDnaResource,

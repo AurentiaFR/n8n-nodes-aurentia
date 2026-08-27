@@ -338,7 +338,6 @@ export const assistantResource: GeneratedResource = {
 								{ name: 'AI Brain', value: 'aiBrain' },
 								{ name: 'AI Visibility', value: 'aiVisibility' },
 								{ name: 'Assistant', value: 'assistant' },
-								{ name: 'Automations', value: 'automations' },
 								{ name: 'Bases', value: 'bases' },
 								{ name: 'Blog', value: 'blog' },
 								{ name: 'Booking', value: 'booking' },
