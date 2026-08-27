@@ -72,8 +72,8 @@ export const siteWebResource: GeneratedResource = {
 		{
 			value: 'createLeadMagnet',
 			name: 'Create Lead Magnet',
-			action: 'Create a lead magnet',
-			description: 'Create a lead magnet',
+			action: 'Create a lead magnet on the project\'s WEBSITE — a downloadable freebie (ebook, checklist, template) offered on a landing page to capture emails',
+			description: 'Create a lead magnet on the project\'s WEBSITE — a downloadable freebie (ebook, checklist, template) offered on a landing page to capture emails. NOT a CRM contact/lead: to add a person to the CRM use create_contact.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/lead-magnets","queryParams":[]},
 			properties: [
 				{
@@ -417,23 +417,6 @@ export const siteWebResource: GeneratedResource = {
 			],
 		},
 		{
-			value: 'getSectionVariation',
-			name: 'Get Section Variation',
-			action: 'Get a section variation',
-			description: 'Get a section variation',
-			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/sections/{section_id}/variation","queryParams":[]},
-			properties: [
-				{
-					displayName: 'Section ID',
-					name: 'section_id',
-					type: 'string',
-					required: true,
-					description: 'The section ID for this operation',
-					default: '',
-				}
-			],
-		},
-		{
 			value: 'getSeo',
 			name: 'Get SEO',
 			action: 'Website SEO configuration',
@@ -572,8 +555,8 @@ export const siteWebResource: GeneratedResource = {
 		{
 			value: 'listLeadMagnets',
 			name: 'List Lead Magnets',
-			action: 'Website lead magnets',
-			description: 'Website lead magnets',
+			action: 'List the lead magnets of the project\'s WEBSITE — downloadable freebies (ebook, checklist, template) offered on a landing page to capture emails',
+			description: 'List the lead magnets of the project\'s WEBSITE — downloadable freebies (ebook, checklist, template) offered on a landing page to capture emails. NOT a CRM contact/lead: to add a person to the CRM use create_contact.',
 			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/lead-magnets","queryParams":["project_id:projectId"]},
 			properties: [
 				{
@@ -699,6 +682,23 @@ export const siteWebResource: GeneratedResource = {
 			action: 'Regenerate a section with AI',
 			description: 'Regenerate a section with AI',
 			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/sections/{section_id}/regenerate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Section ID',
+					name: 'section_id',
+					type: 'string',
+					required: true,
+					description: 'The section ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'regenerateSectionVariation',
+			name: 'Regenerate Section Variation',
+			action: 'REGENERATES a section as a new variation: archives the current version, overwrites the section in place and rebuilds the page HTML',
+			description: 'REGENERATES a section as a new variation: archives the current version, overwrites the section in place and rebuilds the page HTML. Billed on every call.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/sections/{section_id}/variation","queryParams":[]},
 			properties: [
 				{
 					displayName: 'Section ID',
@@ -934,8 +934,8 @@ export const siteWebResource: GeneratedResource = {
 		{
 			value: 'updateLeadMagnet',
 			name: 'Update Lead Magnet',
-			action: 'Update a lead magnet',
-			description: 'Update a lead magnet',
+			action: 'Update a lead magnet on the project\'s WEBSITE — a downloadable freebie (ebook, checklist, template) offered on a landing page',
+			description: 'Update a lead magnet on the project\'s WEBSITE — a downloadable freebie (ebook, checklist, template) offered on a landing page. NOT a CRM contact/lead: to edit a person in the CRM use update_contact.',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/site-web/lead-magnets/{magnet_id}","queryParams":[]},
 			properties: [
 				{

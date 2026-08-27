@@ -101,9 +101,25 @@ export const brandIdentityResource: GeneratedResource = {
 		{
 			value: 'generateBrandIdentity',
 			name: 'Generate Brand Identity',
-			action: 'Generate visual identity with AI',
-			description: 'Generate visual identity with AI. After completion, suggest the user open /marque/identite-visuelle.',
-			routeSpec: {"method":"POST","path":"/api/aurentia/brand-identity/generate","queryParams":[]},
+			action: 'Generate the visual identity with AI (palette, typography, logos, moodboard)',
+			description: 'Generate the visual identity with AI (palette, typography, logos, moodboard). COSTS credits. After completion, suggest the user open /marque.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/brand-identity/generate","queryParams":[],"body":{"action":"full_brand_kit"}},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'generateBrandSuggestions',
+			name: 'Generate Brand Suggestions',
+			action: 'GENERATES AI visual identity suggestions for the project',
+			description: 'GENERATES AI visual identity suggestions for the project. Billed on every call.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/brand-identity/suggestions","queryParams":[]},
 			properties: [
 				{
 					displayName: 'Project ID',
@@ -120,22 +136,6 @@ export const brandIdentityResource: GeneratedResource = {
 			action: 'Visual identity: colors, fonts, tone, values, and `site_images` (the site\'s imported visuals, each with `is_primary`)',
 			description: 'Visual identity: colors, fonts, tone, values, and `site_images` (the site\'s imported visuals, each with `is_primary`). For on-brand image generation, the default references are the logo + the primary (`is_primary=true`) images.',
 			routeSpec: {"method":"GET","path":"/api/aurentia/brand-identity","queryParams":["project_id:projectId"]},
-			properties: [
-				{
-					displayName: 'Project ID',
-					name: 'project_id',
-					type: 'string',
-					required: true,
-					default: '',
-				}
-			],
-		},
-		{
-			value: 'getBrandSuggestions',
-			name: 'Get Brand Suggestions',
-			action: 'Visual identity suggestions',
-			description: 'Visual identity suggestions',
-			routeSpec: {"method":"POST","path":"/api/aurentia/brand-identity/suggestions","queryParams":[]},
 			properties: [
 				{
 					displayName: 'Project ID',
@@ -188,7 +188,7 @@ export const brandIdentityResource: GeneratedResource = {
 			value: 'updateBrandIdentity',
 			name: 'Update Brand Identity',
 			action: 'Update an existing brand kit',
-			description: 'Update an existing brand kit. Partial — only provided fields are overwritten. The user can review at /marque/identite-visuelle.',
+			description: 'Update an existing brand kit. Partial — only provided fields are overwritten. The user can review at /marque/identite-visuelle. When the write touches `colors`, the response may carry `contrast_warning` naming the role pairs that fall short of WCAG AA, with their ratios: the write ALWAYS goes through as asked, so relay the warning to the user instead of silently retrying or picking other colours yourself.',
 			routeSpec: {"method":"PUT","path":"/api/aurentia/brand-identity","queryParams":[]},
 			properties: [
 				{
@@ -210,6 +210,13 @@ export const brandIdentityResource: GeneratedResource = {
 							displayName: 'Accent Color',
 							name: 'accentColor',
 							type: 'color',
+							default: '',
+						},
+						{
+							displayName: 'Background Color',
+							name: 'backgroundColor',
+							type: 'color',
+							description: 'Hex #rrggbb — page background. Needed to describe a complete palette.',
 							default: '',
 						},
 						{
@@ -240,6 +247,13 @@ export const brandIdentityResource: GeneratedResource = {
 							displayName: 'Secondary Color',
 							name: 'secondaryColor',
 							type: 'color',
+							default: '',
+						},
+						{
+							displayName: 'Text Color',
+							name: 'textColor',
+							type: 'color',
+							description: 'Hex #rrggbb — body text. Needed to describe a complete palette.',
 							default: '',
 						},
 						{

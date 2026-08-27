@@ -57,15 +57,46 @@ export const modulesResource: GeneratedResource = {
 							description: 'Provide a JSON object',
 							default: '{}',
 						},
+					],
+				}
+			],
+		},
+		{
+			value: 'generateModuleSuggestions',
+			name: 'Generate Module Suggestions',
+			action: 'GENERATES AI-written answer suggestions for a module questionnaire, then caches them',
+			description: 'GENERATES AI-written answer suggestions for a module questionnaire, then caches them. Costs an AI generation on every uncached call — never a mere lookup.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/modules/suggestions","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'The project the module belongs to',
+					default: '',
+				},
+				{
+					displayName: 'Module Slug',
+					name: 'module_slug',
+					type: 'string',
+					required: true,
+					description: 'Slug of the module whose questions need suggestions (e.g. `business-model`)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
 						{
-							displayName: 'Tier',
-							name: 'tier',
-							type: 'options',
-							default: 'advanced',
-							options: [
-								{ name: 'Advanced', value: 'advanced' },
-								{ name: 'Standard', value: 'standard' },
-							],
+							displayName: 'Question IDs',
+							name: 'question_ids',
+							type: 'json',
+							description: 'Restrict generation to these question IDs. Omit to cover the whole module. (provide a JSON array)',
+							default: '[]',
 						},
 					],
 				}
@@ -106,23 +137,19 @@ export const modulesResource: GeneratedResource = {
 			],
 		},
 		{
-			value: 'getModuleSuggestions',
-			name: 'Get Module Suggestions',
-			action: 'Suggested modules to complete as a priority',
-			description: 'Suggested modules to complete as a priority',
-			routeSpec: {"method":"POST","path":"/api/aurentia/modules/suggestions","queryParams":[]},
-			properties: [
-
-			],
-		},
-		{
 			value: 'getPendingModules',
 			name: 'Get Pending Modules',
-			action: 'Modules currently being generated',
-			description: 'Modules currently being generated',
-			routeSpec: {"method":"GET","path":"/api/aurentia/modules/pending","queryParams":[]},
+			action: 'Modules currently being generated for a project',
+			description: 'Modules currently being generated for a project',
+			routeSpec: {"method":"GET","path":"/api/aurentia/modules/pending","queryParams":["projectId"]},
 			properties: [
-
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
 			],
 		},
 		{
@@ -146,47 +173,6 @@ export const modulesResource: GeneratedResource = {
 							default: '',
 						},
 					],
-				}
-			],
-		},
-		{
-			value: 'listModuleSuggestions',
-			name: 'List Module Suggestions',
-			action: 'AI-suggested next modules for the active project',
-			description: 'AI-suggested next modules for the active project. Use to recommend what the user should generate next.',
-			routeSpec: {"method":"POST","path":"/api/aurentia/modules/suggestions","queryParams":["project_id:projectId"]},
-			properties: [
-				{
-					displayName: 'Project ID',
-					name: 'project_id',
-					type: 'string',
-					required: true,
-					default: '',
-				}
-			],
-		},
-		{
-			value: 'retryModuleStep',
-			name: 'Retry Module Step',
-			action: 'Re-run a single failed sub-module step',
-			description: 'Re-run a single failed sub-module step. Marks the sub-generation row as pending and resumes the workflow scoped to that kind.',
-			routeSpec: {"method":"POST","path":"/api/aurentia/modules/{module_id}/retry-step","queryParams":[]},
-			properties: [
-				{
-					displayName: 'Module ID',
-					name: 'module_id',
-					type: 'string',
-					required: true,
-					description: 'The module ID for this operation',
-					default: '',
-				},
-				{
-					displayName: 'Kind',
-					name: 'kind',
-					type: 'string',
-					required: true,
-					description: 'Sub-module kind (e.g. skeleton, competitor-research, …)',
-					default: '',
 				}
 			],
 		}

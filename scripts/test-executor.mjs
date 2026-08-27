@@ -36,7 +36,7 @@ function makeCtx(params, { additionalFields = {} } = {}) {
 			return fallback;
 		},
 		async getCredentials() {
-			return { baseUrl: 'https://app.aurentia.fr', apiKey: 'aur_test' };
+			return { baseUrl: 'https://entrepreneurs.aurentia.fr', apiKey: 'aur_test' };
 		},
 		helpers: {
 			httpRequestWithAuthentication: {
@@ -88,7 +88,7 @@ console.log('test-executor:');
 	const { ctx, captured } = makeCtx({ [inputKey]: 'p1' });
 	const out = await executeGenerated.call(ctx, found.res.resource, op.value, 0);
 	assert.equal(captured.options.method, 'GET');
-	assert.equal(captured.options.url, `https://app.aurentia.fr${op.routeSpec.path}`);
+	assert.equal(captured.options.url, `https://entrepreneurs.aurentia.fr${op.routeSpec.path}`);
 	assert.equal(captured.options.qs[queryKey], 'p1', `qs must use query key "${queryKey}"`);
 	assert.equal(captured.options.qs[inputKey], undefined, 'input key must not leak into qs');
 	assert.equal(captured.options.body, undefined, 'GET must not carry a body');

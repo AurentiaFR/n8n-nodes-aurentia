@@ -34,7 +34,7 @@ export const clipsResource: GeneratedResource = {
 			value: 'generateClipsFromVideo',
 			name: 'Generate Clips From Video',
 			action: 'Aurentia Clips: (re)generate short-form clips from a transcribed long-form video source — LLM moment detection creates draft 9:16 clips in the Clip Library',
-			description: 'Aurentia Clips: (re)generate short-form clips from a transcribed long-form video source — LLM moment detection creates draft 9:16 clips in the Clip Library. Costly AI action — approval-gated.',
+			description: 'Aurentia Clips: (re)generate short-form clips from a transcribed long-form video source — LLM moment detection creates draft 9:16 clips in the Clip Library. Set coordinatesOnly=true to only detect & return the moment timings (no clip rendering). Costly AI action — approval-gated.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/clips/generate","queryParams":[]},
 			properties: [
 				{
@@ -62,6 +62,13 @@ export const clipsResource: GeneratedResource = {
 								{ name: '16:9', value: '16:9' },
 								{ name: '9:16', value: '9:16' },
 							],
+						},
+						{
+							displayName: 'Coordinates Only',
+							name: 'coordinatesOnly',
+							type: 'boolean',
+							description: 'Whether only detect & return moment timings, do not render clips (default false)',
+							default: false,
 						},
 						{
 							displayName: 'Max Clips',

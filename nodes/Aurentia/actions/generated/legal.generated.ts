@@ -16,6 +16,46 @@ export const legalResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getDpaDocument',
+			name: 'Get Dpa Document',
+			action: 'Generate the personalised Data Processing Agreement (RGPD Art',
+			description: 'Generate the personalised Data Processing Agreement (RGPD Art. 28) for the user, as HTML ready to read, print or attach. Two shapes: \'client\' (Aurentia as processor for the user) and \'three-tier\' (the user as processor for their own clients, Aurentia as sub-processor). Read-only — nothing is stored.',
+			routeSpec: {"method":"GET","path":"/api/legal/dpa","queryParams":["type","language"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Language',
+							name: 'language',
+							type: 'options',
+							description: 'Language (default fr)',
+							default: 'en',
+							options: [
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+							],
+						},
+						{
+							displayName: 'Type',
+							name: 'type',
+							type: 'options',
+							description: 'DPA shape (default \'client\')',
+							default: 'client',
+							options: [
+								{ name: 'Client', value: 'client' },
+								{ name: 'Three Tier', value: 'three-tier' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'getLegalConsentStatus',
 			name: 'Get Legal Consent Status',
 			action: 'Get the current legal consent status of the authenticated user (all signed documents, latest versions)',
@@ -57,6 +97,50 @@ export const legalResource: GeneratedResource = {
 								{ name: 'En', value: 'en' },
 								{ name: 'Fr', value: 'fr' },
 							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'recordLegalConsent',
+			name: 'Record Legal Consent',
+			action: 'Record the user\'s consent to a legal document (CGV, CGU, DPA, …) by slug, with an audit trail (IP, user agent, document version, optional signature name)',
+			description: 'Record the user\'s consent to a legal document (CGV, CGU, DPA, …) by slug, with an audit trail (IP, user agent, document version, optional signature name). BINDING: this is the act of accepting a contract on the user\'s behalf, so it always defers to a human approval.',
+			routeSpec: {"method":"POST","path":"/api/legal/consents","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Document Slug',
+					name: 'documentSlug',
+					type: 'string',
+					required: true,
+					description: 'Slug of the legal document being accepted, e.g. "cgv-utilisateurs" (required). Read it first with get_legal_document.',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Language',
+							name: 'language',
+							type: 'options',
+							description: 'Language of the accepted version (default fr)',
+							default: 'en',
+							options: [
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+							],
+						},
+						{
+							displayName: 'Signature Full Name',
+							name: 'signatureFullName',
+							type: 'string',
+							description: 'Optional — full name typed as signature, when the document requires one',
+							default: '',
 						},
 					],
 				}

@@ -140,8 +140,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'archiveSprint',
 			name: 'Archive Sprint',
-			action: 'Archive a sprint',
-			description: 'Archive a sprint',
+			action: 'Archive a milestone (« jalon »)',
+			description: 'Archive a milestone (« jalon »)',
 			routeSpec: {"method":"DELETE","path":"/api/aurentia/tasks/sprints/{sprint_id}","queryParams":[]},
 			properties: [
 				{
@@ -331,23 +331,155 @@ export const tasksResource: GeneratedResource = {
 							default: 0,
 						},
 						{
-							displayName: 'Labels',
-							name: 'labels',
+							displayName: 'Priority',
+							name: 'priority',
+							type: 'string',
+							description: 'Priority key (project-scoped, free list) — call list_task_priorities to discover valid keys/labels/ranks. Default-seeded projects have \'low\'/\'medium\'/\'high\'/\'urgent\'.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createCardTemplate',
+			name: 'Create Card Template',
+			action: 'Crée un modèle de tâche (portée projet)',
+			description: 'Crée un modèle de tâche (portée projet). Un champ omis ne pose rien à l\'instanciation (instantiate_card_template) — jamais écrit en vide sur la carte créée.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/task-templates","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: 'Nom affiché dans le picker « Nouvelle tâche » — DISTINCT du titre de la tâche créée',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Assigned To',
+							name: 'assignedTo',
+							type: 'json',
+							description: 'User UUIDs. Absent/empty = the template assigns no one. (provide a JSON array)',
+							default: '[]',
+						},
+						{
+							displayName: 'Checklist Items',
+							name: 'checklistItems',
 							type: 'json',
 							description: 'Provide a JSON array',
 							default: '[]',
 						},
 						{
+							displayName: 'Custom Properties',
+							name: 'customProperties',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Description Md',
+							name: 'descriptionMd',
+							type: 'string',
+							description: 'Markdown brut',
+							default: '',
+						},
+						{
+							displayName: 'Due Offset Days',
+							name: 'dueOffsetDays',
+							type: 'number',
+							description: 'Signed day offset from the instantiation date (e.g. -2 = two days before a milestone). Resolved to an absolute date only when instantiate_card_template runs — never store an absolute date on a template.',
+							default: 0,
+						},
+						{
+							displayName: 'Estimated Minutes',
+							name: 'estimatedMinutes',
+							type: 'number',
+							description: 'Estimate in minutes (1-43200). Absent = the template poses no estimate.',
+							default: 0,
+						},
+						{
+							displayName: 'Is Code Task',
+							name: 'isCodeTask',
+							type: 'boolean',
+							description: 'Whether to enable is code task',
+							default: false,
+						},
+						{
+							displayName: 'Is Important',
+							name: 'isImportant',
+							type: 'boolean',
+							description: 'Whether to enable is important',
+							default: false,
+						},
+						{
+							displayName: 'Is Milestone',
+							name: 'isMilestone',
+							type: 'boolean',
+							description: 'Whether to enable is milestone',
+							default: false,
+						},
+						{
+							displayName: 'Is Urgent',
+							name: 'isUrgent',
+							type: 'boolean',
+							description: 'Whether to enable is urgent',
+							default: false,
+						},
+						{
 							displayName: 'Priority',
 							name: 'priority',
+							type: 'string',
+							description: 'Priority key (project-scoped, free list) — call list_task_priorities to discover valid keys/labels/ranks. Default-seeded projects have \'low\'/\'medium\'/\'high\'/\'urgent\'.',
+							default: '',
+						},
+						{
+							displayName: 'Start Offset Days',
+							name: 'startOffsetDays',
+							type: 'number',
+							description: 'Signed day offset from the instantiation date (e.g. -2 = two days before a milestone). Resolved to an absolute date only when instantiate_card_template runs — never store an absolute date on a template.',
+							default: 0,
+						},
+						{
+							displayName: 'Status Category',
+							name: 'statusCategory',
 							type: 'options',
-							default: 'high',
+							default: 'backlog',
 							options: [
-								{ name: 'High', value: 'high' },
-								{ name: 'Low', value: 'low' },
-								{ name: 'Medium', value: 'medium' },
-								{ name: 'Urgent', value: 'urgent' },
+								{ name: 'Backlog', value: 'backlog' },
+								{ name: 'Blocked', value: 'blocked' },
+								{ name: 'Done', value: 'done' },
+								{ name: 'In Progress', value: 'in_progress' },
+								{ name: 'Todo', value: 'todo' },
 							],
+						},
+						{
+							displayName: 'Tag IDs',
+							name: 'tagIds',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							description: 'Titre de la tâche créée à l’instanciation',
+							default: '',
 						},
 					],
 				}
@@ -398,45 +530,6 @@ export const tasksResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					default: '',
-				}
-			],
-		},
-		{
-			value: 'createLabel',
-			name: 'Create Label',
-			action: 'Create a label',
-			description: 'Create a label',
-			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/boards/{board_id}/labels","queryParams":[]},
-			properties: [
-				{
-					displayName: 'Board ID',
-					name: 'board_id',
-					type: 'string',
-					required: true,
-					description: 'The board ID for this operation',
-					default: '',
-				},
-				{
-					displayName: 'Name',
-					name: 'name',
-					type: 'string',
-					required: true,
-					default: '',
-				},
-				{
-					displayName: 'Additional Fields',
-					name: 'additionalFields',
-					type: 'collection',
-					placeholder: 'Add Field',
-					default: {},
-					options: [
-						{
-							displayName: 'Color',
-							name: 'color',
-							type: 'color',
-							default: '',
-						},
-					],
 				}
 			],
 		},
@@ -571,13 +664,6 @@ export const tasksResource: GeneratedResource = {
 							default: 0,
 						},
 						{
-							displayName: 'Labels',
-							name: 'labels',
-							type: 'json',
-							description: 'Provide a JSON array',
-							default: '[]',
-						},
-						{
 							displayName: 'Month Of Year',
 							name: 'month_of_year',
 							type: 'number',
@@ -587,14 +673,9 @@ export const tasksResource: GeneratedResource = {
 						{
 							displayName: 'Priority',
 							name: 'priority',
-							type: 'options',
-							default: 'high',
-							options: [
-								{ name: 'High', value: 'high' },
-								{ name: 'Low', value: 'low' },
-								{ name: 'Medium', value: 'medium' },
-								{ name: 'Urgent', value: 'urgent' },
-							],
+							type: 'string',
+							description: 'Priority key (project-scoped, free list) — call list_task_priorities to discover valid keys/labels/ranks. Default-seeded projects have \'low\'/\'medium\'/\'high\'/\'urgent\'.',
+							default: '',
 						},
 						{
 							displayName: 'Start Date',
@@ -609,8 +690,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'createSprint',
 			name: 'Create Sprint',
-			action: 'Create a sprint on a board',
-			description: 'Create a sprint on a board',
+			action: 'Create a milestone (« jalon ») on a board',
+			description: 'Create a milestone (« jalon ») on a board. The product calls these MILESTONES (« jalons » in French) since 2026-08-08 — say « milestone/jalon » to the user, never « sprint ». The table and the `sprint_ids` field keep their historical names.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/sprints","queryParams":[]},
 			properties: [
 				{
@@ -828,6 +909,206 @@ export const tasksResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createTaskDomain',
+			name: 'Create Task Domain',
+			action: 'Crée un domaine d\'activité pour organiser les projets/boards du portefeuille (ex',
+			description: 'Crée un domaine d\'activité pour organiser les projets/boards du portefeuille (ex. « Marketing », « Produit »). color = clé de palette (slate/brown/orange/amber/emerald/sky/indigo/violet/pink/rose), jamais un hex. Posé en fin de liste.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/domains","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Color',
+					name: 'color',
+					type: 'color',
+					required: true,
+					description: 'Clé de palette — cf. list_task_domains.',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'createTaskPriority',
+			name: 'Create Task Priority',
+			action: 'Crée un niveau de priorité',
+			description: 'Crée un niveau de priorité. rank absent = posé au-dessus de tout (le plus urgent). color = clé de palette (slate/brown/orange/amber/emerald/sky/indigo/violet/pink/rose).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/priorities","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Label',
+					name: 'label',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							default: '',
+						},
+						{
+							displayName: 'Is Default',
+							name: 'isDefault',
+							type: 'boolean',
+							description: 'Whether to enable is default',
+							default: false,
+						},
+						{
+							displayName: 'Rank',
+							name: 'rank',
+							type: 'number',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createTaskProperty',
+			name: 'Create Task Property',
+			action: 'Crée une propriété custom de tâches',
+			description: 'Crée une propriété custom de tâches. boardId absent = propriété visible sur toutes les tâches du projet. Types : text, long_text, number, date, datetime, checkbox, URL, email, phone, select, multi_select, user, multi_user.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/property-definitions","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Label',
+					name: 'label',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Type',
+					name: 'type',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Board ID',
+							name: 'boardId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Options',
+							name: 'options',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createTaskStatus',
+			name: 'Create Task Status',
+			action: 'Crée un statut de tâche',
+			description: 'Crée un statut de tâche. category ∈ backlog/todo/in_progress/blocked/done (catégorie dénormalisée lue par le dashboard, le Gantt, le calendrier et les widgets). color = clé de palette (slate/brown/orange/amber/emerald/sky/indigo/violet/pink/rose), jamais un hex. rank absent = posé en FIN de flux (le plus avancé) — inverse de create_task_priority, où rank absent pose en TÊTE.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/statuses","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Label',
+					name: 'label',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Category',
+					name: 'category',
+					type: 'options',
+					required: true,
+					default: 'backlog',
+					options: [
+						{ name: 'Backlog', value: 'backlog' },
+						{ name: 'Blocked', value: 'blocked' },
+						{ name: 'Done', value: 'done' },
+						{ name: 'In Progress', value: 'in_progress' },
+						{ name: 'Todo', value: 'todo' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							description: 'Clé de palette — cf. list_task_statuses (slate/brown/orange/amber/emerald/sky/indigo/violet/pink/rose). Jamais un hex.',
+							default: '',
+						},
+						{
+							displayName: 'Is Default',
+							name: 'isDefault',
+							type: 'boolean',
+							description: 'Whether to enable is default',
+							default: false,
+						},
+						{
+							displayName: 'Rank',
+							name: 'rank',
+							type: 'number',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createTaskTemplate',
 			name: 'Create Task Template',
 			action: 'Create a kanban task template',
@@ -964,6 +1245,23 @@ export const tasksResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'deleteCardTemplate',
+			name: 'Delete Card Template',
+			action: 'Supprime un modèle de tâche (réversible 30 jours)',
+			description: 'Supprime un modèle de tâche (réversible 30 jours)',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/tasks/task-templates/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'deleteChecklistItem',
 			name: 'Delete Checklist Item',
 			action: 'Delete a checklist item',
@@ -1006,31 +1304,6 @@ export const tasksResource: GeneratedResource = {
 			],
 		},
 		{
-			value: 'deleteLabel',
-			name: 'Delete Label',
-			action: 'Delete a label',
-			description: 'Delete a label',
-			routeSpec: {"method":"DELETE","path":"/api/aurentia/tasks/boards/{board_id}/labels/{label_id}","queryParams":[]},
-			properties: [
-				{
-					displayName: 'Board ID',
-					name: 'board_id',
-					type: 'string',
-					required: true,
-					description: 'The board ID for this operation',
-					default: '',
-				},
-				{
-					displayName: 'Label ID',
-					name: 'label_id',
-					type: 'string',
-					required: true,
-					description: 'The label ID for this operation',
-					default: '',
-				}
-			],
-		},
-		{
 			value: 'deleteProjectTaskTag',
 			name: 'Delete Project Task Tag',
 			action: 'Delete a project task tag',
@@ -1067,8 +1340,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'deleteSprint',
 			name: 'Delete Sprint',
-			action: 'Delete a sprint',
-			description: 'Delete a sprint',
+			action: 'Delete a milestone (« jalon »)',
+			description: 'Delete a milestone (« jalon »)',
 			routeSpec: {"method":"DELETE","path":"/api/aurentia/tasks/sprints/{id}","queryParams":[]},
 			properties: [
 				{
@@ -1157,6 +1430,104 @@ export const tasksResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'deleteTaskDomain',
+			name: 'Delete Task Domain',
+			action: 'Supprime un domaine d\'activité — bascule d\'abord tous ses boards vers « Non classé », puis supprime la ligne',
+			description: 'Supprime un domaine d\'activité — bascule d\'abord tous ses boards vers « Non classé », puis supprime la ligne. Refusé si un board n\'a pas pu être rebasculé, ou sur « Non classé » lui-même.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/tasks/domains/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteTaskPriority',
+			name: 'Delete Task Priority',
+			action: 'Supprime un niveau de priorité (réversible)',
+			description: 'Supprime un niveau de priorité (réversible). repointTo = clé d\'un AUTRE niveau vivant vers laquelle repointer toutes les cartes/tâches récurrentes/modèles qui l\'utilisaient ; absent = elles perdent leur priorité (jamais rejetées).',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/tasks/priorities/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Repoint To',
+							name: 'repointTo',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'deleteTaskProperty',
+			name: 'Delete Task Property',
+			action: 'Supprime une propriété custom (réversible 30 jours)',
+			description: 'Supprime une propriété custom (réversible 30 jours). Les valeurs en cellule sont conservées.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/tasks/property-definitions/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteTaskStatus',
+			name: 'Delete Task Status',
+			action: 'Supprime un statut (réversible)',
+			description: 'Supprime un statut (réversible). repointTo = clé d\'un AUTRE statut vivant vers laquelle repointer les colonnes qui le portaient ; absent = elles retombent sur leur name/status_category legacy (jamais de perte). Refusé sur le dernier statut vivant du projet.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/tasks/statuses/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Repoint To',
+							name: 'repointTo',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'deleteTaskTemplate',
 			name: 'Delete Task Template',
 			action: 'Delete a task template',
@@ -1240,6 +1611,23 @@ export const tasksResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getBoardSchema',
+			name: 'Get Board Schema',
+			action: 'Structure d\'un board kanban AVANT d\'écrire : colonnes (catégories de statut) et tags projet',
+			description: 'Structure d\'un board kanban AVANT d\'écrire : colonnes (catégories de statut) et tags projet. Les propriétés custom valides vivent dans task_property_definitions — appeler list_task_properties pour les connaître.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/tasks/boards/{board_id}/schema","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Board ID',
+					name: 'board_id',
+					type: 'string',
+					required: true,
+					description: 'The board ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'getCardActivity',
 			name: 'Get Card Activity',
 			action: 'Activity on a card',
@@ -1295,6 +1683,30 @@ export const tasksResource: GeneratedResource = {
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'instantiateCardTemplate',
+			name: 'Instantiate Card Template',
+			action: 'Crée une vraie tâche (carte kanban) sur un board à partir d’un modèle',
+			description: 'Crée une vraie tâche (carte kanban) sur un board à partir d’un modèle. Le modèle DOIT appartenir au même projet que le board cible.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/task-templates/{id}/instantiate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Board ID',
+					name: 'boardId',
+					type: 'string',
+					required: true,
+					default: '',
 				}
 			],
 		},
@@ -1455,6 +1867,31 @@ export const tasksResource: GeneratedResource = {
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'linkTaskMeeting',
+			name: 'Link Task Meeting',
+			action: 'Link an existing calendar meeting (create it first with create_meeting) to a kanban card',
+			description: 'Link an existing calendar meeting (create it first with create_meeting) to a kanban card',
+			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/cards/{card_id}/meetings","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Card ID',
+					name: 'card_id',
+					type: 'string',
+					required: true,
+					description: 'The card ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Event ID',
+					name: 'event_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of an existing meeting/calendar event',
+					default: '',
 				}
 			],
 		},
@@ -1636,6 +2073,22 @@ export const tasksResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'listCardTemplates',
+			name: 'List Card Templates',
+			action: 'Liste les modèles de tâche vivants d\'un projet — à appeler AVANT instantiate_card_template pour connaître les IDs/noms disponibles',
+			description: 'Liste les modèles de tâche vivants d\'un projet — à appeler AVANT instantiate_card_template pour connaître les IDs/noms disponibles. Distinct de list_task_templates (modèles de BOARD entier).',
+			routeSpec: {"method":"GET","path":"/api/aurentia/tasks/task-templates","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'listChecklists',
 			name: 'List Checklists',
 			action: 'Checklists on a card',
@@ -1648,23 +2101,6 @@ export const tasksResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The card ID for this operation',
-					default: '',
-				}
-			],
-		},
-		{
-			value: 'listLabels',
-			name: 'List Labels',
-			action: 'Labels for a board',
-			description: 'Labels for a board',
-			routeSpec: {"method":"GET","path":"/api/aurentia/tasks/boards/{board_id}/labels","queryParams":[]},
-			properties: [
-				{
-					displayName: 'Board ID',
-					name: 'board_id',
-					type: 'string',
-					required: true,
-					description: 'The board ID for this operation',
 					default: '',
 				}
 			],
@@ -1688,8 +2124,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'listSprints',
 			name: 'List Sprints',
-			action: 'List sprints for a board',
-			description: 'List sprints for a board',
+			action: 'List a board\'s milestones',
+			description: 'List a board\'s milestones. The product calls these MILESTONES (« jalons » in French) since 2026-08-08 — say « milestone/jalon » to the user, never « sprint ». The table and the `sprint_ids` field keep their historical names.',
 			routeSpec: {"method":"GET","path":"/api/aurentia/tasks/sprints","queryParams":["board_id:boardId"]},
 			properties: [
 				{
@@ -1738,8 +2174,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'listTaskBoardMeetings',
 			name: 'List Task Board Meetings',
-			action: 'Meetings (calendar events) linked to a task project (board)',
-			description: 'Meetings (calendar events) linked to a task project (board)',
+			action: 'Meetings linked to a task project (board): the board meeting entities (public.meetings, with status and summary) plus any bare linked calendar events not yet backed by a meeting',
+			description: 'Meetings linked to a task project (board): the board meeting entities (public.meetings, with status and summary) plus any bare linked calendar events not yet backed by a meeting',
 			routeSpec: {"method":"GET","path":"/api/aurentia/tasks/boards/{board_id}/meetings","queryParams":[]},
 			properties: [
 				{
@@ -1748,6 +2184,85 @@ export const tasksResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The board ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listTaskDomains',
+			name: 'List Task Domains',
+			action: 'Liste les domaines d\'activité d\'un projet (référentiel du Gantt de portefeuille), triés par position — crée « Non classé » au passage s\'il n\'existe pas encore',
+			description: 'Liste les domaines d\'activité d\'un projet (référentiel du Gantt de portefeuille), triés par position — crée « Non classé » au passage s\'il n\'existe pas encore. À appeler AVANT de poser un ID de domaine sur un board.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/tasks/domains","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listTaskPriorities',
+			name: 'List Task Priorities',
+			action: 'Liste les DÉFINITIONS des niveaux de priorité configurés sur un projet (clés/libellés/rang, ex',
+			description: 'Liste les DÉFINITIONS des niveaux de priorité configurés sur un projet (clés/libellés/rang, ex. low/medium/high/urgent), triées du plus urgent au moins urgent (rank DESC) — PAS une liste de tâches, PAS un outil de consultation de to-do. À appeler AVANT de poser priority sur une carte/tâche récurrente/modèle, pour connaître les clés valides. Pour afficher les tâches de l\'utilisateur, utiliser list_cards.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/tasks/priorities","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listTaskProperties',
+			name: 'List Task Properties',
+			action: 'Liste les propriétés custom des tâches d\'un projet (portée projet + board)',
+			description: 'Liste les propriétés custom des tâches d\'un projet (portée projet + board). À appeler AVANT set_card_property pour connaître les clés, types et choix valides.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/tasks/property-definitions","queryParams":["project_id:projectId","board_id:boardId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Board ID',
+							name: 'board_id',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'listTaskStatuses',
+			name: 'List Task Statuses',
+			action: 'Liste les statuts vivants d\'un projet, triés du moins avancé au plus avancé (rank ASC — backlog en premier)',
+			description: 'Liste les statuts vivants d\'un projet, triés du moins avancé au plus avancé (rank ASC — backlog en premier). À appeler AVANT de poser category/color sur create_task_status/update_task_status.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/tasks/statuses","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
 					default: '',
 				}
 			],
@@ -1915,6 +2430,130 @@ export const tasksResource: GeneratedResource = {
 					required: true,
 					description: 'Provide a JSON array',
 					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'reorderTaskPriorities',
+			name: 'Reorder Task Priorities',
+			action: 'Réordonne l\'INTÉGRALITÉ des niveaux de priorité vivants d\'un projet (IDs doit lister chaque ID vivant exactement une fois)',
+			description: 'Réordonne l\'INTÉGRALITÉ des niveaux de priorité vivants d\'un projet (IDs doit lister chaque ID vivant exactement une fois). IDs[0] = le plus urgent.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/priorities/reorder","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'IDs',
+					name: 'ids',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'reorderTaskProperties',
+			name: 'Reorder Task Properties',
+			action: 'Réordonne les propriétés custom d\'un projet (portées projet et board mélangées)',
+			description: 'Réordonne les propriétés custom d\'un projet (portées projet et board mélangées)',
+			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/property-definitions/reorder","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project UUID — porte la portée, vérifiée côté serveur',
+					default: '',
+				},
+				{
+					displayName: 'IDs',
+					name: 'ids',
+					type: 'json',
+					required: true,
+					description: 'IDs des définitions dans le nouvel ordre. Champs camelCase (projectId/IDs) : le corps de la route les exige tels quels. (provide a JSON array)',
+					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'reorderTaskStatuses',
+			name: 'Reorder Task Statuses',
+			action: 'Réordonne l\'INTÉGRALITÉ des statuts vivants d\'un projet (IDs doit lister chaque ID vivant exactement une fois)',
+			description: 'Réordonne l\'INTÉGRALITÉ des statuts vivants d\'un projet (IDs doit lister chaque ID vivant exactement une fois). IDs[0] = le MOINS avancé (début de flux) — inverse de reorder_task_priorities, où IDs[0] est le plus urgent.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/statuses/reorder","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'IDs',
+					name: 'ids',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'restoreTaskPriority',
+			name: 'Restore Task Priority',
+			action: 'Restaure un niveau de priorité supprimé',
+			description: 'Restaure un niveau de priorité supprimé',
+			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/priorities/{id}/restore","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'restoreTaskProperty',
+			name: 'Restore Task Property',
+			action: 'Restaure une propriété custom supprimée (soft delete, réversible 30 jours)',
+			description: 'Restaure une propriété custom supprimée (soft delete, réversible 30 jours). Les valeurs de cellule déjà écrites sont rebranchées telles quelles.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/property-definitions/{id}/restore","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'restoreTaskStatus',
+			name: 'Restore Task Status',
+			action: 'Restaure un statut supprimé',
+			description: 'Restaure un statut supprimé',
+			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/statuses/{id}/restore","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
 				}
 			],
 		},
@@ -2089,10 +2728,35 @@ export const tasksResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'unlinkTaskMeeting',
+			name: 'Unlink Task Meeting',
+			action: 'Unlink a meeting from a kanban card (does not delete the meeting itself)',
+			description: 'Unlink a meeting from a kanban card (does not delete the meeting itself)',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/tasks/cards/{card_id}/meetings/{event_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Card ID',
+					name: 'card_id',
+					type: 'string',
+					required: true,
+					description: 'The card ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Event ID',
+					name: 'event_id',
+					type: 'string',
+					required: true,
+					description: 'The event ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'updateBoard',
 			name: 'Update Board',
-			action: 'Update a board',
-			description: 'Update a board',
+			action: 'Update a board (project)',
+			description: 'Update a board (project). Only provide the fields to change.',
 			routeSpec: {"method":"PUT","path":"/api/aurentia/tasks/boards/{board_id}","queryParams":[]},
 			properties: [
 				{
@@ -2111,9 +2775,44 @@ export const tasksResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
+							displayName: 'End Date',
+							name: 'end_date',
+							type: 'string',
+							description: 'ISO date (YYYY-MM-DD)',
+							default: '',
+						},
+						{
+							displayName: 'Is Priority',
+							name: 'is_priority',
+							type: 'boolean',
+							description: 'Whether to enable is priority',
+							default: false,
+						},
+						{
 							displayName: 'Name',
 							name: 'name',
 							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Owner ID',
+							name: 'owner_id',
+							type: 'string',
+							description: 'User UUID of the project owner (responsable). MUST be a member of the project — the server rejects anyone else. Pass null to unassign.',
+							default: '',
+						},
+						{
+							displayName: 'Start Date',
+							name: 'start_date',
+							type: 'string',
+							description: 'ISO date (YYYY-MM-DD)',
+							default: '',
+						},
+						{
+							displayName: 'Status',
+							name: 'status',
+							type: 'string',
+							description: 'One of \'a_venir\' | \'en_cours\' | \'en_pause\' | \'termine\' | \'bloque\' | \'archive\'',
 							default: '',
 						},
 					],
@@ -2200,23 +2899,11 @@ export const tasksResource: GeneratedResource = {
 							default: 0,
 						},
 						{
-							displayName: 'Labels',
-							name: 'labels',
-							type: 'json',
-							description: 'Provide a JSON array',
-							default: '[]',
-						},
-						{
 							displayName: 'Priority',
 							name: 'priority',
-							type: 'options',
-							default: 'high',
-							options: [
-								{ name: 'High', value: 'high' },
-								{ name: 'Low', value: 'low' },
-								{ name: 'Medium', value: 'medium' },
-								{ name: 'Urgent', value: 'urgent' },
-							],
+							type: 'string',
+							description: 'Priority key (project-scoped, free list) — call list_task_priorities to discover valid keys/labels/ranks. Default-seeded projects have \'low\'/\'medium\'/\'high\'/\'urgent\'.',
+							default: '',
 						},
 						{
 							displayName: 'Status',
@@ -2228,6 +2915,147 @@ export const tasksResource: GeneratedResource = {
 								{ name: 'In Progress', value: 'in_progress' },
 								{ name: 'Todo', value: 'todo' },
 							],
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateCardTemplate',
+			name: 'Update Card Template',
+			action: 'Met à jour un modèle de tâche (patch partiel — seules les clés fournies changent)',
+			description: 'Met à jour un modèle de tâche (patch partiel — seules les clés fournies changent)',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/tasks/task-templates/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Assigned To',
+							name: 'assignedTo',
+							type: 'json',
+							description: 'User UUIDs. Absent/empty = the template assigns no one. (provide a JSON array)',
+							default: '[]',
+						},
+						{
+							displayName: 'Checklist Items',
+							name: 'checklistItems',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Custom Properties',
+							name: 'customProperties',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Description Md',
+							name: 'descriptionMd',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Due Offset Days',
+							name: 'dueOffsetDays',
+							type: 'number',
+							description: 'Signed day offset from the instantiation date (e.g. -2 = two days before a milestone). Resolved to an absolute date only when instantiate_card_template runs — never store an absolute date on a template.',
+							default: 0,
+						},
+						{
+							displayName: 'Estimated Minutes',
+							name: 'estimatedMinutes',
+							type: 'number',
+							description: 'Estimate in minutes (1-43200). Absent = the template poses no estimate.',
+							default: 0,
+						},
+						{
+							displayName: 'Is Code Task',
+							name: 'isCodeTask',
+							type: 'boolean',
+							description: 'Whether to enable is code task',
+							default: false,
+						},
+						{
+							displayName: 'Is Important',
+							name: 'isImportant',
+							type: 'boolean',
+							description: 'Whether to enable is important',
+							default: false,
+						},
+						{
+							displayName: 'Is Milestone',
+							name: 'isMilestone',
+							type: 'boolean',
+							description: 'Whether to enable is milestone',
+							default: false,
+						},
+						{
+							displayName: 'Is Urgent',
+							name: 'isUrgent',
+							type: 'boolean',
+							description: 'Whether to enable is urgent',
+							default: false,
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Priority',
+							name: 'priority',
+							type: 'string',
+							description: 'Priority key (project-scoped, free list) — call list_task_priorities to discover valid keys/labels/ranks. Default-seeded projects have \'low\'/\'medium\'/\'high\'/\'urgent\'.',
+							default: '',
+						},
+						{
+							displayName: 'Start Offset Days',
+							name: 'startOffsetDays',
+							type: 'number',
+							description: 'Signed day offset from the instantiation date (e.g. -2 = two days before a milestone). Resolved to an absolute date only when instantiate_card_template runs — never store an absolute date on a template.',
+							default: 0,
+						},
+						{
+							displayName: 'Status Category',
+							name: 'statusCategory',
+							type: 'options',
+							default: 'backlog',
+							options: [
+								{ name: 'Backlog', value: 'backlog' },
+								{ name: 'Blocked', value: 'blocked' },
+								{ name: 'Done', value: 'done' },
+								{ name: 'In Progress', value: 'in_progress' },
+								{ name: 'Todo', value: 'todo' },
+							],
+						},
+						{
+							displayName: 'Tag IDs',
+							name: 'tagIds',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
 						},
 						{
 							displayName: 'Title',
@@ -2308,52 +3136,6 @@ export const tasksResource: GeneratedResource = {
 					placeholder: 'Add Field',
 					default: {},
 					options: [
-						{
-							displayName: 'Name',
-							name: 'name',
-							type: 'string',
-							default: '',
-						},
-					],
-				}
-			],
-		},
-		{
-			value: 'updateLabel',
-			name: 'Update Label',
-			action: 'Update a label',
-			description: 'Update a label',
-			routeSpec: {"method":"PUT","path":"/api/aurentia/tasks/boards/{board_id}/labels/{label_id}","queryParams":[]},
-			properties: [
-				{
-					displayName: 'Board ID',
-					name: 'board_id',
-					type: 'string',
-					required: true,
-					description: 'The board ID for this operation',
-					default: '',
-				},
-				{
-					displayName: 'Label ID',
-					name: 'label_id',
-					type: 'string',
-					required: true,
-					description: 'The label ID for this operation',
-					default: '',
-				},
-				{
-					displayName: 'Additional Fields',
-					name: 'additionalFields',
-					type: 'collection',
-					placeholder: 'Add Field',
-					default: {},
-					options: [
-						{
-							displayName: 'Color',
-							name: 'color',
-							type: 'color',
-							default: '',
-						},
 						{
 							displayName: 'Name',
 							name: 'name',
@@ -2477,13 +3259,6 @@ export const tasksResource: GeneratedResource = {
 							default: false,
 						},
 						{
-							displayName: 'Labels',
-							name: 'labels',
-							type: 'json',
-							description: 'Provide a JSON array',
-							default: '[]',
-						},
-						{
 							displayName: 'Month Of Year',
 							name: 'month_of_year',
 							type: 'number',
@@ -2498,14 +3273,9 @@ export const tasksResource: GeneratedResource = {
 						{
 							displayName: 'Priority',
 							name: 'priority',
-							type: 'options',
-							default: 'high',
-							options: [
-								{ name: 'High', value: 'high' },
-								{ name: 'Low', value: 'low' },
-								{ name: 'Medium', value: 'medium' },
-								{ name: 'Urgent', value: 'urgent' },
-							],
+							type: 'string',
+							description: 'Priority key (project-scoped, free list) — call list_task_priorities to discover valid keys/labels/ranks. Default-seeded projects have \'low\'/\'medium\'/\'high\'/\'urgent\'.',
+							default: '',
 						},
 						{
 							displayName: 'Start Date',
@@ -2526,8 +3296,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'updateSprint',
 			name: 'Update Sprint',
-			action: 'Update a sprint',
-			description: 'Update a sprint',
+			action: 'Update a milestone (« jalon »)',
+			description: 'Update a milestone (« jalon »)',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/tasks/sprints/{sprint_id}","queryParams":[]},
 			properties: [
 				{
@@ -2592,10 +3362,204 @@ export const tasksResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'updateTaskDomain',
+			name: 'Update Task Domain',
+			action: 'Renomme/recolore/repositionne un domaine d\'activité',
+			description: 'Renomme/recolore/repositionne un domaine d\'activité. Le domaine « Non classé » ne peut jamais être renommé (position/couleur restent modifiables).',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/tasks/domains/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							description: 'Clé de palette — cf. list_task_domains.',
+							default: '',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Position',
+							name: 'position',
+							type: 'number',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateTaskPriority',
+			name: 'Update Task Priority',
+			action: 'Renomme/recolore/repositionne un niveau de priorité, ou le pose comme défaut du projet',
+			description: 'Renomme/recolore/repositionne un niveau de priorité, ou le pose comme défaut du projet. La clé (référencée par les cartes) ne change jamais.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/tasks/priorities/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							default: '',
+						},
+						{
+							displayName: 'Is Default',
+							name: 'isDefault',
+							type: 'boolean',
+							description: 'Whether to enable is default',
+							default: false,
+						},
+						{
+							displayName: 'Label',
+							name: 'label',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Rank',
+							name: 'rank',
+							type: 'number',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateTaskProperty',
+			name: 'Update Task Property',
+			action: 'Renomme une propriété custom, change ses choix ou leurs couleurs',
+			description: 'Renomme une propriété custom, change ses choix ou leurs couleurs. Le type se change via un appel dédié.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/tasks/property-definitions/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Label',
+							name: 'label',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Options',
+							name: 'options',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateTaskStatus',
+			name: 'Update Task Status',
+			action: 'Renomme/recatégorise/recolore un statut, ou le pose comme défaut du projet',
+			description: 'Renomme/recatégorise/recolore un statut, ou le pose comme défaut du projet. La clé (key, référencée par les colonnes) ne change jamais. Pas de rank ici : le rang ne se change que par reorder_task_statuses, seul à garantir un ordre total.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/tasks/statuses/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Category',
+							name: 'category',
+							type: 'options',
+							default: 'backlog',
+							options: [
+								{ name: 'Backlog', value: 'backlog' },
+								{ name: 'Blocked', value: 'blocked' },
+								{ name: 'Done', value: 'done' },
+								{ name: 'In Progress', value: 'in_progress' },
+								{ name: 'Todo', value: 'todo' },
+							],
+						},
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							description: 'Clé de palette — cf. list_task_statuses. Jamais un hex.',
+							default: '',
+						},
+						{
+							displayName: 'Is Default',
+							name: 'isDefault',
+							type: 'boolean',
+							description: 'Whether to enable is default',
+							default: false,
+						},
+						{
+							displayName: 'Label',
+							name: 'label',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'updateTaskTemplate',
 			name: 'Update Task Template',
-			action: 'Update a task template (columns, labels)',
-			description: 'Update a task template (columns, labels)',
+			action: 'Update a task template (columns)',
+			description: 'Update a task template (columns)',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/tasks/templates/{template_id}","queryParams":[]},
 			properties: [
 				{

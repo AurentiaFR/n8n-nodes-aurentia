@@ -6,6 +6,137 @@ export const analyticsResource: GeneratedResource = {
 	displayName: 'Analytics',
 	operations: [
 		{
+			value: 'attributionRevenueByPost',
+			name: 'Attribution Revenue By Post',
+			action: 'Revenue attributed to your LinkedIn/social content, grouped by one of six dimensions (revenue totals, content pillar, platform, platform account, post, media) — pass level="post" to see revenue per post',
+			description: 'Revenue attributed to your LinkedIn/social content, grouped by one of six dimensions (revenue totals, content pillar, platform, platform account, post, media) — pass level="post" to see revenue per post. Optional parent filters (pillarId/platform/platformAccountId/postId) combine as AND for drill-down (e.g. one platform account, then one post within it). model picks the attribution model (first/last/linear touch, default linear). Aurentia for Entrepreneurs only.',
+			routeSpec: {"method":"GET","path":"/api/analytics/attribution/breakdown","queryParams":["level","model","from","to","pillarId","platform","platformAccountId","postId"]},
+			properties: [
+				{
+					displayName: 'Level',
+					name: 'level',
+					type: 'options',
+					required: true,
+					description: 'Grouping dimension — "post" for revenue per post',
+					default: 'account',
+					options: [
+						{ name: 'Account', value: 'account' },
+						{ name: 'Media', value: 'media' },
+						{ name: 'Pillar', value: 'pillar' },
+						{ name: 'Platform', value: 'platform' },
+						{ name: 'Post', value: 'post' },
+						{ name: 'Revenue', value: 'revenue' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'From',
+							name: 'from',
+							type: 'string',
+							description: 'ISO 8601 date or datetime, lower bound',
+							default: '',
+						},
+						{
+							displayName: 'Model',
+							name: 'model',
+							type: 'options',
+							description: 'Attribution model (default linear)',
+							default: 'first',
+							options: [
+								{ name: 'First', value: 'first' },
+								{ name: 'Last', value: 'last' },
+								{ name: 'Linear', value: 'linear' },
+							],
+						},
+						{
+							displayName: 'Pillar ID',
+							name: 'pillarId',
+							type: 'string',
+							description: 'Content pillar UUID filter',
+							default: '',
+						},
+						{
+							displayName: 'Platform',
+							name: 'platform',
+							type: 'string',
+							description: 'Platform key filter (e.g. linkedin)',
+							default: '',
+						},
+						{
+							displayName: 'Platform Account ID',
+							name: 'platformAccountId',
+							type: 'string',
+							description: 'Platform account UUID filter',
+							default: '',
+						},
+						{
+							displayName: 'Post ID',
+							name: 'postId',
+							type: 'string',
+							description: 'Post UUID filter',
+							default: '',
+						},
+						{
+							displayName: 'To',
+							name: 'to',
+							type: 'string',
+							description: 'ISO 8601 date or datetime, upper bound',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'attributionSilentReaders',
+			name: 'Attribution Silent Readers',
+			action: 'High-engagement social contacts (3+ interactions on your LinkedIn content) who were never promoted to a CRM lead/contact — ranked by a B2B ICP fit score with match reasons',
+			description: 'High-engagement social contacts (3+ interactions on your LinkedIn content) who were never promoted to a CRM lead/contact — ranked by a B2B ICP fit score with match reasons. Use to surface warm readers worth reaching out to manually before they go cold.',
+			routeSpec: {"method":"GET","path":"/api/analytics/attribution/silent-readers","queryParams":["limit"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Limit',
+							name: 'limit',
+							type: 'number',
+							description: 'Max number of results to return',
+							typeOptions: {"minValue":1},
+							default: 50,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'attributionSubjectJourney',
+			name: 'Attribution Subject Journey',
+			action: 'Full touchpoint journey of one attribution subject (a contact/prospect tracked across LinkedIn touches): every touchpoint in chronological order (channel, platform, post, media, confidence, source) plus the 3 pre-computed attribution model rows (first/last/linear touch) with conversion date, linked CRM deal and revenue when converted',
+			description: 'Full touchpoint journey of one attribution subject (a contact/prospect tracked across LinkedIn touches): every touchpoint in chronological order (channel, platform, post, media, confidence, source) plus the 3 pre-computed attribution model rows (first/last/linear touch) with conversion date, linked CRM deal and revenue when converted. Errors if the subject does not exist or does not belong to you.',
+			routeSpec: {"method":"GET","path":"/api/analytics/attribution/journeys","queryParams":["subjectId"]},
+			properties: [
+				{
+					displayName: 'Subject ID',
+					name: 'subjectId',
+					type: 'string',
+					required: true,
+					description: 'Attribution_subjects.ID (UUID)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'getAnalyticsActivity',
 			name: 'Get Analytics Activity',
 			action: 'Recent activity feed',

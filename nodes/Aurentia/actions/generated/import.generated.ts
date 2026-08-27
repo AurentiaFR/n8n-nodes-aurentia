@@ -165,8 +165,8 @@ export const importResource: GeneratedResource = {
 		{
 			value: 'startImport',
 			name: 'Start Import',
-			action: 'Start a universal AI import: analyzes the source (paste/URL/composio) and proposes a field mapping',
-			description: 'Start a universal AI import: analyzes the source (paste/URL/composio) and proposes a field mapping. Analysis only — no data is written until commit_import.',
+			action: 'Start a universal AI import: analyzes the source (paste/URL/composio/attachment/inline) and proposes a field mapping',
+			description: 'Start a universal AI import: analyzes the source (paste/URL/composio/attachment/inline) and proposes a field mapping. Analysis only — no data is written until commit_import. Use \'attachment\' for a file already dropped in this conversation (never guess an ID from another conversation — it is ownership-checked server-side and rejected otherwise), \'inline\' when the data is pasted directly in the user\'s message. Calling start_import again on the SAME attachment that already has a non-finished job returns that job instead of billing a second extraction.',
 			routeSpec: {"method":"POST","path":"/api/import","queryParams":[]},
 			properties: [
 				{
@@ -174,9 +174,11 @@ export const importResource: GeneratedResource = {
 					name: 'sourceType',
 					type: 'options',
 					required: true,
-					default: 'composio',
+					default: 'attachment',
 					options: [
+						{ name: 'Attachment', value: 'attachment' },
 						{ name: 'Composio', value: 'composio' },
+						{ name: 'Inline', value: 'inline' },
 						{ name: 'Paste', value: 'paste' },
 						{ name: 'URL', value: 'url' },
 					],
@@ -186,7 +188,7 @@ export const importResource: GeneratedResource = {
 					name: 'source',
 					type: 'json',
 					required: true,
-					description: 'Paste: { pasteText } · URL: { URL } · composio: { composio: { toolkit, objectType?, filter? } } (provide a JSON object)',
+					description: 'Paste: { pasteText } · URL: { URL } · composio: { composio: { toolkit, objectType?, filter? } } · attachment: { attachmentId } (ID of a file attachment already in this conversation) · inline: { text } (raw data pasted in the message) (provide a JSON object)',
 					default: '{}',
 				},
 				{

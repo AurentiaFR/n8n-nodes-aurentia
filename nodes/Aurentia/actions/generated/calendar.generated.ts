@@ -35,8 +35,8 @@ export const calendarResource: GeneratedResource = {
 		{
 			value: 'listCalendarEvents',
 			name: 'List Calendar Events',
-			action: 'Calendar events (internal + external)',
-			description: 'Calendar events (internal + external)',
+			action: 'The user\'s AGENDA over a date range: every calendar event, internal + synced external (Google/Outlook)',
+			description: 'The user\'s AGENDA over a date range: every calendar event, internal + synced external (Google/Outlook). This is the tool for "what\'s on my schedule", "my appointments this week", "am I free Thursday". Distinct from list_meetings, which lists recorded/transcribed meeting reports, not the diary.',
 			routeSpec: {"method":"GET","path":"/api/calendar/events","queryParams":["from","to"]},
 			properties: [
 				{

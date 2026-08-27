@@ -987,6 +987,23 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'deployCarousel',
+			name: 'Deploy Carousel',
+			action: 'Deploy an already-validated carousel by declining it into the other image formats — one format per network',
+			description: 'Deploy an already-validated carousel by declining it into the other image formats — one format per network. Free — no credits, no AI call.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels/{id}/deploy","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'disconnectBundleSocial',
 			name: 'Disconnect Bundle Social',
 			action: 'Disconnect a Bundle.social platform from the project',
@@ -1109,7 +1126,7 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'generateCarousel',
 			name: 'Generate Carousel',
 			action: 'AI-generate a multi-network carousel from a brief',
-			description: 'AI-generate a multi-network carousel from a brief. Charges 25 credits. Returns the rendered PNGs grouped by aspect ratio (1:1, 4:5, 9:16, 1.91:1, 2:3). Networks sharing the same aspect are merged into 1 rendering. The Aurentia footer is auto-appended to the final CTA slide unless aurentiaFooter=false.',
+			description: 'AI-generate a multi-network carousel from a brief. Charges 5 credits. Returns the rendered PNGs grouped by aspect ratio (1:1, 4:5, 9:16, 1.91:1, 2:3). Networks sharing the same aspect are merged into 1 rendering. The Aurentia footer is auto-appended to the final CTA slide unless aurentiaFooter=false.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels","queryParams":[]},
 			properties: [
 				{
@@ -1117,16 +1134,8 @@ export const socialMediaResource: GeneratedResource = {
 					name: 'brief',
 					type: 'string',
 					required: true,
-					description: 'What the carousel should communicate (8 chars min)',
+					description: 'What the carousel should communicate',
 					default: '',
-				},
-				{
-					displayName: 'Target Networks',
-					name: 'targetNetworks',
-					type: 'json',
-					required: true,
-					description: 'Provide a JSON array',
-					default: '[]',
 				},
 				{
 					displayName: 'Additional Fields',
@@ -1153,10 +1162,24 @@ export const socialMediaResource: GeneratedResource = {
 							],
 						},
 						{
+							displayName: 'Pillar ID',
+							name: 'pillarId',
+							type: 'string',
+							description: 'Identifiant du Thème dont le carrousel hérite réseaux, palette, gabarits et slides épinglées',
+							default: '',
+						},
+						{
 							displayName: 'Source Asset IDs',
 							name: 'sourceAssetIds',
 							type: 'json',
 							description: 'Optional media library asset IDs to use as input. (provide a JSON array).',
+							default: '[]',
+						},
+						{
+							displayName: 'Target Networks',
+							name: 'targetNetworks',
+							type: 'json',
+							description: 'Optional — derived from the Thème (pillarId) when omitted. (provide a JSON array).',
 							default: '[]',
 						},
 						{
@@ -1318,6 +1341,55 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'generateRedditPost',
+			name: 'Generate Reddit Post',
+			action: 'PRD-221 — Generate an original native Reddit post (title + body) in your brand voice, subreddit-rule aware (flair, length)',
+			description: 'PRD-221 — Generate an original native Reddit post (title + body) in your brand voice, subreddit-rule aware (flair, length). Returns draft + rationale + risk level. Charges 2 credits (suggest).',
+			routeSpec: {"method":"POST","path":"/api/social-media/reddit/posts","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Subreddit',
+					name: 'subreddit',
+					type: 'string',
+					required: true,
+					description: 'Subreddit name without the r/ prefix',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Mode',
+							name: 'mode',
+							type: 'options',
+							default: 'autopilot',
+							options: [
+								{ name: 'Autopilot', value: 'autopilot' },
+								{ name: 'Suggest', value: 'suggest' },
+							],
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Topic',
+							name: 'topic',
+							type: 'string',
+							description: 'Optional angle/topic for the post',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'generateRedditReply',
 			name: 'Generate Reddit Reply',
 			action: 'Generate a voice-matched Reddit reply draft for a veille thread (respects the subreddit rules)',
@@ -1442,6 +1514,31 @@ export const socialMediaResource: GeneratedResource = {
 								{ name: 'Fast', value: 'fast' },
 								{ name: 'Quality', value: 'quality' },
 							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'generateSocialInsights',
+			name: 'Generate Social Insights',
+			action: 'GENERATES a new AI "what is working" analysis over your social analytics: best-performing platform, winning content patterns, and concrete recommendations synthesized from your top posts',
+			description: 'GENERATES a new AI "what is working" analysis over your social analytics: best-performing platform, winning content patterns, and concrete recommendations synthesized from your top posts. CHARGES 2 CREDITS and is persisted — call `get_social_insights` first (free) and only generate when there is no stored analysis or it is stale.',
+			routeSpec: {"method":"POST","path":"/api/social-media/analytics/insights","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Days',
+							name: 'days',
+							type: 'number',
+							description: 'Lookback window in days (7-365, default 30)',
+							default: 0,
 						},
 					],
 				}
@@ -1930,9 +2027,9 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'getSocialAnalyticsDashboard',
 			name: 'Get Social Analytics Dashboard',
-			action: 'Aggregated engagement analytics across all your published social posts: totals (reach/impressions/engagement/avg engagement rate), top 10 posts, per-platform and per-pillar breakdowns',
-			description: 'Aggregated engagement analytics across all your published social posts: totals (reach/impressions/engagement/avg engagement rate), top 10 posts, per-platform and per-pillar breakdowns. Use this to answer "How is my social performing?" or "Which pillar drives the most engagement?". Refreshed nightly at 04:00 UTC.',
-			routeSpec: {"method":"GET","path":"/api/social-media/analytics","queryParams":["days"]},
+			action: 'Aggregated engagement analytics across all your published social posts: totals (reach/impressions/engagement/weighted avg engagement rate), top 10 posts, per-platform and per-pillar breakdowns',
+			description: 'Aggregated engagement analytics across all your published social posts: totals (reach/impressions/engagement/weighted avg engagement rate), top 10 posts, per-platform and per-pillar breakdowns. Also returns: `publishing` (posts per calendar day over the window, best streak, days without posting — reads our own DB, so it stays accurate even when no network reports metrics), `previousTotals`/`variation` (same-length preceding window), `dailySeries` (one point per day per KPI), `followersByPlatform` (real follower time series), `connectedPlatforms` (networks connected but silent), and `scope` (native vs imported posts). Use for "How is my social performing?", "Which pillar drives the most engagement?", or "Have I kept up my publishing pace?". Refreshed nightly at 04:00 UTC.',
+			routeSpec: {"method":"GET","path":"/api/social-media/analytics","queryParams":["days","timezone"]},
 			properties: [
 				{
 					displayName: 'Additional Fields',
@@ -1947,6 +2044,13 @@ export const socialMediaResource: GeneratedResource = {
 							type: 'number',
 							description: 'Lookback window in days. Default 30, clamped to [7, 365].',
 							default: 0,
+						},
+						{
+							displayName: 'Timezone',
+							name: 'timezone',
+							type: 'string',
+							description: 'IANA timezone (e.g. "Europe/Paris") used to bucket every per-day series. PASS IT: the server runs in UTC, so without it a post published at 00:30 local is counted on the previous day. Invalid values fall back to the server timezone rather than failing.',
+							default: '',
 						},
 					],
 				}
@@ -1986,26 +2090,11 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'getSocialInsights',
 			name: 'Get Social Insights',
-			action: 'AI "what is working" insights over your social analytics: best-performing platform, winning content patterns, and concrete recommendations synthesized from your top posts',
-			description: 'AI "what is working" insights over your social analytics: best-performing platform, winning content patterns, and concrete recommendations synthesized from your top posts. Charges 2 credits.',
-			routeSpec: {"method":"POST","path":"/api/social-media/analytics/insights","queryParams":[]},
+			action: 'READS the latest stored AI "what is working" analysis: summary, best platform, winning patterns, recommendations, plus `windowDays` (the window it actually analysed) and `generatedAt`',
+			description: 'READS the latest stored AI "what is working" analysis: summary, best platform, winning patterns, recommendations, plus `windowDays` (the window it actually analysed) and `generatedAt`. FREE — no credits, no model call. CALL THIS FIRST: `generate_social_insights` charges 2 credits, so only generate when this returns null or when `generatedAt` is stale relative to what has been published since. Returns null when no analysis has ever been generated.',
+			routeSpec: {"method":"GET","path":"/api/social-media/analytics/insights","queryParams":[]},
 			properties: [
-				{
-					displayName: 'Additional Fields',
-					name: 'additionalFields',
-					type: 'collection',
-					placeholder: 'Add Field',
-					default: {},
-					options: [
-						{
-							displayName: 'Days',
-							name: 'days',
-							type: 'number',
-							description: 'Lookback window in days (7-365, default 30)',
-							default: 0,
-						},
-					],
-				}
+
 			],
 		},
 		{
@@ -3270,6 +3359,33 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'redditBestTimes',
+			name: 'Reddit Best Times',
+			action: 'PRD-221 — Best posting windows (weekday + hour, UTC) for a subreddit, derived from the threads already collected',
+			description: 'PRD-221 — Best posting windows (weekday + hour, UTC) for a subreddit, derived from the threads already collected. Falls back to generic windows when there is not enough signal.',
+			routeSpec: {"method":"GET","path":"/api/social-media/reddit/best-times","queryParams":["subreddit"]},
+			properties: [
+				{
+					displayName: 'Subreddit',
+					name: 'subreddit',
+					type: 'string',
+					required: true,
+					description: 'Subreddit name without the r/ prefix',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'redditDashboard',
+			name: 'Reddit Dashboard',
+			action: 'PRD-221 — Reddit veille daily-loop KPIs: high-intent opportunities still to handle, threads to review, pending reply drafts, and last scan time',
+			description: 'PRD-221 — Reddit veille daily-loop KPIs: high-intent opportunities still to handle, threads to review, pending reply drafts, and last scan time',
+			routeSpec: {"method":"GET","path":"/api/social-media/reddit/dashboard","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
 			value: 'refreshSocialAnalytics',
 			name: 'Refresh Social Analytics',
 			action: 'Force a fresh pull of engagement metrics from Bundle.social for all your published posts',
@@ -3441,8 +3557,8 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'replyToInboxItem',
 			name: 'Reply To Inbox Item',
-			action: 'Reply to an inbox item via Bundle.social',
-			description: 'Reply to an inbox item via Bundle.social',
+			action: 'Reply to an inbox item (comment OR review) via Bundle.social',
+			description: 'Reply to an inbox item (comment OR review) via Bundle.social. Auto-routes review-type items to the review-reply flow.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/inbox/{item_id}/reply","queryParams":[]},
 			properties: [
 				{
@@ -3458,6 +3574,31 @@ export const socialMediaResource: GeneratedResource = {
 					name: 'text',
 					type: 'string',
 					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'replyToReview',
+			name: 'Reply To Review',
+			action: 'Reply to a Google Business / Facebook review inbox item via Bundle.social',
+			description: 'Reply to a Google Business / Facebook review inbox item via Bundle.social. The item must be a review; use `reply_to_inbox_item` for comments. Same reply endpoint (routes review items to the review-reply flow).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/inbox/{item_id}/reply","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Item ID',
+					name: 'item_id',
+					type: 'string',
+					required: true,
+					description: 'Inbox item ID of the review to answer',
+					default: '',
+				},
+				{
+					displayName: 'Text',
+					name: 'text',
+					type: 'string',
+					required: true,
+					description: 'The public reply to post on the review',
 					default: '',
 				}
 			],
@@ -4016,7 +4157,7 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'socialLinkShorten',
 			name: 'Social Link Shorten',
 			action: 'Generate a maison short link (aur.ai/s/&lt;ID&gt;) with optional UTM params',
-			description: 'Generate a maison short link (aur.ai/s/&lt;ID&gt;) with optional UTM params. Tracks clicks/uniques/country/day.',
+			description: 'Generate a maison short link (aur.ai/s/&lt;ID&gt;) with optional UTM params. Tracks clicks/uniques/country/day. If you are shortening a link for an existing post, shared form or booking page whose platform you know, also pass `origin` so the click becomes attributable to that post/platform in the revenue attribution dashboard — omit it if you are not sure, it must never be guessed.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/link-shorten","queryParams":[]},
 			properties: [
 				{
@@ -4033,6 +4174,13 @@ export const socialMediaResource: GeneratedResource = {
 					placeholder: 'Add Field',
 					default: {},
 					options: [
+						{
+							displayName: 'Origin',
+							name: 'origin',
+							type: 'json',
+							description: 'Attribution context for this link — optional, never guess it. Only set when you know for certain which platform/surface this link belongs to. (provide a JSON object)',
+							default: '{}',
+						},
 						{
 							displayName: 'Post ID',
 							name: 'postId',
@@ -4283,6 +4431,183 @@ export const socialMediaResource: GeneratedResource = {
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'studioGenerateVideo',
+			name: 'Studio Generate Video',
+			action: 'PRD-STUDIO-1 — Génère une vidéo avec une opération studio SPÉCIALISÉE (fal.ai)',
+			description: 'PRD-STUDIO-1 — Génère une vidéo avec une opération studio SPÉCIALISÉE (fal.ai). Choisis l\'opération: \'omni_ref\' (pub Seedance-2 depuis prompt + images produit), \'motion_control\' (Body Swap Kling: applique la gestuelle d\'une vidéo de référence sur l\'image d\'un personnage — requiert referenceVideoUrl + characterImageUrl + characterOrientation ; consentConfirmed=true OBLIGATOIRE), \'lipsync\' (synchronise les lèvres sur une piste audio — requiert audioUrl + un support facial: characterImageUrl pour un portrait OU referenceVideoUrl pour une vidéo source ; consentConfirmed=true OBLIGATOIRE), \'extend\' (prolonge une génération via sourceRequestId). Utilise studio_get_generation pour le statut. Consomme des crédits (×5 COGS fal). Renvoie jobId. IMPORTANT: \'lipsync\' et \'motion_control\' manipulent le visage/la voix d\'une personne réelle → consentConfirmed=true OBLIGATOIRE (droit à l\'image + AI Act Art. 50) — la route rejette sans consentement. Réfère-toi au registre de modèles (getStudioModel) pour les ratios/durées supportés.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/media/submit","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Operation',
+					name: 'operation',
+					type: 'options',
+					required: true,
+					description: 'Opération studio spécialisée',
+					default: 'extend',
+					options: [
+						{ name: 'Extend', value: 'extend' },
+						{ name: 'Lipsync', value: 'lipsync' },
+						{ name: 'Motion Control', value: 'motion_control' },
+						{ name: 'Omni Ref', value: 'omni_ref' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Aspect Ratio',
+							name: 'aspectRatio',
+							type: 'options',
+							default: '1:1',
+							options: [
+								{ name: '1:1', value: '1:1' },
+								{ name: '16:9', value: '16:9' },
+								{ name: '4:3', value: '4:3' },
+								{ name: '9:16', value: '9:16' },
+							],
+						},
+						{
+							displayName: 'Audio URL',
+							name: 'audioUrl',
+							type: 'string',
+							description: 'Lipsync — piste audio pilotant les lèvres (Storage URL). REQUIS pour lipsync.',
+							default: '',
+						},
+						{
+							displayName: 'Character Image URL',
+							name: 'characterImageUrl',
+							type: 'string',
+							description: 'Motion_control — image du personnage animé ; lipsync (portrait) — portrait auquel on donne la voix. (Storage URL).',
+							default: '',
+						},
+						{
+							displayName: 'Character Orientation',
+							name: 'characterOrientation',
+							type: 'options',
+							description: 'Motion_control — source d\'orientation Kling (image ≤10s, video ≤30s)',
+							default: 'image',
+							options: [
+								{ name: 'Image', value: 'image' },
+								{ name: 'Video', value: 'video' },
+							],
+						},
+						{
+							displayName: 'Consent Confirmed',
+							name: 'consentConfirmed',
+							type: 'boolean',
+							description: 'Whether REQUIS true pour lipsync/motion_control — l\'utilisateur dispose des droits sur ce visage/cette voix',
+							default: false,
+						},
+						{
+							displayName: 'Duration Seconds',
+							name: 'durationSeconds',
+							type: 'options',
+							description: 'Défaut: 5',
+							default: '10',
+							options: [
+								{ name: '10', value: '10' },
+								{ name: '3', value: '3' },
+								{ name: '5', value: '5' },
+								{ name: '8', value: '8' },
+							],
+						},
+						{
+							displayName: 'Model',
+							name: 'model',
+							type: 'string',
+							description: 'ID de modèle du registre (ex: seedance-2-omni). Optionnel — sinon primaire de l\'opération.',
+							default: '',
+						},
+						{
+							displayName: 'Post ID',
+							name: 'postId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Prompt',
+							name: 'prompt',
+							type: 'string',
+							description: 'Description (requis pour omni_ref, optionnel sinon)',
+							default: '',
+						},
+						{
+							displayName: 'Reference Image URLs',
+							name: 'referenceImageUrls',
+							type: 'json',
+							description: 'Omni_ref — images produit/référence (Storage URLs). (provide a JSON array).',
+							default: '[]',
+						},
+						{
+							displayName: 'Reference Video URL',
+							name: 'referenceVideoUrl',
+							type: 'string',
+							description: 'Motion_control — vidéo de référence dont on reprend la gestuelle ; lipsync (vidéo source) — vidéo à re-synchroniser. (Storage URL).',
+							default: '',
+						},
+						{
+							displayName: 'Reference Video URLs',
+							name: 'referenceVideoUrls',
+							type: 'json',
+							description: 'Omni_ref — vidéos de référence. (provide a JSON array).',
+							default: '[]',
+						},
+						{
+							displayName: 'Seed',
+							name: 'seed',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Source Request ID',
+							name: 'sourceRequestId',
+							type: 'string',
+							description: 'Extend — request_id de la génération à prolonger',
+							default: '',
+						},
+						{
+							displayName: 'Tier',
+							name: 'tier',
+							type: 'options',
+							description: 'Défaut: quality',
+							default: 'fast',
+							options: [
+								{ name: 'Fast', value: 'fast' },
+								{ name: 'Quality', value: 'quality' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'studioGetGeneration',
+			name: 'Studio Get Generation',
+			action: 'PRD-STUDIO-1 — Statut d\'une génération studio (vidéo)',
+			description: 'PRD-STUDIO-1 — Statut d\'une génération studio (vidéo). Status: queued / running / uploading / c2pa_wrapping / completed / failed / cancelled. Renvoie l\'URL de sortie quand completed.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/media/jobs/{jobId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Job ID',
+					name: 'jobId',
+					type: 'string',
+					required: true,
+					description: 'The job ID for this operation',
+					default: '',
 				}
 			],
 		},

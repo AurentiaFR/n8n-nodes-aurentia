@@ -32,7 +32,7 @@ export class AurentiaApi implements ICredentialType {
 			displayName: 'Base URL',
 			name: 'baseUrl',
 			type: 'string',
-			default: 'https://app.aurentia.fr',
+			default: 'https://entrepreneurs.aurentia.fr',
 			description: 'Only change this to target a local or staging Aurentia instance',
 		},
 	];

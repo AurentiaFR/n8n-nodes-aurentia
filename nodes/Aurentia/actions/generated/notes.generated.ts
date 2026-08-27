@@ -6,6 +6,85 @@ export const notesResource: GeneratedResource = {
 	displayName: 'Notes',
 	operations: [
 		{
+			value: 'addNoteTab',
+			name: 'Add Note Tab',
+			action: 'Ajoute un onglet à un bloc onglets existant',
+			description: 'Ajoute un onglet à un bloc onglets existant. `block_id` provient de get_note_tabs. `position` (0-based) insère l\'onglet à un rang précis ; absent = à la fin.',
+			routeSpec: {"method":"POST","path":"/api/notes/{id}/tab-blocks/{block_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'ID de la note',
+					default: '',
+				},
+				{
+					displayName: 'Block ID',
+					name: 'block_id',
+					type: 'string',
+					required: true,
+					description: 'ID du bloc onglets (voir get_note_tabs)',
+					default: '',
+				},
+				{
+					displayName: 'Label',
+					name: 'label',
+					type: 'string',
+					required: true,
+					description: 'Libellé du nouvel onglet',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Icon',
+							name: 'icon',
+							type: 'string',
+							description: 'Emoji / court glyphe (facultatif)',
+							default: '',
+						},
+						{
+							displayName: 'Position',
+							name: 'position',
+							type: 'number',
+							description: 'Rang de l\'onglet (0-based). Absent = à la fin.',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createBrandCharte',
+			name: 'Create Brand Charte',
+			action: 'Crée une charte de marque vide dans un projet',
+			description: 'Crée une charte de marque vide dans un projet. À composer ensuite avec les blocs de marque (en-tête, identité, couleurs, typographie, voix, références).',
+			routeSpec: {"method":"POST","path":"/api/notes","queryParams":[],"body":{"kind":"brand_charter"}},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'createNote',
 			name: 'Create Note',
 			action: 'Create a note/page',
@@ -55,6 +134,47 @@ export const notesResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createNoteTabs',
+			name: 'Create Note Tabs',
+			action: 'Crée un nouveau bloc onglets dans une note : un onglet vide par libellé, dans l\'ordre fourni',
+			description: 'Crée un nouveau bloc onglets dans une note : un onglet vide par libellé, dans l\'ordre fourni. `position` (0-based) insère le bloc à un endroit précis du document ; absent = à la fin.',
+			routeSpec: {"method":"POST","path":"/api/notes/{id}/tab-blocks","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'ID de la note',
+					default: '',
+				},
+				{
+					displayName: 'Labels',
+					name: 'labels',
+					type: 'json',
+					required: true,
+					description: 'Libellés des onglets, dans l\'ordre (1 à 12). (provide a JSON array).',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Position',
+							name: 'position',
+							type: 'number',
+							description: 'Où insérer le bloc (0-based). Absent = à la fin.',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'deleteNote',
 			name: 'Delete Note',
 			action: 'Delete a note/page',
@@ -67,6 +187,31 @@ export const notesResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteNoteTab',
+			name: 'Delete Note Tab',
+			action: 'Supprime un onglet',
+			description: 'Supprime un onglet. Supprimer le DERNIER onglet dissout le bloc et réinsère son contenu dans le document — aucun contenu perdu. `tab_id` provient de get_note_tabs.',
+			routeSpec: {"method":"DELETE","path":"/api/notes/{id}/tabs/{tab_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'ID de la note',
+					default: '',
+				},
+				{
+					displayName: 'Tab ID',
+					name: 'tab_id',
+					type: 'string',
+					required: true,
+					description: 'ID de l\'onglet (voir get_note_tabs)',
 					default: '',
 				}
 			],
@@ -91,8 +236,8 @@ export const notesResource: GeneratedResource = {
 		{
 			value: 'getNoteJsonb',
 			name: 'Get Note Jsonb',
-			action: 'Get a note in Tiptap JSON format (for rich-text rendering)',
-			description: 'Get a note in Tiptap JSON format (for rich-text rendering). User URL: /notes/{ID}.',
+			action: 'Get a note as a Slate document (rich-text)',
+			description: 'Get a note as a Slate document (rich-text). Legacy notes may still return a Tiptap object — discriminate with Array.isArray. User URL: /notes/{ID}.',
 			routeSpec: {"method":"GET","path":"/api/aurentia/notes/{id}/jsonb","queryParams":[]},
 			properties: [
 				{
@@ -102,6 +247,50 @@ export const notesResource: GeneratedResource = {
 					required: true,
 					description: 'The ID for this operation',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'getNoteTabs',
+			name: 'Get Note Tabs',
+			action: 'Liste les blocs onglets d\'une note (identifiants de bloc + onglets, libellés, icônes, aperçu)',
+			description: 'Liste les blocs onglets d\'une note (identifiants de bloc + onglets, libellés, icônes, aperçu). À appeler AVANT toute écriture : les autres verbes ciblent par tab_id / block_id retournés ici.',
+			routeSpec: {"method":"GET","path":"/api/notes/{id}/tab-blocks","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'ID de la note',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listBrandChartes',
+			name: 'List Brand Chartes',
+			action: 'Liste les chartes de marque d’un projet (galerie /marque/charte)',
+			description: 'Liste les chartes de marque d’un projet (galerie /marque/charte). Ce sont des documents `kind=brand_charter` — jamais listés avec les notes. Passe toujours kind=brand_charter.',
+			routeSpec: {"method":"GET","path":"/api/notes","queryParams":["projectId","kind"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Kind',
+					name: 'kind',
+					type: 'options',
+					required: true,
+					description: 'Toujours brand_charter',
+					default: 'brand_charter',
+					options: [
+						{ name: 'Brand Charter', value: 'brand_charter' },
+					],
 				}
 			],
 		},
@@ -136,6 +325,33 @@ export const notesResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'listNotesTrash',
+			name: 'List Notes Trash',
+			action: 'List the caller\'s soft-deleted notes/pages (most recently deleted first)',
+			description: 'List the caller\'s soft-deleted notes/pages (most recently deleted first)',
+			routeSpec: {"method":"GET","path":"/api/notes/trash","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'restoreNote',
+			name: 'Restore Note',
+			action: 'Restore a soft-deleted note/page (clears deleted_at; reattaches to root if the parent is still deleted)',
+			description: 'Restore a soft-deleted note/page (clears deleted_at; reattaches to root if the parent is still deleted)',
+			routeSpec: {"method":"POST","path":"/api/notes/{id}/restore","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'searchNotes',
 			name: 'Search Notes',
 			action: 'Full-text search in notes/pages',
@@ -155,7 +371,7 @@ export const notesResource: GeneratedResource = {
 			value: 'updateNote',
 			name: 'Update Note',
 			action: 'Update a note/page (title/content/icon/parent)',
-			description: 'Update a note/page (title/content/icon/parent)',
+			description: 'Update a note/page (title/content/icon/parent). `content` is PLAIN TEXT and REPLACES the whole body: it is rejected on a note that already holds a formatted document (callouts, toggles, tables, images) — read the note first and send `content_jsonb` to edit those without flattening them.',
 			routeSpec: {"method":"PUT","path":"/api/notes/{id}","queryParams":[]},
 			properties: [
 				{
@@ -204,8 +420,8 @@ export const notesResource: GeneratedResource = {
 		{
 			value: 'updateNoteJsonb',
 			name: 'Update Note Jsonb',
-			action: 'Update a note Tiptap JSON content',
-			description: 'Update a note Tiptap JSON content. Provide content_jsonb (Tiptap doc) and optionally content (plain text mirror for search).',
+			action: 'Update a note Slate document',
+			description: 'Update a note Slate document. Provide content_jsonb (Slate value — an array of nodes) and optionally content (plain text mirror for search).',
 			routeSpec: {"method":"PUT","path":"/api/aurentia/notes/{id}/jsonb","queryParams":[]},
 			properties: [
 				{
@@ -221,7 +437,7 @@ export const notesResource: GeneratedResource = {
 					name: 'content_jsonb',
 					type: 'json',
 					required: true,
-					description: 'Tiptap doc (provide a JSON object)',
+					description: 'Slate value (array of nodes) (provide a JSON object)',
 					default: '{}',
 				},
 				{
@@ -236,6 +452,114 @@ export const notesResource: GeneratedResource = {
 							name: 'content',
 							type: 'string',
 							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateNoteTab',
+			name: 'Update Note Tab',
+			action: 'Renomme un onglet, change son icône, ou le déplace (même verbe)',
+			description: 'Renomme un onglet, change son icône, ou le déplace (même verbe). Fournis au moins un de label / icon / position. `tab_id` provient de get_note_tabs.',
+			routeSpec: {"method":"PATCH","path":"/api/notes/{id}/tabs/{tab_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'ID de la note',
+					default: '',
+				},
+				{
+					displayName: 'Tab ID',
+					name: 'tab_id',
+					type: 'string',
+					required: true,
+					description: 'ID de l\'onglet (voir get_note_tabs)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Icon',
+							name: 'icon',
+							type: 'string',
+							description: 'Nouvelle icône (chaîne vide pour l\'effacer)',
+							default: '',
+						},
+						{
+							displayName: 'Label',
+							name: 'label',
+							type: 'string',
+							description: 'Nouveau libellé',
+							default: '',
+						},
+						{
+							displayName: 'Position',
+							name: 'position',
+							type: 'number',
+							description: 'Nouveau rang (0-based)',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'writeNoteTab',
+			name: 'Write Note Tab',
+			action: 'Écrit du markdown dans un onglet précis (converti en nœuds Slate)',
+			description: 'Écrit du markdown dans un onglet précis (converti en nœuds Slate). mode=replace (défaut) remplace le contenu de l\'onglet ; mode=append l\'ajoute à la suite. Préfère ce verbe à update_note_jsonb : il n\'écrit QUE l\'onglet visé, sans toucher au reste de la note. `tab_id` provient de get_note_tabs.',
+			routeSpec: {"method":"PUT","path":"/api/notes/{id}/tabs/{tab_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'ID de la note',
+					default: '',
+				},
+				{
+					displayName: 'Tab ID',
+					name: 'tab_id',
+					type: 'string',
+					required: true,
+					description: 'ID de l\'onglet (voir get_note_tabs)',
+					default: '',
+				},
+				{
+					displayName: 'Markdown',
+					name: 'markdown',
+					type: 'string',
+					required: true,
+					description: 'Contenu markdown à écrire dans l\'onglet',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Mode',
+							name: 'mode',
+							type: 'options',
+							description: 'Replace (défaut) écrase le contenu ; append ajoute à la suite',
+							default: 'append',
+							options: [
+								{ name: 'Append', value: 'append' },
+								{ name: 'Replace', value: 'replace' },
+							],
 						},
 					],
 				}

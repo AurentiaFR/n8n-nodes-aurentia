@@ -33,8 +33,8 @@ export const crmResource: GeneratedResource = {
 		{
 			value: 'aiEnrichContact',
 			name: 'AI Enrich Contact',
-			action: 'Enrich a contact with AI',
-			description: 'Enrich a contact with AI',
+			action: 'Enrich a contact with AI (registries + website + inferred email)',
+			description: 'Enrich a contact with AI (registries + website + inferred email). Optional targets narrows the hunt.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/crm/ai/enrich","queryParams":[]},
 			properties: [
 				{
@@ -43,6 +43,22 @@ export const crmResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Targets',
+							name: 'targets',
+							type: 'json',
+							description: 'Narrow the hunt to specific fields (default = full enrich). (provide a JSON array).',
+							default: '[]',
+						},
+					],
 				}
 			],
 		},
@@ -172,6 +188,40 @@ export const crmResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'anonymizeCrmContact',
+			name: 'Anonymize CRM Contact',
+			action: 'RGPD Art',
+			description: 'RGPD Art. 17 (right to erasure) — one-way anonymisation of a CRM contact and every related row across the CRM (notes, activity, deals, missions…). Irreversible. Requires the delete right on the CRM.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/contacts/{contact_id}/anonymize","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Contact ID',
+					name: 'contact_id',
+					type: 'string',
+					required: true,
+					description: 'The contact ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'autoProvisionCrm',
+			name: 'Auto Provision CRM',
+			action: 'One-shot CRM setup for a project — replaces the prepare_crm_onboarding + complete_crm_onboarding two-step wizard with a single call using built-in default pipelines/stages',
+			description: 'One-shot CRM setup for a project — replaces the prepare_crm_onboarding + complete_crm_onboarding two-step wizard with a single call using built-in default pipelines/stages. Use this unless the user wants to customize pipeline stages first (in that case use prepare_crm_onboarding then complete_crm_onboarding instead). Idempotent on the project.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/onboarding/auto-provision","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project ID (uuid)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'completeCallSession',
 			name: 'Complete Call Session',
 			action: 'Complete a call session',
@@ -226,6 +276,58 @@ export const crmResource: GeneratedResource = {
 					required: true,
 					description: 'Whether enable the partners (partenaires) tab',
 					default: false,
+				}
+			],
+		},
+		{
+			value: 'convertCrmContact',
+			name: 'Convert CRM Contact',
+			action: 'Convert a \'réseau\' (network) contact into client/partenaire/fournisseur — changes its section, tags it \'origine:reseau\' and assigns the first stage of the target pipeline',
+			description: 'Convert a \'réseau\' (network) contact into client/partenaire/fournisseur — changes its section, tags it \'origine:reseau\' and assigns the first stage of the target pipeline. Optionally opens a deal in the same call when converting to client.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/contacts/{contact_id}/convert","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Contact ID',
+					name: 'contact_id',
+					type: 'string',
+					required: true,
+					description: 'The contact ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Target Type',
+					name: 'target_type',
+					type: 'options',
+					required: true,
+					default: 'client',
+					options: [
+						{ name: 'Client', value: 'client' },
+						{ name: 'Fournisseur', value: 'fournisseur' },
+						{ name: 'Partenaire', value: 'partenaire' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Create Deal',
+							name: 'create_deal',
+							type: 'json',
+							description: 'Optional — open a deal in the same call (client conversions only). (provide a JSON object).',
+							default: '{}',
+						},
+					],
 				}
 			],
 		},
@@ -318,6 +420,258 @@ export const crmResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createChecklistTemplate',
+			name: 'Create Checklist Template',
+			action: 'Create a reusable checklist template — kind=\'task\' is a flat list of task titles, kind=\'mission\' is a mission title plus its own task list',
+			description: 'Create a reusable checklist template — kind=\'task\' is a flat list of task titles, kind=\'mission\' is a mission title plus its own task list. Apply it to a contact later via the UI.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/checklist-templates","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Kind',
+					name: 'kind',
+					type: 'options',
+					required: true,
+					default: 'mission',
+					options: [
+						{ name: 'Mission', value: 'mission' },
+						{ name: 'Task', value: 'task' },
+					],
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Items',
+					name: 'items',
+					type: 'json',
+					required: true,
+					description: 'Kind=\'task\': array of {title}. kind=\'mission\': {title?, tasks:[{title}]}. (provide a JSON object)',
+					default: '{}',
+				}
+			],
+		},
+		{
+			value: 'createContactRelationTask',
+			name: 'Create Contact Relation Task',
+			action: 'Create a kanban task linked to a CRM contact (shows up on the contact 360 view, distinct from create_card)',
+			description: 'Create a kanban task linked to a CRM contact (shows up on the contact 360 view, distinct from create_card)',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/contacts/{contact_id}/relations/tasks","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Contact ID',
+					name: 'contact_id',
+					type: 'string',
+					required: true,
+					description: 'The contact ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'createCrmCallScript',
+			name: 'Create CRM Call Script',
+			action: 'Save a call script',
+			description: 'Save a call script',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/call-scripts","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Content',
+					name: 'content',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Is Default',
+							name: 'is_default',
+							type: 'boolean',
+							description: 'Whether to enable is default',
+							default: false,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createCrmDecision',
+			name: 'Create CRM Decision',
+			action: 'Capture a decision (with weighed options — pros/cons) and link it to a CRM contact in one call',
+			description: 'Capture a decision (with weighed options — pros/cons) and link it to a CRM contact in one call',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/decisions","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Contact ID',
+					name: 'contact_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Context',
+							name: 'context',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Options',
+							name: 'options',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Tags',
+							name: 'tags',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createCrmMission',
+			name: 'Create CRM Mission',
+			action: 'Create a client mission (a scoped piece of work, optionally linked to a contact/deal, with a price and dates)',
+			description: 'Create a client mission (a scoped piece of work, optionally linked to a contact/deal, with a price and dates)',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/missions","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Contact ID',
+							name: 'contact_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Deal ID',
+							name: 'deal_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'End Date',
+							name: 'end_date',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Price',
+							name: 'price',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Start Date',
+							name: 'start_date',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Status',
+							name: 'status',
+							type: 'options',
+							default: 'active',
+							options: [
+								{ name: 'Active', value: 'active' },
+								{ name: 'Cancelled', value: 'cancelled' },
+								{ name: 'Completed', value: 'completed' },
+								{ name: 'Draft', value: 'draft' },
+								{ name: 'Paused', value: 'paused' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createCrmNote',
 			name: 'Create CRM Note',
 			action: 'Create a CRM note attached to a contact (and optionally a deal)',
@@ -357,6 +711,75 @@ export const crmResource: GeneratedResource = {
 							name: 'deal_id',
 							type: 'string',
 							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createCrmTask',
+			name: 'Create CRM Task',
+			action: 'Create a task attached to a CRM contact (optionally to a mission)',
+			description: 'Create a task attached to a CRM contact (optionally to a mission). Distinct from create_card (kanban) and create_mission_task (mission-scoped) — this is the general contact-linked task.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/tasks","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Contact ID',
+					name: 'contact_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Assigned To',
+							name: 'assigned_to',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Due Date',
+							name: 'due_date',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Mission ID',
+							name: 'mission_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Position',
+							name: 'position',
+							type: 'number',
+							default: 0,
 						},
 					],
 				}
@@ -445,6 +868,183 @@ export const crmResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createLeadCategory',
+			name: 'Create Lead Category',
+			action: 'Create a qualification category (label + color) for a CRM pipeline section',
+			description: 'Create a qualification category (label + color) for a CRM pipeline section',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/lead-categories","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Pipeline Slug',
+					name: 'pipeline_slug',
+					type: 'string',
+					required: true,
+					description: 'Lowercase slug of the pipeline section (e.g. \'client\', \'partenaire\')',
+					default: '',
+				},
+				{
+					displayName: 'Label',
+					name: 'label',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							description: 'Hex color, e.g. #3B82F6',
+							default: '',
+						},
+						{
+							displayName: 'Sort Order',
+							name: 'sort_order',
+							type: 'number',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createMissionTask',
+			name: 'Create Mission Task',
+			action: 'Add a task to an existing mission',
+			description: 'Add a task to an existing mission',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/missions/{mission_id}/tasks","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Mission ID',
+					name: 'mission_id',
+					type: 'string',
+					required: true,
+					description: 'The mission ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Assigned To',
+							name: 'assigned_to',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Due Date',
+							name: 'due_date',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Position',
+							name: 'position',
+							type: 'number',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createPipeline',
+			name: 'Create Pipeline',
+			action: 'Create a custom CRM pipeline section (beyond the 4 built-ins: client/partenaire/fournisseur/reseau)',
+			description: 'Create a custom CRM pipeline section (beyond the 4 built-ins: client/partenaire/fournisseur/reseau)',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/pipelines","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Slug',
+					name: 'slug',
+					type: 'string',
+					required: true,
+					description: 'Lowercase slug, e.g. \'investisseur\'',
+					default: '',
+				},
+				{
+					displayName: 'Label',
+					name: 'label',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							description: 'Hex color, e.g. #3B82F6',
+							default: '',
+						},
+						{
+							displayName: 'Has Deals',
+							name: 'has_deals',
+							type: 'boolean',
+							description: 'Whether to enable has deals',
+							default: false,
+						},
+						{
+							displayName: 'Icon',
+							name: 'icon',
+							type: 'string',
+							description: 'Icon name from the catalog, or a single emoji',
+							default: '',
+						},
+						{
+							displayName: 'Sort Order',
+							name: 'sort_order',
+							type: 'number',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'deleteCallScript',
 			name: 'Delete Call Script',
 			action: 'Delete a call script',
@@ -491,6 +1091,23 @@ export const crmResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The note ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteCrmTask',
+			name: 'Delete CRM Task',
+			action: 'Delete a CRM task',
+			description: 'Delete a CRM task',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/crm/tasks/{task_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Task ID',
+					name: 'task_id',
+					type: 'string',
+					required: true,
+					description: 'The task ID for this operation',
 					default: '',
 				}
 			],
@@ -553,6 +1170,58 @@ export const crmResource: GeneratedResource = {
 						{
 							displayName: 'Context',
 							name: 'context',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'generateCallScriptObjections',
+			name: 'Generate Call Script Objections',
+			action: 'Generate ONLY the objections section for a call script with AI (1 credit) — use to complete an existing script\'s objections without regenerating the whole thing',
+			description: 'Generate ONLY the objections section for a call script with AI (1 credit) — use to complete an existing script\'s objections without regenerating the whole thing',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/call-scripts/generate-objections","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Objective Key',
+					name: 'objective_key',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Objective Label',
+					name: 'objective_label',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Existing',
+							name: 'existing',
+							type: 'json',
+							description: 'Objections already in the script — the model will not repeat them. (provide a JSON array).',
+							default: '[]',
+						},
+						{
+							displayName: 'Target Label',
+							name: 'target_label',
 							type: 'string',
 							default: '',
 						},
@@ -673,6 +1342,41 @@ export const crmResource: GeneratedResource = {
 				{
 					displayName: 'Project ID',
 					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'linkContactRelation',
+			name: 'Link Contact Relation',
+			action: 'Link an existing task or decision to a CRM contact (shows up on the contact 360 view)',
+			description: 'Link an existing task or decision to a CRM contact (shows up on the contact 360 view)',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/contacts/{contact_id}/relations/link","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Contact ID',
+					name: 'contact_id',
+					type: 'string',
+					required: true,
+					description: 'The contact ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Type',
+					name: 'type',
+					type: 'options',
+					required: true,
+					default: 'decision',
+					options: [
+						{ name: 'Decision', value: 'decision' },
+						{ name: 'Task', value: 'task' },
+					],
+				},
+				{
+					displayName: 'Target ID',
+					name: 'target_id',
 					type: 'string',
 					required: true,
 					default: '',
@@ -985,6 +1689,31 @@ export const crmResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'pinCrmNote',
+			name: 'Pin CRM Note',
+			action: 'Pin or unpin a CRM note',
+			description: 'Pin or unpin a CRM note. Pinned notes float to the top of the contact timeline.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/crm/notes/{note_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Note ID',
+					name: 'note_id',
+					type: 'string',
+					required: true,
+					description: 'The note ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Is Pinned',
+					name: 'is_pinned',
+					type: 'boolean',
+					required: true,
+					description: 'Whether to enable is pinned',
+					default: false,
+				}
+			],
+		},
+		{
 			value: 'prepareCrmOnboarding',
 			name: 'Prepare CRM Onboarding',
 			action: 'Prepare CRM onboarding for a project',
@@ -997,6 +1726,29 @@ export const crmResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'Project ID (uuid)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'promoteContactToClient',
+			name: 'Promote Contact To Client',
+			action: 'Manually promote an existing CRM contact to client status — no won deal required',
+			description: 'Manually promote an existing CRM contact to client status — no won deal required',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/clients","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Contact ID',
+					name: 'contact_id',
+					type: 'string',
+					required: true,
 					default: '',
 				}
 			],
@@ -1057,6 +1809,37 @@ export const crmResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'sendContactEmail',
+			name: 'Send Contact Email',
+			action: 'Send a one-off email to a CRM contact from the connected mailbox (not a template — free text)',
+			description: 'Send a one-off email to a CRM contact from the connected mailbox (not a template — free text). Approval-gated: outbound to a real person.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/contacts/{contact_id}/send-email","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Contact ID',
+					name: 'contact_id',
+					type: 'string',
+					required: true,
+					description: 'The contact ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Subject',
+					name: 'subject',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Body',
+					name: 'body',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'sendEmail',
 			name: 'Send Email',
 			action: 'Send an email via template',
@@ -1113,10 +1896,58 @@ export const crmResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'suggestCallScriptObjectives',
+			name: 'Suggest Call Script Objectives',
+			action: 'Suggest call objectives (AI) for a target — a starting point before generating a full script',
+			description: 'Suggest call objectives (AI) for a target — a starting point before generating a full script',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/call-scripts/suggest-objectives","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Target Label',
+							name: 'target_label',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'unmarkCrmActivityReviewed',
+			name: 'Unmark CRM Activity Reviewed',
+			action: 'Clear the reviewed flag on a CRM activity timeline event',
+			description: 'Clear the reviewed flag on a CRM activity timeline event',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/crm/activity/{event_id}/review","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Event ID',
+					name: 'event_id',
+					type: 'string',
+					required: true,
+					description: 'The event ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'updateCallLog',
 			name: 'Update Call Log',
 			action: 'Update a call log entry',
-			description: 'Update a call log entry',
+			description: 'Update a call log entry. outcome=callback with callback_date creates (or re-dates) a task in Tasks — do not create one yourself.',
 			routeSpec: {"method":"PUT","path":"/api/aurentia/crm/call-logs/{log_id}","queryParams":[]},
 			properties: [
 				{
@@ -1135,6 +1966,13 @@ export const crmResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
+							displayName: 'Callback Date',
+							name: 'callback_date',
+							type: 'string',
+							description: 'ISO datetime. With outcome=callback, a task is created in Tasks, due that day.',
+							default: '',
+						},
+						{
 							displayName: 'Notes',
 							name: 'notes',
 							type: 'string',
@@ -1143,8 +1981,15 @@ export const crmResource: GeneratedResource = {
 						{
 							displayName: 'Outcome',
 							name: 'outcome',
-							type: 'string',
-							default: '',
+							type: 'options',
+							default: 'callback',
+							options: [
+								{ name: 'Callback', value: 'callback' },
+								{ name: 'No Answer', value: 'no_answer' },
+								{ name: 'Not Interested', value: 'not_interested' },
+								{ name: 'Other', value: 'other' },
+								{ name: 'Rdv', value: 'rdv' },
+							],
 						},
 					],
 				}
@@ -1179,8 +2024,8 @@ export const crmResource: GeneratedResource = {
 							default: '',
 						},
 						{
-							displayName: 'Title',
-							name: 'title',
+							displayName: 'Name',
+							name: 'name',
 							type: 'string',
 							default: '',
 						},
@@ -1213,6 +2058,123 @@ export const crmResource: GeneratedResource = {
 						{
 							displayName: 'Notes',
 							name: 'notes',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateCrmClient',
+			name: 'Update CRM Client',
+			action: 'Update a CRM client\'s lifecycle status (active/paused/terminated) and/or its internal notes',
+			description: 'Update a CRM client\'s lifecycle status (active/paused/terminated) and/or its internal notes. At least one of the two is required.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/crm/clients/{contact_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Contact ID',
+					name: 'contact_id',
+					type: 'string',
+					required: true,
+					description: 'The contact ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Notes',
+							name: 'notes',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Status',
+							name: 'status',
+							type: 'options',
+							default: 'active',
+							options: [
+								{ name: 'Active', value: 'active' },
+								{ name: 'Paused', value: 'paused' },
+								{ name: 'Terminated', value: 'terminated' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateCrmTask',
+			name: 'Update CRM Task',
+			action: 'Update or toggle a CRM task (title, description, status, due date, assignment)',
+			description: 'Update or toggle a CRM task (title, description, status, due date, assignment)',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/crm/tasks/{task_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Task ID',
+					name: 'task_id',
+					type: 'string',
+					required: true,
+					description: 'The task ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Assigned To',
+							name: 'assigned_to',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Due Date',
+							name: 'due_date',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Position',
+							name: 'position',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Status',
+							name: 'status',
+							type: 'options',
+							default: 'done',
+							options: [
+								{ name: 'Done', value: 'done' },
+								{ name: 'In Progress', value: 'in_progress' },
+								{ name: 'Todo', value: 'todo' },
+							],
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
 							type: 'string',
 							default: '',
 						},
@@ -1317,6 +2279,50 @@ export const crmResource: GeneratedResource = {
 					required: true,
 					description: 'Provide a JSON array',
 					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'writeCallScriptObjectionResponse',
+			name: 'Write Call Script Objection Response',
+			action: 'Write a response to a single hand-written objection',
+			description: 'Write a response to a single hand-written objection. Free — output is two sentences.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/call-scripts/objection-response","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Objection',
+					name: 'objection',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Objective Label',
+							name: 'objective_label',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Target Label',
+							name: 'target_label',
+							type: 'string',
+							default: '',
+						},
+					],
 				}
 			],
 		}

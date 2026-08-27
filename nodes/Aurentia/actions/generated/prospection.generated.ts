@@ -6,6 +6,83 @@ export const prospectionResource: GeneratedResource = {
 	displayName: 'Prospection',
 	operations: [
 		{
+			value: 'bulkUpdateProspectionLeads',
+			name: 'Bulk Update Prospection Leads',
+			action: 'Apply one action to up to 200 prospection leads in one call: \'ignore\'/\'fresh\' (status only), \'forget\' (RGPD hard-delete, irreversible), \'add_to_crm\' (B2B only), \'enrich\' (free pass, pay-on-success)',
+			description: 'Apply one action to up to 200 prospection leads in one call: \'ignore\'/\'fresh\' (status only), \'forget\' (RGPD hard-delete, irreversible), \'add_to_crm\' (B2B only), \'enrich\' (free pass, pay-on-success). Partial failures don\'t abort the batch — read `results` for per-lead outcome.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/prospection/leads/bulk","queryParams":[]},
+			properties: [
+				{
+					displayName: 'IDs',
+					name: 'ids',
+					type: 'json',
+					required: true,
+					description: 'Lead UUIDs, 1-200. (provide a JSON array).',
+					default: '[]',
+				},
+				{
+					displayName: 'Action',
+					name: 'action',
+					type: 'options',
+					required: true,
+					default: 'add_to_crm',
+					options: [
+						{ name: 'Add To CRM', value: 'add_to_crm' },
+						{ name: 'Enrich', value: 'enrich' },
+						{ name: 'Forget', value: 'forget' },
+						{ name: 'Fresh', value: 'fresh' },
+						{ name: 'Ignore', value: 'ignore' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Contact Type',
+							name: 'contact_type',
+							type: 'options',
+							description: 'For \'add_to_crm\'',
+							default: 'client',
+							options: [
+								{ name: 'Client', value: 'client' },
+								{ name: 'Fournisseur', value: 'fournisseur' },
+								{ name: 'Partenaire', value: 'partenaire' },
+								{ name: 'Reseau', value: 'reseau' },
+							],
+						},
+						{
+							displayName: 'Target Project ID',
+							name: 'target_project_id',
+							type: 'string',
+							description: 'For \'add_to_crm\'. Falls back to each lead\'s own project.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'cancelProspectionRun',
+			name: 'Cancel Prospection Run',
+			action: 'Stop a running prospection session',
+			description: 'Stop a running prospection session. Only sessions still `pending`/`running` can be stopped; a finished one returns a conflict. Contacts already found are KEPT and returned as `leadsPersisted`. The pipeline stops at the end of its current phase, not instantly.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/prospection/runs/{run_id}/cancel","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Run ID',
+					name: 'run_id',
+					type: 'string',
+					required: true,
+					description: 'The run ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'convertProspectionLeadToCrm',
 			name: 'Convert Prospection Lead To CRM',
 			action: 'Promote a B2B prospection lead to a real CRM contact',
@@ -51,6 +128,170 @@ export const prospectionResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createProspectionIcp',
+			name: 'Create Prospection Icp',
+			action: 'Create a new prospection ICP (Ideal Customer Profile)',
+			description: 'Create a new prospection ICP (Ideal Customer Profile). Prefer derive_icp_from_targets whenever the project already has a Clientèle Cible — it derives the ICP from what\'s already known instead of asking the user to redescribe their audience. A B2B ICP needs EITHER `description` (free text, LLM-derives NAF codes + keywords) OR `config_json.naf_codes`; a B2C ICP needs EITHER `description` OR `config_json.intent_queries` — both empty is rejected. `outbound_channels` cannot contain \'email\' for a B2C ICP (RGPD art. 6.1.f / CNIL délib. 2020-091). Idempotent on (name, audience_type, project_id): recreating with the same name updates the existing ICP instead of erroring. Always created PASSIVE (no recurring cadence, no agent auto-trigger) — this is enforced server-side and cannot be requested here; turning on autonomous runs is a human action in the ICP settings UI, same as create_scheduled_task never starting a schedule by itself.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/prospection/icps","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: 'ICP name (≤120 chars)',
+					default: '',
+				},
+				{
+					displayName: 'Audience Type',
+					name: 'audience_type',
+					type: 'options',
+					required: true,
+					default: 'b2b',
+					options: [
+						{ name: 'B2b', value: 'b2b' },
+						{ name: 'B2c', value: 'b2c' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Config JSON',
+							name: 'config_json',
+							type: 'json',
+							description: 'Structured filters. B2B: geo_zones, departments, countries, naf_codes, effectifs_range, ca_range, target_relationship (\'client\'|\'partner\'|\'supplier\'). B2C: intent_queries, platforms, language, recency_days. (provide a JSON object)',
+							default: '{}',
+						},
+						{
+							displayName: 'Daily Volume Target',
+							name: 'daily_volume_target',
+							type: 'number',
+							description: 'Target leads per run (1-200). Default 20.',
+							default: 0,
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							description: 'Free-text description of the target (e.g. "PME en conseil cybersécurité, 10-50 salariés, France"). Fed to the LLM deriver to produce NAF codes/keywords (B2B) or intent queries (B2C).',
+							default: '',
+						},
+						{
+							displayName: 'Notes',
+							name: 'notes',
+							type: 'string',
+							description: 'Free-text targeting notes — inclusions, exclusions, sub-niches. Steers derivation, scoring and approach angle.',
+							default: '',
+						},
+						{
+							displayName: 'Outbound Channels',
+							name: 'outbound_channels',
+							type: 'json',
+							description: '\'email\' is forbidden for B2C ICPs (RGPD/CNIL). (provide a JSON array).',
+							default: '[]',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'project_id',
+							type: 'string',
+							description: 'Project this ICP belongs to. Omit for a global (non-project) ICP.',
+							default: '',
+						},
+						{
+							displayName: 'Signal Score Threshold',
+							name: 'signal_score_threshold',
+							type: 'number',
+							description: 'Minimum signal score (0-100) to keep a lead. Default 60.',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'deleteProspectionIcp',
+			name: 'Delete Prospection Icp',
+			action: 'Delete a prospection ICP',
+			description: 'Delete a prospection ICP. Leads already collected under it are kept — only the ICP config (and its recurring cadence, if any) is removed.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/prospection/icps/{icp_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Icp ID',
+					name: 'icp_id',
+					type: 'string',
+					required: true,
+					description: 'The icp ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deriveIcpFromTargets',
+			name: 'Derive Icp From Targets',
+			action: 'Derive prospection ICPs from the project\'s existing Clientèle Cible (project_targets) instead of asking the user to describe their audience again — the never-ask-twice path',
+			description: 'Derive prospection ICPs from the project\'s existing Clientèle Cible (project_targets) instead of asking the user to describe their audience again — the never-ask-twice path. Creates one passive ICP per target (cron_cadence off, agent_trigger_enabled false, is_active true) with audience_type/description/config_json inferred from the target\'s segment, category and role. Idempotent: a target that already has a matching ICP is skipped, so calling this on a project that already has ICPs is a safe no-op. Call this BEFORE create_prospection_icp whenever the project has a Clientèle Cible; fall back to create_prospection_icp only for a target that isn\'t already covered here.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/prospection/icps/sync-from-targets","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project whose Clientèle Cible (project_targets) to derive ICPs from. Usually already known from the conversation.',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'enrichProspectionLead',
+			name: 'Enrich Prospection Lead',
+			action: 'Run an enrichment pass on a single B2B lead (registries + website scrape + inferred contact)',
+			description: 'Run an enrichment pass on a single B2B lead (registries + website scrape + inferred contact). Pay-on-success: only charged when the pass actually recovers a NEW field. tier=\'premium\' also queries paid sources (Google Places).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/prospection/leads/{lead_id}/enrich","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Lead ID',
+					name: 'lead_id',
+					type: 'string',
+					required: true,
+					description: 'The lead ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Targets',
+							name: 'targets',
+							type: 'json',
+							description: 'Narrow the hunt. Default = full pass. (provide a JSON array)',
+							default: '[]',
+						},
+						{
+							displayName: 'Tier',
+							name: 'tier',
+							type: 'options',
+							description: 'Default free',
+							default: 'free',
+							options: [
+								{ name: 'Free', value: 'free' },
+								{ name: 'Premium', value: 'premium' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'estimateProspectionCost',
 			name: 'Estimate Prospection Cost',
 			action: 'Estimate the credit cost of a prospection batch BEFORE running',
@@ -74,6 +315,23 @@ export const prospectionResource: GeneratedResource = {
 					type: 'number',
 					required: true,
 					default: 0,
+				}
+			],
+		},
+		{
+			value: 'forgetProspectionLead',
+			name: 'Forget Prospection Lead',
+			action: 'RGPD art',
+			description: 'RGPD art. 17 (right to erasure) — permanently deletes a prospection lead and, for a B2B lead, adds its SIREN to the erasure suppression list so the free collection pipeline never re-creates it. Irreversible.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/prospection/leads/{lead_id}/forget","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Lead ID',
+					name: 'lead_id',
+					type: 'string',
+					required: true,
+					description: 'The lead ID for this operation',
+					default: '',
 				}
 			],
 		},
@@ -142,8 +400,8 @@ export const prospectionResource: GeneratedResource = {
 		{
 			value: 'listProspectionRuns',
 			name: 'List Prospection Runs',
-			action: 'List recent prospection batch runs with trigger source, status, leads_persisted, cost',
-			description: 'List recent prospection batch runs with trigger source, status, leads_persisted, cost',
+			action: 'List recent prospection sessions with trigger source, status, leads_persisted and cost',
+			description: 'List recent prospection sessions with trigger source, status, leads_persisted and cost. Each row also carries `title` (the session\'s name), `phase` (`discovery|scoring|verification|dedup|enrichment|finalizing` while it runs, `null` once finished — report THIS rather than saying « still running »), and `no_leads_reason` (`no_candidates|all_duplicates|no_qualified|sector_too_generic|needs_refinement|ai_unavailable`) explaining a zero result. A session still `running` more than ~7 min after `started_at` is dead: say so instead of waiting.',
 			routeSpec: {"method":"GET","path":"/api/aurentia/prospection/runs","queryParams":["icp_id:icpId","limit"]},
 			properties: [
 				{
@@ -215,10 +473,60 @@ export const prospectionResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'prepareProspectionContactFormDraft',
+			name: 'Prepare Prospection Contact Form Draft',
+			action: 'Detect a genuine contact form on a lead\'s own site (its entry point, or its website as fallback) and generate prefilled values for it — identity fields (name/email/phone/company) from the caller\'s own profile, an open message from the lead\'s qualified context, and a pick among any dropdown/radio options',
+			description: 'Detect a genuine contact form on a lead\'s own site (its entry point, or its website as fallback) and generate prefilled values for it — identity fields (name/email/phone/company) from the caller\'s own profile, an open message from the lead\'s qualified context, and a pick among any dropdown/radio options. Never submits anything — returns/persists suggestions for copy-paste. No-op (formFound: false, nothing persisted) when the lead has no usable URL or no contact form is found — a normal, common outcome, not an error.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/prospection/leads/{lead_id}/contact-form-draft","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Lead ID',
+					name: 'lead_id',
+					type: 'string',
+					required: true,
+					description: 'The lead ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'prepareProspectionLeadReply',
+			name: 'Prepare Prospection Lead Reply',
+			action: 'Draft an AI reply to a lead who has responded to outreach',
+			description: 'Draft an AI reply to a lead who has responded to outreach. Returns a draft — does not send anything. business_context (≤500 chars) steers the tone/offer.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/prospection/leads/{lead_id}/prepare-reply","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Lead ID',
+					name: 'lead_id',
+					type: 'string',
+					required: true,
+					description: 'The lead ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Business Context',
+							name: 'business_context',
+							type: 'string',
+							description: 'Free-text context to steer the draft (≤500 chars)',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'runProspectionBatch',
 			name: 'Run Prospection Batch',
 			action: 'Trigger a manual prospection batch for an ICP',
-			description: 'Trigger a manual prospection batch for an ICP. Consumes credits (cost shown by estimate_prospection_cost). Cap 10/day. Returns the run result with leads_persisted.',
+			description: 'Trigger a manual prospection batch for an ICP. Consumes credits (cost shown by estimate_prospection_cost). Cap 10/day. Returns the session ID immediately; the batch then runs in background (poll list_prospection_runs for status and leads_persisted). To scope ONE run to a French region without editing the ICP, pass refinement.region (region name, e.g. \'Île-de-France\' — resolved to departments server-side). Omit region (or « toute la France ») to cover the whole country.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/prospection/batch","queryParams":[]},
 			properties: [
 				{
@@ -235,6 +543,31 @@ export const prospectionResource: GeneratedResource = {
 					placeholder: 'Add Field',
 					default: {},
 					options: [
+						{
+							displayName: 'Mode',
+							name: 'mode',
+							type: 'options',
+							description: '\'discovery\' (default) = whole sector; \'fresh_creations\' = newly-registered companies (BODACC)',
+							default: 'discovery',
+							options: [
+								{ name: 'Discovery', value: 'discovery' },
+								{ name: 'Fresh Creations', value: 'fresh_creations' },
+							],
+						},
+						{
+							displayName: 'Refinement',
+							name: 'refinement',
+							type: 'json',
+							description: 'One-shot geo/keyword narrowing for THIS run only (not saved on the ICP). (provide a JSON object).',
+							default: '{}',
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							description: 'Name of the session (≤120 chars). Shown as-is in the sessions list; without it the session falls back to the target\'s label. Name it after what you are looking for, not after the tool.',
+							default: '',
+						},
 						{
 							displayName: 'Volume',
 							name: 'volume',
@@ -304,6 +637,167 @@ export const prospectionResource: GeneratedResource = {
 							options: [
 								{ name: 'En', value: 'en' },
 								{ name: 'Fr', value: 'fr' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateProspectionIcp',
+			name: 'Update Prospection Icp',
+			action: 'Update an existing prospection ICP',
+			description: 'Update an existing prospection ICP. The route requires resending `name`, `audience_type`, `outbound_channels` and `config_json` even to change only one field — read the current values first (list_prospection_icps) and send them all back alongside whatever changes. Changing `description`, `notes` or `config_json` flushes the cached derived filters (NAF codes/keywords or intent queries); they are lazily re-derived on the next batch. Same B2C \'email\' restriction as create_prospection_icp. Cannot turn ON the recurring cadence or the agent auto-trigger — those are stripped server-side from this call and stay whatever the user last set in the UI; you can still change everything else (name, description, config, channels…) without touching them.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/prospection/icps/{icp_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Icp ID',
+					name: 'icp_id',
+					type: 'string',
+					required: true,
+					description: 'The icp ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Audience Type',
+					name: 'audience_type',
+					type: 'options',
+					required: true,
+					default: 'b2b',
+					options: [
+						{ name: 'B2b', value: 'b2b' },
+						{ name: 'B2c', value: 'b2c' },
+					],
+				},
+				{
+					displayName: 'Outbound Channels',
+					name: 'outbound_channels',
+					type: 'json',
+					required: true,
+					description: '\'email\' is forbidden for B2C ICPs (RGPD/CNIL). (provide a JSON array).',
+					default: '[]',
+				},
+				{
+					displayName: 'Config JSON',
+					name: 'config_json',
+					type: 'json',
+					required: true,
+					description: 'Same shape as create_prospection_icp.config_json. (provide a JSON object).',
+					default: '{}',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Daily Volume Target',
+							name: 'daily_volume_target',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Is Active',
+							name: 'is_active',
+							type: 'boolean',
+							description: 'Whether to enable is active',
+							default: false,
+						},
+						{
+							displayName: 'Notes',
+							name: 'notes',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'project_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Signal Score Threshold',
+							name: 'signal_score_threshold',
+							type: 'number',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateProspectionLeadStatus',
+			name: 'Update Prospection Lead Status',
+			action: 'Triage a prospection lead: change its status (fresh/reviewing/added_to_crm/ignored/engaged/converted), reclassify it as a company or a person, or correct its company name',
+			description: 'Triage a prospection lead: change its status (fresh/reviewing/added_to_crm/ignored/engaged/converted), reclassify it as a company or a person, or correct its company name. Send only the fields you want to change — omitted fields are left untouched. Use ignored_reason to say WHY when setting status to \'ignored\' (shown back to the user later).',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/prospection/leads/{lead_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Lead ID',
+					name: 'lead_id',
+					type: 'string',
+					required: true,
+					description: 'The lead ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Company Name',
+							name: 'company_name',
+							type: 'string',
+							description: 'Employer name for a person-kind lead',
+							default: '',
+						},
+						{
+							displayName: 'Ignored Reason',
+							name: 'ignored_reason',
+							type: 'string',
+							description: 'Why this lead was ignored (shown to the user later)',
+							default: '',
+						},
+						{
+							displayName: 'Lead Kind',
+							name: 'lead_kind',
+							type: 'options',
+							default: 'company',
+							options: [
+								{ name: 'Company', value: 'company' },
+								{ name: 'Person', value: 'person' },
+							],
+						},
+						{
+							displayName: 'Status',
+							name: 'status',
+							type: 'options',
+							default: 'added_to_crm',
+							options: [
+								{ name: 'Added To CRM', value: 'added_to_crm' },
+								{ name: 'Converted', value: 'converted' },
+								{ name: 'Engaged', value: 'engaged' },
+								{ name: 'Fresh', value: 'fresh' },
+								{ name: 'Ignored', value: 'ignored' },
+								{ name: 'Reviewing', value: 'reviewing' },
 							],
 						},
 					],

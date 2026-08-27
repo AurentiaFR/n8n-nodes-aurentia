@@ -6,6 +6,126 @@ export const projectsResource: GeneratedResource = {
 	displayName: 'Projects Advanced',
 	operations: [
 		{
+			value: 'createActionPlanJalon',
+			name: 'Create Action Plan Jalon',
+			action: 'HISTORICAL PLANS ONLY (plan_kind="legacy")',
+			description: 'HISTORICAL PLANS ONLY (plan_kind="legacy"). Add a milestone (jalon) to a phase of the action plan. On a plan_kind="projects" plan, milestones live inside the generated task board (create_sprint).',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/action-plan/jalons","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'The project ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Phase ID',
+					name: 'phase_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Jalon Nom',
+					name: 'jalon_nom',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Condition Validation',
+							name: 'condition_validation',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Criticite',
+							name: 'criticite',
+							type: 'options',
+							default: 'Critique',
+							options: [
+								{ name: 'Critique', value: 'Critique' },
+								{ name: 'Important', value: 'Important' },
+								{ name: 'Normal', value: 'Normal' },
+							],
+						},
+						{
+							displayName: 'Semaine Cible',
+							name: 'semaine_cible',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createActionPlanPhase',
+			name: 'Create Action Plan Phase',
+			action: 'HISTORICAL PLANS ONLY (plan_kind="legacy")',
+			description: 'HISTORICAL PLANS ONLY (plan_kind="legacy"). Add a phase to the action plan (appended after the last one, or after after_phase_id). Does nothing useful on a plan_kind="projects" plan: create a task board instead (create_board).',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/action-plan/phases","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'The project ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Nom Phase',
+					name: 'nom_phase',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'After Phase ID',
+							name: 'after_phase_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Duree Mois',
+							name: 'duree_mois',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Objectif Principal',
+							name: 'objectif_principal',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Periode',
+							name: 'periode',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createKanbanCardFromActionPlanTask',
 			name: 'Create Kanban Card From Action Plan Task',
 			action: 'Create a new Kanban card pre-filled from an action-plan task (title, description, priority, estimated duration) and link them',
@@ -26,6 +146,84 @@ export const projectsResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The tache ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Board ID',
+					name: 'board_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Column ID',
+					name: 'column_id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'createKanbanCardsFromActionPlanJalon',
+			name: 'Create Kanban Cards From Action Plan Jalon',
+			action: 'HISTORICAL PLANS ONLY (plan_kind="legacy")',
+			description: 'HISTORICAL PLANS ONLY (plan_kind="legacy"). Bulk-create Kanban cards from every active task of an action-plan milestone (jalon), skipping tasks already linked to a card. Returns { created, skipped, failed }. A plan_kind="projects" plan ALREADY has its cards — running this would create duplicates.',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/action-plan/jalons/{jalon_id}/kanban-cards","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'The project ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Jalon ID',
+					name: 'jalon_id',
+					type: 'string',
+					required: true,
+					description: 'Jalon row uuid',
+					default: '',
+				},
+				{
+					displayName: 'Board ID',
+					name: 'board_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Column ID',
+					name: 'column_id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'createKanbanCardsFromActionPlanPhase',
+			name: 'Create Kanban Cards From Action Plan Phase',
+			action: 'HISTORICAL PLANS ONLY (plan_kind="legacy")',
+			description: 'HISTORICAL PLANS ONLY (plan_kind="legacy"). Bulk-create Kanban cards from every active task across ALL milestones of an action-plan phase, skipping tasks already linked to a card. Returns { created, skipped, failed }. A plan_kind="projects" plan ALREADY has its cards — running this would create duplicates.',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/action-plan/phases/{phase_id}/kanban-cards","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'The project ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Phase ID',
+					name: 'phase_id',
+					type: 'string',
+					required: true,
+					description: 'Phase row uuid',
 					default: '',
 				},
 				{
@@ -145,6 +343,56 @@ export const projectsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'deleteActionPlanJalon',
+			name: 'Delete Action Plan Jalon',
+			action: 'HISTORICAL PLANS ONLY (plan_kind="legacy")',
+			description: 'HISTORICAL PLANS ONLY (plan_kind="legacy"). Soft-delete a jalon AND its taches. On a plan_kind="projects" plan, delete the milestone in the task board instead.',
+			routeSpec: {"method":"DELETE","path":"/api/projects/{project_id}/action-plan/jalons/{jalon_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'The project ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Jalon ID',
+					name: 'jalon_id',
+					type: 'string',
+					required: true,
+					description: 'Jalon row uuid',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteActionPlanPhase',
+			name: 'Delete Action Plan Phase',
+			action: 'HISTORICAL PLANS ONLY (plan_kind="legacy")',
+			description: 'HISTORICAL PLANS ONLY (plan_kind="legacy"). Soft-delete a phase AND its jalons + taches. Refuses to delete the last phase. On a plan_kind="projects" plan there is no phase to delete — the projects are task boards.',
+			routeSpec: {"method":"DELETE","path":"/api/projects/{project_id}/action-plan/phases/{phase_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'The project ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Phase ID',
+					name: 'phase_id',
+					type: 'string',
+					required: true,
+					description: 'Phase row uuid',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'exportProjectOverviewPdf',
 			name: 'Export Project Overview PDF',
 			action: 'Generate a PDF export of the project\'s overview (value proposition, targets, markets, completed modules)',
@@ -237,10 +485,88 @@ export const projectsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getActionPlan',
+			name: 'Get Action Plan',
+			action: 'Full action plan of a project',
+			description: 'Full action plan of a project. Returns BOTH shapes: `generated_projects` (CURRENT formula — one real task board per project, with icon, objectif, dates, status, slot and card counts) and `phases` → jalons → taches (HISTORICAL plans only, active rows). `plan_kind` says which one carries the live work: "projects" | "legacy" | "none". On a "projects" plan, `phases` is empty by design — read `generated_projects`, then the task tools (list_board_cards…) for the work itself.',
+			routeSpec: {"method":"GET","path":"/api/projects/{project_id}/action-plan","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'The project ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getCompetitorSignals',
+			name: 'Get Competitor Signals',
+			action: 'Recent PUBLIC signals of a project\'s competitors — press appearances, media mentions, product launches, funding, partnerships, hiring, pricing moves and notable social posts',
+			description: 'Recent PUBLIC signals of a project\'s competitors — press appearances, media mentions, product launches, funding, partnerships, hiring, pricing moves and notable social posts. Read-only timeline (what a competitor is publicly saying/doing). Filter by competitor or signal type.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/projects/{project_id}/competitors/signals","queryParams":["competitor_id:competitorId","type","limit"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Competitor ID',
+							name: 'competitor_id',
+							type: 'string',
+							description: 'Optional — a single competitor fiche ID',
+							default: '',
+						},
+						{
+							displayName: 'Limit',
+							name: 'limit',
+							type: 'number',
+							description: 'Max number of results to return',
+							typeOptions: {"minValue":1},
+							default: 50,
+						},
+						{
+							displayName: 'Type',
+							name: 'type',
+							type: 'options',
+							description: 'Optional — filter to one signal type',
+							default: 'announcement',
+							options: [
+								{ name: 'Announcement', value: 'announcement' },
+								{ name: 'Award', value: 'award' },
+								{ name: 'Controversy', value: 'controversy' },
+								{ name: 'Expansion', value: 'expansion' },
+								{ name: 'Funding', value: 'funding' },
+								{ name: 'Hiring', value: 'hiring' },
+								{ name: 'Other', value: 'other' },
+								{ name: 'Partnership', value: 'partnership' },
+								{ name: 'Press', value: 'press' },
+								{ name: 'Pricing', value: 'pricing' },
+								{ name: 'Product Launch', value: 'product_launch' },
+								{ name: 'Social Post', value: 'social_post' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'getCompetitorSocialFollowers',
 			name: 'Get Competitor Social Followers',
 			action: 'Latest PUBLIC follower counts (YouTube/TikTok) of a project\'s competitors — aggregate numbers only',
-			description: 'Latest PUBLIC follower counts (YouTube/TikTok) of a project\'s competitors — aggregate numbers only. Optionally filter by competitor or platform.',
+			description: 'Latest PUBLIC follower counts (YouTube/TikTok) of a project\'s competitors — aggregate numbers only. Optionally filter by competitor or platform. A null or absent count means the number was NOT collected (never measured, or the platform blocked the read) — it does NOT mean zero: never state or estimate a figure for it, say it is not measured.',
 			routeSpec: {"method":"GET","path":"/api/aurentia/projects/{project_id}/competitors/social-followers","queryParams":["competitor_id:competitorId","platform"]},
 			properties: [
 				{
@@ -316,8 +642,8 @@ export const projectsResource: GeneratedResource = {
 		{
 			value: 'getProjectCompetitors',
 			name: 'Get Project Competitors',
-			action: 'Full competitive-analysis fiches of a project\'s competitors: identité (SIREN/CA/effectif), positionnement (offre/prix/canaux), site & SEO, réseaux sociaux, visibilité (part de voix + IA) et menace (forces/faiblesses/comment le battre)',
-			description: 'Full competitive-analysis fiches of a project\'s competitors: identité (SIREN/CA/effectif), positionnement (offre/prix/canaux), site & SEO, réseaux sociaux, visibilité (part de voix + IA) et menace (forces/faiblesses/comment le battre). Read-only. Optionally scope to one module completion.',
+			action: 'Full competitive-analysis fiches of a project\'s competitors: identité (SIREN/CA/effectif ; for a non-French competitor, `identite.registre_international` carries the local registration number, country, legal form and status instead of a SIREN, and the filed figures come in the REGISTRY\'S OWN currency — GBP/CHF/NOK are not euros, never restate them as €), positionnement (offre/prix/canaux), site & SEO, réseaux sociaux, visibilité (part de voix + IA) et menace (forces/faiblesses/comment le battre)',
+			description: 'Full competitive-analysis fiches of a project\'s competitors: identité (SIREN/CA/effectif ; for a non-French competitor, `identite.registre_international` carries the local registration number, country, legal form and status instead of a SIREN, and the filed figures come in the REGISTRY\'S OWN currency — GBP/CHF/NOK are not euros, never restate them as €), positionnement (offre/prix/canaux), site & SEO, réseaux sociaux, visibilité (part de voix + IA) et menace (forces/faiblesses/comment le battre). A `match_method` of \'llm\' on that registry block means the link between this competitor and that registry record was inferred by a model, not proven — say so rather than presenting it as verified. Read-only. Optionally scope to one module completion.',
 			routeSpec: {"method":"GET","path":"/api/projects/{project_id}/competitors","queryParams":["completion_id:completionId"]},
 			properties: [
 				{
@@ -380,8 +706,8 @@ export const projectsResource: GeneratedResource = {
 		{
 			value: 'getProjectSchema',
 			name: 'Get Project Schema',
-			action: 'Full dynamic data schema of the project as configured by the user: kanban boards (columns with status categories, labels, custom properties), project task tags, CRM custom fields and pipeline stages, Bases (tables, fields, views) and Notion-like databases (property schemas)',
-			description: 'Full dynamic data schema of the project as configured by the user: kanban boards (columns with status categories, labels, custom properties), project task tags, CRM custom fields and pipeline stages, Bases (tables, fields, views) and Notion-like databases (property schemas). Call this before reading or writing project data to use the user\'s REAL structures (exact names, keys, IDs) instead of assuming defaults.',
+			action: 'Full dynamic data schema of the project as configured by the user: kanban boards (columns with status categories, custom properties), project task tags, CRM custom fields and pipeline stages, Bases (tables, fields, views) and Notion-like databases (property schemas)',
+			description: 'Full dynamic data schema of the project as configured by the user: kanban boards (columns with status categories, custom properties), project task tags, CRM custom fields and pipeline stages, Bases (tables, fields, views) and Notion-like databases (property schemas). Call this before reading or writing project data to use the user\'s REAL structures (exact names, keys, IDs) instead of assuming defaults.',
 			routeSpec: {"method":"GET","path":"/api/aurentia/projects/{project_id}/schema","queryParams":[]},
 			properties: [
 				{
@@ -517,6 +843,64 @@ export const projectsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'moveActionPlanTask',
+			name: 'Move Action Plan Task',
+			action: 'HISTORICAL PLANS ONLY (plan_kind="legacy")',
+			description: 'HISTORICAL PLANS ONLY (plan_kind="legacy"). Move an action-plan task to another jalon. On a plan_kind="projects" plan, tasks are cards: move the card (update_card / move_card).',
+			routeSpec: {"method":"PATCH","path":"/api/projects/{project_id}/action-plan/taches/{tache_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'The project ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Tache ID',
+					name: 'tache_id',
+					type: 'string',
+					required: true,
+					description: 'The tache ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Jalon Parent ID',
+					name: 'jalon_parent_id',
+					type: 'string',
+					required: true,
+					description: 'Target jalon (TEXT jalon_id, e.g. "J2.1")',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'reorderActionPlanPhases',
+			name: 'Reorder Action Plan Phases',
+			action: 'HISTORICAL PLANS ONLY (plan_kind="legacy")',
+			description: 'HISTORICAL PLANS ONLY (plan_kind="legacy"). Reorder phases (array of phase row uuids in the new order). Recomputes scheduling. A plan_kind="projects" plan has no phases to reorder.',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/action-plan/phases/reorder","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'The project ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Phase IDs',
+					name: 'phaseIds',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				}
+			],
+		},
+		{
 			value: 'rollbackProject',
 			name: 'Rollback Project',
 			action: 'Undo the last generation',
@@ -583,7 +967,7 @@ export const projectsResource: GeneratedResource = {
 			value: 'updateTarget',
 			name: 'Update Target',
 			action: 'Update a target',
-			description: 'Update a target',
+			description: 'Update a target. `role` says what it does for the business: client (buys the offer), prescripteur (refers without buying — accountants, chambers of commerce, coaches), revendeur (resells it).',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/projects/{project_id}/targets/{target_id}","queryParams":[]},
 			properties: [
 				{
@@ -610,16 +994,978 @@ export const projectsResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
+							displayName: 'Custom Name',
+							name: 'custom_name',
+							type: 'string',
+							default: '',
+						},
+						{
 							displayName: 'Description',
 							name: 'description',
 							type: 'string',
 							default: '',
 						},
 						{
-							displayName: 'Name',
-							name: 'name',
+							displayName: 'Role',
+							name: 'role',
+							type: 'options',
+							default: 'client',
+							options: [
+								{ name: 'Client', value: 'client' },
+								{ name: 'Prescripteur', value: 'prescripteur' },
+								{ name: 'Revendeur', value: 'revendeur' },
+							],
+						},
+						{
+							displayName: 'User Notes',
+							name: 'user_notes',
 							type: 'string',
 							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'veilleAddCompetitor',
+			name: 'Veille Add Competitor',
+			action: 'Add ONE competitor to the project and launch its deep-dive analysis',
+			description: 'Add ONE competitor to the project and launch its deep-dive analysis. This is the Veille \'Add a competitor\' gesture — the only entry point since the standalone competitive-analysis module was removed. Also provisions the project competitor probes, so the new competitor is watched from that point on. COSTS CREDITS (refunded if the deep-dive fails). Deduplicates on the name within the project.',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/competitors/add","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				},
+				{
+					displayName: 'Nom',
+					name: 'nom',
+					type: 'string',
+					required: true,
+					description: 'Competitor name (required)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Portee',
+							name: 'portee',
+							type: 'options',
+							description: 'Competitor reach',
+							default: 'international',
+							options: [
+								{ name: 'International', value: 'international' },
+								{ name: 'Local', value: 'local' },
+								{ name: 'National', value: 'national' },
+							],
+						},
+						{
+							displayName: 'Type',
+							name: 'type',
+							type: 'options',
+							description: 'Competition type',
+							default: 'direct',
+							options: [
+								{ name: 'Direct', value: 'direct' },
+								{ name: 'Indirect', value: 'indirect' },
+								{ name: 'Potentiel', value: 'potentiel' },
+							],
+						},
+						{
+							displayName: 'Website',
+							name: 'website',
+							type: 'string',
+							description: 'Optional — competitor website URL. Strongly improves the deep-dive quality.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'veilleAnalysisProgress',
+			name: 'Veille Analysis Progress',
+			action: 'Progress of the competitor deep-dive analyses running for a project: total, done, running, and the per-competitor status (pending | analyzing | done | error)',
+			description: 'Progress of the competitor deep-dive analyses running for a project: total, done, running, and the per-competitor status (pending | analyzing | done | error). Use to answer \'is my competitor analysis finished?\' before reading the fiches.',
+			routeSpec: {"method":"GET","path":"/api/projects/{project_id}/veille/analysis-progress","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleArmProjectWatch',
+			name: 'Veille Arm Project Watch',
+			action: 'Create a Veille watch sector for a project AUTOMATICALLY, deriving it from the project\'s own sector/sub_sector/primary_market/market_scope facts — no form needed',
+			description: 'Create a Veille watch sector for a project AUTOMATICALLY, deriving it from the project\'s own sector/sub_sector/primary_market/market_scope facts — no form needed. Returns a status: armed (sector created) or a reason it could not be (e.g. not enough project facts yet), never throws. Prefer veille_create_sector when the user wants to specify keywords by hand.',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/veille/sectors/auto","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleCreateSector',
+			name: 'Veille Create Sector',
+			action: 'Create a Veille watch sector for a project: a market to monitor, defined by keywords, an optional French NAF industry code, and a geographic scope',
+			description: 'Create a Veille watch sector for a project: a market to monitor, defined by keywords, an optional French NAF industry code, and a geographic scope. Sectors drive which news and legal signals get collected. Use when the user says they want to start watching a market or an industry.',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/veille/sectors","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				},
+				{
+					displayName: 'Nom',
+					name: 'nom',
+					type: 'string',
+					required: true,
+					description: 'Sector name, e.g. "SaaS RH" (required)',
+					default: '',
+				},
+				{
+					displayName: 'Mots Cles',
+					name: 'mots_cles',
+					type: 'json',
+					required: true,
+					description: 'Keywords that define the sector — they drive the collection queries. (provide a JSON array).',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Is Primary',
+							name: 'is_primary',
+							type: 'boolean',
+							description: 'Whether mark as the project main sector',
+							default: false,
+						},
+						{
+							displayName: 'Naf',
+							name: 'naf',
+							type: 'string',
+							description: 'Optional — French NAF/APE industry code',
+							default: '',
+						},
+						{
+							displayName: 'Rayon Km',
+							name: 'rayon_km',
+							type: 'number',
+							description: 'Radius in km — required when zone is \'local\'',
+							default: 0,
+						},
+						{
+							displayName: 'Zone',
+							name: 'zone',
+							type: 'options',
+							description: 'Geographic scope (default \'national\'). \'local\' REQUIRES rayon_km.',
+							default: 'international',
+							options: [
+								{ name: 'International', value: 'international' },
+								{ name: 'Local', value: 'local' },
+								{ name: 'National', value: 'national' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'veilleCreateSource',
+			name: 'Veille Create Source',
+			action: 'Add a Veille watch source to a project',
+			description: 'Add a Veille watch source to a project. Kinds: \'site\' (watch a URL for changes), \'search\' (a recurring web search), \'legal_theme\' (regulatory watch on a theme), \'competitor_probe\' (probe tracked competitors), \'new_entrants\' (scan for newcomers). Each collection run costs credits — the frequency drives the monthly bill (see veille_estimate_monthly_cost).',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/veille/sources","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				},
+				{
+					displayName: 'Kind',
+					name: 'kind',
+					type: 'options',
+					required: true,
+					description: 'Source kind (required)',
+					default: 'competitor_probe',
+					options: [
+						{ name: 'Competitor Probe', value: 'competitor_probe' },
+						{ name: 'Legal Theme', value: 'legal_theme' },
+						{ name: 'New Entrants', value: 'new_entrants' },
+						{ name: 'Search', value: 'search' },
+						{ name: 'Site', value: 'site' },
+					],
+				},
+				{
+					displayName: 'Label',
+					name: 'label',
+					type: 'string',
+					required: true,
+					description: 'Human label shown in the Veille panel (required)',
+					default: '',
+				},
+				{
+					displayName: 'Target',
+					name: 'target',
+					type: 'string',
+					required: true,
+					description: 'The URL to watch (\'site\'), the query to run (\'search\'), or the theme to follow (\'legal_theme\') — required',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Frequency',
+							name: 'frequency',
+							type: 'options',
+							description: 'Collection frequency (default \'weekly\')',
+							default: 'daily',
+							options: [
+								{ name: 'Daily', value: 'daily' },
+								{ name: 'Monthly', value: 'monthly' },
+								{ name: 'Off', value: 'off' },
+								{ name: 'Weekly', value: 'weekly' },
+							],
+						},
+						{
+							displayName: 'Sector ID',
+							name: 'sector_id',
+							type: 'string',
+							description: 'Optional — attach the source to one watch sector',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'veilleCreateTaskFromSignal',
+			name: 'Veille Create Task From Signal',
+			action: 'Create a kanban task from a Veille signal (e.g',
+			description: 'Create a kanban task from a Veille signal (e.g. a competitor price change or a new entrant) so it gets tracked and actioned like any other task',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/veille/signals/{signal_id}/task","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID the signal belongs to (required — enforces tenant isolation)',
+					default: '',
+				},
+				{
+					displayName: 'Signal ID',
+					name: 'signal_id',
+					type: 'string',
+					required: true,
+					description: 'Signal ID to turn into a task (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleDeleteCompetitor',
+			name: 'Veille Delete Competitor',
+			action: 'Remove a competitor from the project tracking — deletes its fiche; linked signals and snapshots follow the FK behaviour',
+			description: 'Remove a competitor from the project tracking — deletes its fiche; linked signals and snapshots follow the FK behaviour. The competitor probes stay in place and simply skip the deleted fiche on the next run. Irreversible.',
+			routeSpec: {"method":"DELETE","path":"/api/projects/{project_id}/competitors/{competitor_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID the competitor belongs to (required — enforces tenant isolation)',
+					default: '',
+				},
+				{
+					displayName: 'Competitor ID',
+					name: 'competitor_id',
+					type: 'string',
+					required: true,
+					description: 'Competitor_analyses row ID to delete (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleDeleteSector',
+			name: 'Veille Delete Sector',
+			action: 'Delete a Veille watch sector from a project',
+			description: 'Delete a Veille watch sector from a project. The sources attached to it stop being collected. Irreversible.',
+			routeSpec: {"method":"DELETE","path":"/api/projects/{project_id}/veille/sectors/{sector_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID the sector belongs to (required — enforces tenant isolation)',
+					default: '',
+				},
+				{
+					displayName: 'Sector ID',
+					name: 'sector_id',
+					type: 'string',
+					required: true,
+					description: 'Sector ID to delete (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleDeleteSource',
+			name: 'Veille Delete Source',
+			action: 'Delete a Veille watch source from a project',
+			description: 'Delete a Veille watch source from a project. Irreversible — prefer veille_toggle_source (enabled=false) to pause it without losing its history.',
+			routeSpec: {"method":"DELETE","path":"/api/projects/{project_id}/veille/sources/{source_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID the source belongs to (required — enforces tenant isolation)',
+					default: '',
+				},
+				{
+					displayName: 'Source ID',
+					name: 'source_id',
+					type: 'string',
+					required: true,
+					description: 'Watch source ID to delete (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleDiscoverCompetitors',
+			name: 'Veille Discover Competitors',
+			action: 'AI-discover candidate competitors for a project, using the project context and excluding the ones already tracked',
+			description: 'AI-discover candidate competitors for a project, using the project context and excluding the ones already tracked. FREE — returns suggestions only, nothing is tracked or billed. Feed a chosen suggestion to veille_add_competitor to run the paid deep-dive.',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/competitors/discover","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleEstimateMonthlyCost',
+			name: 'Veille Estimate Monthly Cost',
+			action: 'Estimate the monthly credit cost of a Veille configuration BEFORE applying it',
+			description: 'Estimate the monthly credit cost of a Veille configuration BEFORE applying it. Takes the candidate source list and returns { monthly, byKind, included, overage }. Veille collections are not included in any plan quota — every run is billed. Read-only, charges nothing.',
+			routeSpec: {"method":"GET","path":"/api/projects/{project_id}/veille/cost-estimate","queryParams":["sources"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				},
+				{
+					displayName: 'Sources',
+					name: 'sources',
+					type: 'string',
+					required: true,
+					description: 'REQUIRED — JSON array string of { kind, frequency, enabled } objects, e.g. \'[{"kind":"site","frequency":"weekly","enabled":true}]\'',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleGenerateBattlecard',
+			name: 'Veille Generate Battlecard',
+			action: 'Generate (or regenerate) the battle card of a competitor: objections + evidence-grounded rebuttals, topics to avoid, topics to lead with, and a closing phrase',
+			description: 'Generate (or regenerate) the battle card of a competitor: objections + evidence-grounded rebuttals, topics to avoid, topics to lead with, and a closing phrase. COSTS CREDITS, debited before generation and refunded if it fails. Read the result with veille_get_battlecard.',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/competitors/{competitor_id}/combat","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID the competitor belongs to (required — enforces tenant isolation)',
+					default: '',
+				},
+				{
+					displayName: 'Competitor ID',
+					name: 'competitor_id',
+					type: 'string',
+					required: true,
+					description: 'Competitor_analyses row ID (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleGetBattlecard',
+			name: 'Veille Get Battlecard',
+			action: 'Read the battle card (fiche de combat) for a competitor',
+			description: 'Read the battle card (fiche de combat) for a competitor. Returns objections + rebuttals grounded in collected evidence, topics to avoid, topics to lead with, and a closing phrase. Use when the user asks \'What do I say when compared to &lt;competitor&gt;?\' or needs call-script ammo. Requires a prior generation (POST /combat). Returns null if never generated.',
+			routeSpec: {"method":"GET","path":"/api/projects/{projectId}/competitors/{competitor_id}/combat","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				},
+				{
+					displayName: 'Competitor ID',
+					name: 'competitor_id',
+					type: 'string',
+					required: true,
+					description: 'Competitor_analyses row ID (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleGetNotificationPrefs',
+			name: 'Veille Get Notification Prefs',
+			action: 'This person\'s Veille notification preferences for a project: weeklyReport, priceChange, funding, legalText, newEntrant, restInReport (all booleans)',
+			description: 'This person\'s Veille notification preferences for a project: weeklyReport, priceChange, funding, legalText, newEntrant, restInReport (all booleans). Read-only — scoped to the caller, not the whole project.',
+			routeSpec: {"method":"GET","path":"/api/projects/{project_id}/veille/notifications","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleListMutedTypes',
+			name: 'Veille List Muted Types',
+			action: 'List the signal types the user has muted for a project\'s Veille feed (e.g',
+			description: 'List the signal types the user has muted for a project\'s Veille feed (e.g. after clicking \'Hide this type\' on a signal). Read-only.',
+			routeSpec: {"method":"GET","path":"/api/projects/{project_id}/veille/muted-types","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleListSectors',
+			name: 'Veille List Sectors',
+			action: 'List the Veille watch sectors configured for a project',
+			description: 'List the Veille watch sectors configured for a project. Each sector has keywords, an optional NAF code and a geographic scope (local/national/international). Read-only.',
+			routeSpec: {"method":"GET","path":"/api/projects/{project_id}/veille/sectors","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleListSignals',
+			name: 'Veille List Signals',
+			action: 'List Veille signals for a project and tab (competitors|news|legal)',
+			description: 'List Veille signals for a project and tab (competitors|news|legal). Returns a paginated feed of competitor signals, news or legal alerts detected for the project. Read-only. Use to answer \'What\'s new with my competitors?\' or \'Any regulatory alerts?\'.',
+			routeSpec: {"method":"GET","path":"/api/projects/{project_id}/veille/signals","queryParams":["tab","limit","cursor"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Cursor',
+							name: 'cursor',
+							type: 'string',
+							description: 'Optional — pagination cursor from the previous call (nextCursor field)',
+							default: '',
+						},
+						{
+							displayName: 'Limit',
+							name: 'limit',
+							type: 'number',
+							description: 'Max number of results to return',
+							typeOptions: {"minValue":1},
+							default: 50,
+						},
+						{
+							displayName: 'Tab',
+							name: 'tab',
+							type: 'options',
+							description: 'Feed to read — \'competitors\' (default), \'news\' or \'legal\'',
+							default: 'competitors',
+							options: [
+								{ name: 'Competitors', value: 'competitors' },
+								{ name: 'Legal', value: 'legal' },
+								{ name: 'News', value: 'news' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'veilleListSources',
+			name: 'Veille List Sources',
+			action: 'List the Veille watch sources configured for a project (sites, searches, legal themes, competitor probes, new-entrant scans)',
+			description: 'List the Veille watch sources configured for a project (sites, searches, legal themes, competitor probes, new-entrant scans). Each source has a kind, label, target URL or query, frequency, and enabled flag. Read-only.',
+			routeSpec: {"method":"GET","path":"/api/projects/{project_id}/veille/sources","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleMarkTabSeen',
+			name: 'Veille Mark Tab Seen',
+			action: 'Mark a Veille feed tab (competitors | news | legal) as seen for the user, clearing its unread badge',
+			description: 'Mark a Veille feed tab (competitors | news | legal) as seen for the user, clearing its unread badge. Use after summarising a feed to the user so the badge reflects reality.',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/veille/seen","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Tab',
+							name: 'tab',
+							type: 'options',
+							description: 'Feed to mark as seen (default \'competitors\')',
+							default: 'competitors',
+							options: [
+								{ name: 'Competitors', value: 'competitors' },
+								{ name: 'Legal', value: 'legal' },
+								{ name: 'News', value: 'news' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'veilleMuteSignalType',
+			name: 'Veille Mute Signal Type',
+			action: 'Mute the TYPE of a given Veille signal (not just that one signal) — future signals of the same type stop appearing in the project\'s feed',
+			description: 'Mute the TYPE of a given Veille signal (not just that one signal) — future signals of the same type stop appearing in the project\'s feed. The type is read from the signal itself, not supplied by the caller.',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/veille/signals/{signal_id}/mute","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID the signal belongs to (required — enforces tenant isolation)',
+					default: '',
+				},
+				{
+					displayName: 'Signal ID',
+					name: 'signal_id',
+					type: 'string',
+					required: true,
+					description: 'Signal ID whose type should be muted (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleRescanCompetitor',
+			name: 'Veille Rescan Competitor',
+			action: 'Re-run the deep-dive analysis of an existing competitor fiche — use to refresh an outdated fiche, or to analyse a fiche still in the "discovered" state',
+			description: 'Re-run the deep-dive analysis of an existing competitor fiche — use to refresh an outdated fiche, or to analyse a fiche still in the "discovered" state. COSTS CREDITS (refunded if the deep-dive fails).',
+			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/competitors/{competitor_id}/rescan","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID the competitor belongs to (required — enforces tenant isolation)',
+					default: '',
+				},
+				{
+					displayName: 'Competitor ID',
+					name: 'competitor_id',
+					type: 'string',
+					required: true,
+					description: 'Competitor_analyses row ID (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleSetCollection',
+			name: 'Veille Set Collection',
+			action: 'Toggle sectorial Veille collection for a project on/off, and/or set its cadence (daily | every_3_days | weekly | monthly)',
+			description: 'Toggle sectorial Veille collection for a project on/off, and/or set its cadence (daily | every_3_days | weekly | monthly). Acts on the sector-driven sources as a group — for one specific source use veille_set_source_frequency instead.',
+			routeSpec: {"method":"PATCH","path":"/api/projects/{project_id}/veille/collection","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Enabled',
+							name: 'enabled',
+							type: 'boolean',
+							description: 'Whether true = turn collection on, false = turn it off',
+							default: false,
+						},
+						{
+							displayName: 'Frequency',
+							name: 'frequency',
+							type: 'options',
+							description: 'Collection cadence',
+							default: 'daily',
+							options: [
+								{ name: 'Daily', value: 'daily' },
+								{ name: 'Every 3 Days', value: 'every_3_days' },
+								{ name: 'Monthly', value: 'monthly' },
+								{ name: 'Weekly', value: 'weekly' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'veilleSetNotificationPrefs',
+			name: 'Veille Set Notification Prefs',
+			action: 'Update this person\'s Veille notification preferences for a project',
+			description: 'Update this person\'s Veille notification preferences for a project. Only the keys provided in `prefs` are changed — omitted keys keep their current value.',
+			routeSpec: {"method":"PUT","path":"/api/projects/{project_id}/veille/notifications","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				},
+				{
+					displayName: 'Prefs',
+					name: 'prefs',
+					type: 'json',
+					required: true,
+					description: 'Partial preference patch (required, at least one key). (provide a JSON object).',
+					default: '{}',
+				}
+			],
+		},
+		{
+			value: 'veilleSetSourceFrequency',
+			name: 'Veille Set Source Frequency',
+			action: 'Change how often a Veille watch source is collected (daily | weekly | monthly | off)',
+			description: 'Change how often a Veille watch source is collected (daily | weekly | monthly | off). This is the main cost lever: every collection run is billed, so moving a source from daily to weekly divides its monthly cost. \'off\' stops collection without deleting the source.',
+			routeSpec: {"method":"PATCH","path":"/api/projects/{project_id}/veille/sources/{source_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID the source belongs to (required — enforces tenant isolation)',
+					default: '',
+				},
+				{
+					displayName: 'Source ID',
+					name: 'source_id',
+					type: 'string',
+					required: true,
+					description: 'Watch source ID (required)',
+					default: '',
+				},
+				{
+					displayName: 'Frequency',
+					name: 'frequency',
+					type: 'options',
+					required: true,
+					description: 'New collection frequency (required)',
+					default: 'daily',
+					options: [
+						{ name: 'Daily', value: 'daily' },
+						{ name: 'Monthly', value: 'monthly' },
+						{ name: 'Off', value: 'off' },
+						{ name: 'Weekly', value: 'weekly' },
+					],
+				}
+			],
+		},
+		{
+			value: 'veilleSuggestSources',
+			name: 'Veille Suggest Sources',
+			action: 'Propose candidate Veille watch sources derived from the project watch sectors',
+			description: 'Propose candidate Veille watch sources derived from the project watch sectors. Returns candidates only (origin="proposed", enabled=false) — NOTHING is created or activated. Feed the chosen ones to veille_create_source. Free, no collection is triggered.',
+			routeSpec: {"method":"GET","path":"/api/projects/{project_id}/veille/sources/suggest","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required). Configure sectors first — the proposals are derived from them.',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleToggleSource',
+			name: 'Veille Toggle Source',
+			action: 'Enable or disable a Veille watch source for a project',
+			description: 'Enable or disable a Veille watch source for a project. Only acts on sources that belong to the given project_id — cross-tenant access is rejected. Use to pause a noisy or failing source, or to re-enable a previously paused one.',
+			routeSpec: {"method":"PATCH","path":"/api/projects/{project_id}/veille/sources/{source_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID the source belongs to (required — enforces tenant isolation)',
+					default: '',
+				},
+				{
+					displayName: 'Source ID',
+					name: 'source_id',
+					type: 'string',
+					required: true,
+					description: 'Watch source ID to toggle (required)',
+					default: '',
+				},
+				{
+					displayName: 'Enabled',
+					name: 'enabled',
+					type: 'boolean',
+					required: true,
+					description: 'Whether true = enable the source, false = disable it',
+					default: false,
+				}
+			],
+		},
+		{
+			value: 'veilleUnmuteSignalType',
+			name: 'Veille Unmute Signal Type',
+			action: 'Un-mute the TYPE of a given Veille signal — the inverse of veille_mute_signal_type',
+			description: 'Un-mute the TYPE of a given Veille signal — the inverse of veille_mute_signal_type',
+			routeSpec: {"method":"DELETE","path":"/api/projects/{project_id}/veille/signals/{signal_id}/mute","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID the signal belongs to (required — enforces tenant isolation)',
+					default: '',
+				},
+				{
+					displayName: 'Signal ID',
+					name: 'signal_id',
+					type: 'string',
+					required: true,
+					description: 'Signal ID whose type should be unmuted (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleUnmuteType',
+			name: 'Veille Unmute Type',
+			action: 'Un-mute a signal type for a project\'s Veille feed, so signals of that type appear in the feed again',
+			description: 'Un-mute a signal type for a project\'s Veille feed, so signals of that type appear in the feed again',
+			routeSpec: {"method":"DELETE","path":"/api/projects/{project_id}/veille/muted-types","queryParams":["type"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				},
+				{
+					displayName: 'Type',
+					name: 'type',
+					type: 'string',
+					required: true,
+					description: 'Signal type to unmute, as returned by veille_list_muted_types (required)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'veilleUpdateSector',
+			name: 'Veille Update Sector',
+			action: 'Update a Veille watch sector (name, keywords, NAF code, geographic scope, radius, primary flag)',
+			description: 'Update a Veille watch sector (name, keywords, NAF code, geographic scope, radius, primary flag). Use to widen or narrow what the watch collects.',
+			routeSpec: {"method":"PATCH","path":"/api/projects/{project_id}/veille/sectors/{sector_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID the sector belongs to (required — enforces tenant isolation)',
+					default: '',
+				},
+				{
+					displayName: 'Sector ID',
+					name: 'sector_id',
+					type: 'string',
+					required: true,
+					description: 'Sector ID to update (required)',
+					default: '',
+				},
+				{
+					displayName: 'Nom',
+					name: 'nom',
+					type: 'string',
+					required: true,
+					description: 'Sector name',
+					default: '',
+				},
+				{
+					displayName: 'Mots Cles',
+					name: 'mots_cles',
+					type: 'json',
+					required: true,
+					description: 'Full replacement keyword list. (provide a JSON array).',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Is Primary',
+							name: 'is_primary',
+							type: 'boolean',
+							description: 'Whether mark as the project main sector',
+							default: false,
+						},
+						{
+							displayName: 'Naf',
+							name: 'naf',
+							type: 'string',
+							description: 'French NAF/APE industry code',
+							default: '',
+						},
+						{
+							displayName: 'Rayon Km',
+							name: 'rayon_km',
+							type: 'number',
+							description: 'Radius in km — required when zone is \'local\'',
+							default: 0,
+						},
+						{
+							displayName: 'Zone',
+							name: 'zone',
+							type: 'options',
+							description: 'Geographic scope. \'local\' REQUIRES rayon_km.',
+							default: 'international',
+							options: [
+								{ name: 'International', value: 'international' },
+								{ name: 'Local', value: 'local' },
+								{ name: 'National', value: 'national' },
+							],
 						},
 					],
 				}

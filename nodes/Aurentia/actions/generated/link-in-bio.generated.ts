@@ -8,9 +8,9 @@ export const linkInBioResource: GeneratedResource = {
 		{
 			value: 'createLinkInBioLink',
 			name: 'Create Link In Bio Link',
-			action: 'Add a new link on a Link-in-bio page — PRD-186',
-			description: 'Add a new link on a Link-in-bio page — PRD-186. Free tier capped at 5 links.',
-			routeSpec: {"method":"POST","path":"/api/aurentia/link-in-bio/{website_id}/links","queryParams":[]},
+			action: 'Add a new link block (block_type=link) on a Link-in-bio page — PRD-186',
+			description: 'Add a new link block (block_type=link) on a Link-in-bio page — PRD-186. Free tier capped at 5 blocks.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/link-in-bio/{website_id}/blocks","queryParams":[]},
 			properties: [
 				{
 					displayName: 'Website ID',
@@ -47,6 +47,59 @@ export const linkInBioResource: GeneratedResource = {
 							type: 'string',
 							default: '',
 						},
+						{
+							displayName: 'Platform',
+							name: 'platform',
+							type: 'string',
+							description: 'Attribution — optional, never guess it. Only set when you know for certain which social platform this specific link belongs to (e.g. linkedin, instagram, twitter). Makes this link attributable in the revenue attribution dashboard (surface=link_in_bio); omit it and the link still works, just without attribution.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createLinkInBioPage',
+			name: 'Create Link In Bio Page',
+			action: 'Create a new Link-in-bio page (a `websites` row, kind=link_in_bio, served at bio.aurentia.fr/&lt;slug&gt;) — PRD-186',
+			description: 'Create a new Link-in-bio page (a `websites` row, kind=link_in_bio, served at bio.aurentia.fr/&lt;slug&gt;) — PRD-186. Slug must be available: checked against `public.websites.slug`, shared with the site-builder\'s full-site pages (same table, same unique index) — not with published full-site domains. Returns the new page ID + slug — pass the ID as website_id to list_link_in_bio_links/create_link_in_bio_link.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/link-in-bio","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Slug',
+					name: 'slug',
+					type: 'string',
+					required: true,
+					description: 'Kebab-case, 2-31 chars, lowercase + digits + dashes. Must be available.',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'Optional Aurentia project UUID to associate the page with',
+							default: '',
+						},
+						{
+							displayName: 'Subtitle',
+							name: 'subtitle',
+							type: 'string',
+							description: 'Rôle/fonction affiché sous le titre, façon carte de visite (ex. "Coach en nutrition"). Optionnel.',
+							default: '',
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							default: '',
+						},
 					],
 				}
 			],
@@ -54,9 +107,9 @@ export const linkInBioResource: GeneratedResource = {
 		{
 			value: 'listLinkInBioLinks',
 			name: 'List Link In Bio Links',
-			action: 'List links on a Link-in-bio page (Aurentia website with kind=link_in_bio) — PRD-186',
-			description: 'List links on a Link-in-bio page (Aurentia website with kind=link_in_bio) — PRD-186',
-			routeSpec: {"method":"GET","path":"/api/aurentia/link-in-bio/{website_id}/links","queryParams":[]},
+			action: 'List blocks on a Link-in-bio page (Aurentia website with kind=link_in_bio) — PRD-186',
+			description: 'List blocks on a Link-in-bio page (Aurentia website with kind=link_in_bio) — PRD-186. Despite the tool name (kept for backward compat), this lists ALL block types, not just block_type=link.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/link-in-bio/{website_id}/blocks","queryParams":[]},
 			properties: [
 				{
 					displayName: 'Website ID',

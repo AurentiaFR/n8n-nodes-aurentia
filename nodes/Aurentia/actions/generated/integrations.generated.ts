@@ -109,6 +109,46 @@ export const integrationsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'executeIntegrationAction',
+			name: 'Execute Integration Action',
+			action: 'Run a live action on a connected integration and return the result — e.g',
+			description: 'Run a live action on a connected integration and return the result — e.g. list your latest Airtable records/leads, read a Notion page, post a Slack message, create a HubSpot contact. Find the exact `action` name + `arguments` first with list_integration_actions. Reads (LIST/GET/SEARCH) run instantly; writes (CREATE/UPDATE/DELETE/SEND) are confirmed before running. Example: action="AIRTABLE_LIST_RECORDS", arguments={ baseId, tableId, maxRecords: 10 }.',
+			routeSpec: {"method":"POST","path":"/api/integrations/execute","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Action',
+					name: 'action',
+					type: 'string',
+					required: true,
+					description: 'Exact Composio action name, e.g. AIRTABLE_LIST_RECORDS (from list_integration_actions)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Arguments',
+							name: 'arguments',
+							type: 'json',
+							description: 'Action arguments — the input schema comes from list_integration_actions. (provide a JSON object).',
+							default: '{}',
+						},
+						{
+							displayName: 'Toolkit',
+							name: 'toolkit',
+							type: 'string',
+							description: 'Optional integration slug for context, e.g. airtable',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'listConnectedIntegrations',
 			name: 'List Connected Integrations',
 			action: 'List the user\'s connected third-party integrations (HubSpot, Notion, Pipedrive…) available to import from',
@@ -126,6 +166,38 @@ export const integrationsResource: GeneratedResource = {
 			routeSpec: {"method":"GET","path":"/api/integrations/github/repos","queryParams":[]},
 			properties: [
 
+			],
+		},
+		{
+			value: 'listIntegrationActions',
+			name: 'List Integration Actions',
+			action: 'Discover the callable actions of a connected integration (Airtable, Notion, Slack, HubSpot, Pipedrive, Gmail…)',
+			description: 'Discover the callable actions of a connected integration (Airtable, Notion, Slack, HubSpot, Pipedrive, Gmail…). Call this BEFORE execute_integration_action to find the exact action name + arguments. Omit `toolkit` to list the user\'s connected integrations first. Example: toolkit="airtable" → AIRTABLE_LIST_RECORDS, AIRTABLE_CREATE_RECORD, … Use `search` (e.g. "record", "lead") to narrow a long list.',
+			routeSpec: {"method":"GET","path":"/api/integrations/actions","queryParams":["toolkit","search"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Search',
+							name: 'search',
+							type: 'string',
+							description: 'Optional keyword to filter the actions (e.g. "record", "lead", "message")',
+							default: '',
+						},
+						{
+							displayName: 'Toolkit',
+							name: 'toolkit',
+							type: 'string',
+							description: 'Integration slug, e.g. airtable, notion, hubspot. Omit to list connected integrations.',
+							default: '',
+						},
+					],
+				}
 			],
 		},
 		{
@@ -199,6 +271,46 @@ export const integrationsResource: GeneratedResource = {
 					required: true,
 					description: 'Project_github_repos.ID (UUID)',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'syncIntegration',
+			name: 'Sync Integration',
+			action: 'Sync a connected integration (HubSpot, Pipedrive…) into the CRM: pulls contacts and mirrors them locally (idempotent — no duplicates)',
+			description: 'Sync a connected integration (HubSpot, Pipedrive…) into the CRM: pulls contacts and mirrors them locally (idempotent — no duplicates). Use for "refresh/sync my HubSpot contacts" / "import my new leads". Reads stay 100% local afterwards. Prefer this over import_from_integration for recurring syncs.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/integrations/{toolkit}/sync","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Toolkit',
+					name: 'toolkit',
+					type: 'string',
+					required: true,
+					description: 'E.g. hubspot, pipedrive.',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Instructions',
+							name: 'instructions',
+							type: 'string',
+							description: 'What to fetch, in natural language (e.g. "my new leads this week") — drives the object type',
+							default: '',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'Destination project ID (from list_projects). Falls back to the saved target project.',
+							default: '',
+						},
+					],
 				}
 			],
 		}

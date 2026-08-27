@@ -28,6 +28,12 @@ export const devisResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
+							displayName: 'Client Address',
+							name: 'client_address',
+							type: 'string',
+							default: '',
+						},
+						{
 							displayName: 'Client Company',
 							name: 'client_company',
 							type: 'string',
@@ -57,6 +63,31 @@ export const devisResource: GeneratedResource = {
 							type: 'string',
 							description: 'Linked CRM contact (optional)',
 							default: '',
+						},
+						{
+							displayName: 'Currency',
+							name: 'currency',
+							type: 'string',
+							description: 'ISO 4217, default EUR',
+							default: '',
+						},
+						{
+							displayName: 'Discount Type',
+							name: 'discount_type',
+							type: 'options',
+							description: 'Optional global discount on the HT total',
+							default: 'amount',
+							options: [
+								{ name: 'Amount', value: 'amount' },
+								{ name: 'Percent', value: 'percent' },
+							],
+						},
+						{
+							displayName: 'Discount Value',
+							name: 'discount_value',
+							type: 'number',
+							description: 'Discount amount (currency) or percentage (0-100), per discount_type',
+							default: 0,
 						},
 						{
 							displayName: 'Items',
@@ -262,8 +293,8 @@ export const devisResource: GeneratedResource = {
 		{
 			value: 'updateQuote',
 			name: 'Update Quote',
-			action: 'Update a quote (devis): title, line items, VAT, validity, conditions, notes or status',
-			description: 'Update a quote (devis): title, line items, VAT, validity, conditions, notes or status',
+			action: 'Update a quote (devis): title, description, line items, VAT, global discount, client, validity, conditions, notes or status',
+			description: 'Update a quote (devis): title, description, line items, VAT, global discount, client, validity, conditions, notes or status. Amounts recompute from the line items. Reflects live in the open editor (agent + human share the same quote).',
 			routeSpec: {"method":"PUT","path":"/api/aurentia/devis/{id}","queryParams":[]},
 			properties: [
 				{
@@ -282,16 +313,78 @@ export const devisResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
+							displayName: 'Client Address',
+							name: 'client_address',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Client Company',
+							name: 'client_company',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Client Email',
+							name: 'client_email',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Client Name',
+							name: 'client_name',
+							type: 'string',
+							default: '',
+						},
+						{
 							displayName: 'Conditions',
 							name: 'conditions',
 							type: 'string',
 							default: '',
 						},
 						{
+							displayName: 'Contact ID',
+							name: 'contact_id',
+							type: 'string',
+							description: 'Linked CRM contact',
+							default: '',
+						},
+						{
+							displayName: 'Currency',
+							name: 'currency',
+							type: 'string',
+							description: 'ISO 4217',
+							default: '',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Discount Type',
+							name: 'discount_type',
+							type: 'options',
+							description: 'Global discount on the HT total',
+							default: 'amount',
+							options: [
+								{ name: 'Amount', value: 'amount' },
+								{ name: 'Percent', value: 'percent' },
+							],
+						},
+						{
+							displayName: 'Discount Value',
+							name: 'discount_value',
+							type: 'number',
+							description: 'Discount amount (currency) or percentage (0-100)',
+							default: 0,
+						},
+						{
 							displayName: 'Items',
 							name: 'items',
 							type: 'json',
-							description: 'Provide a JSON array',
+							description: 'Full replacement list of line items (provide a JSON array)',
 							default: '[]',
 						},
 						{
@@ -330,6 +423,7 @@ export const devisResource: GeneratedResource = {
 							displayName: 'Valid Until',
 							name: 'valid_until',
 							type: 'string',
+							description: 'ISO date',
 							default: '',
 						},
 					],

@@ -103,8 +103,8 @@ export const bookingResource: GeneratedResource = {
 		{
 			value: 'cancelBookingAppointment',
 			name: 'Cancel Booking Appointment',
-			action: 'Cancel an appointment',
-			description: 'Cancel an appointment',
+			action: 'Cancel an appointment as the host',
+			description: 'Cancel an appointment as the host. Emails the guest a cancellation notice and frees the calendar slot — outbound to a real person, approval-gated.',
 			routeSpec: {"method":"PUT","path":"/api/booking/appointments/{id}","queryParams":[]},
 			properties: [
 				{
@@ -137,6 +137,7 @@ export const bookingResource: GeneratedResource = {
 							displayName: 'Reason',
 							name: 'reason',
 							type: 'string',
+							description: 'Optional reason shown to the guest in the cancellation email',
 							default: '',
 						},
 					],
@@ -326,6 +327,37 @@ export const bookingResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createBookingSequence',
+			name: 'Create Booking Sequence',
+			action: 'Create a Multi-Booking sequence: chain 2 to 3 of your own ACTIVE, FREE booking pages into one guided guest journey (e.g',
+			description: 'Create a Multi-Booking sequence: chain 2 to 3 of your own ACTIVE, FREE booking pages into one guided guest journey (e.g. discovery call then demo). project_id is the project the sequence is filed under (you must own it) — the step pages themselves only need to be yours, active and free, whatever their own project tag. A page that requires payment cannot be a step — its appointment is only created after checkout, so the chaining would never fire.',
+			routeSpec: {"method":"POST","path":"/api/booking/sequences","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Step Page IDs',
+					name: 'step_page_ids',
+					type: 'json',
+					required: true,
+					description: '2 to 3 booking page IDs, in the order the guest should book them. (provide a JSON array).',
+					default: '[]',
+				}
+			],
+		},
+		{
 			value: 'deleteBookingException',
 			name: 'Delete Booking Exception',
 			action: 'Delete an exception',
@@ -467,8 +499,8 @@ export const bookingResource: GeneratedResource = {
 			value: 'listBookingAppointments',
 			name: 'List Booking Appointments',
 			action: 'List of appointments',
-			description: 'List of appointments',
-			routeSpec: {"method":"GET","path":"/api/booking/appointments","queryParams":["status","dateFrom","dateTo","pageId"]},
+			description: 'List of appointments. The underlying query caps at 200 rows (most recent first) — pass scope to stay under that cap on a host with heavy history.',
+			routeSpec: {"method":"GET","path":"/api/booking/appointments","queryParams":["status","scope","dateFrom","dateTo","pageId"]},
 			properties: [
 				{
 					displayName: 'Additional Fields',
@@ -494,6 +526,17 @@ export const bookingResource: GeneratedResource = {
 							name: 'pageId',
 							type: 'string',
 							default: '',
+						},
+						{
+							displayName: 'Scope',
+							name: 'scope',
+							type: 'options',
+							default: 'past',
+							options: [
+								{ name: 'Past', value: 'past' },
+								{ name: 'Period', value: 'period' },
+								{ name: 'Upcoming', value: 'upcoming' },
+							],
 						},
 						{
 							displayName: 'Status',
@@ -572,6 +615,30 @@ export const bookingResource: GeneratedResource = {
 			routeSpec: {"method":"GET","path":"/api/booking/pages","queryParams":[]},
 			properties: [
 
+			],
+		},
+		{
+			value: 'listBookingSequences',
+			name: 'List Booking Sequences',
+			action: 'List your Multi-Booking sequences (chains of 2-3 of your own booking pages into one guided guest journey)',
+			description: 'List your Multi-Booking sequences (chains of 2-3 of your own booking pages into one guided guest journey). Optional project scoping.',
+			routeSpec: {"method":"GET","path":"/api/booking/sequences","queryParams":["project_id"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Project ID',
+							name: 'project_id',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
 			],
 		},
 		{
@@ -656,6 +723,31 @@ export const bookingResource: GeneratedResource = {
 					required: true,
 					description: 'Provide a JSON array',
 					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'toggleBookingSequenceActive',
+			name: 'Toggle Booking Sequence Active',
+			action: 'Turn a Multi-Booking sequence on or off',
+			description: 'Turn a Multi-Booking sequence on or off',
+			routeSpec: {"method":"PATCH","path":"/api/booking/sequences/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Is Active',
+					name: 'is_active',
+					type: 'boolean',
+					required: true,
+					description: 'Whether to enable is active',
+					default: false,
 				}
 			],
 		},
