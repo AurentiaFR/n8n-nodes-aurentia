@@ -4445,6 +4445,7 @@ export const socialMediaResource: GeneratedResource = {
 					displayName: 'Operation',
 					name: 'operation',
 					type: 'options',
+					noDataExpression: true,
 					required: true,
 					description: 'Opération studio spécialisée',
 					default: 'extend',
