@@ -28,7 +28,7 @@ function makeCtx(params, { additionalFields = {} } = {}) {
 		// Presence of getInputData makes the transport treat this as an execute
 		// context (item-indexed getNodeParameter).
 		getInputData: () => [{ json: {} }],
-		getNode: () => ({ name: 'Aurentia', type: 'n8n-nodes-aurentia.aurentia' }),
+		getNode: () => ({ name: 'Aurentia', type: '@aurentiaai/n8n-nodes-aurentia.aurentia' }),
 		getNodeParameter(name, _i, fallback) {
 			if (name === 'authentication') return 'apiKey';
 			if (name === 'additionalFields') return additionalFields;

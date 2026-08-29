@@ -1,4 +1,4 @@
-# n8n-nodes-aurentia
+# @aurentiaai/n8n-nodes-aurentia
 
 This is an n8n community node. It lets you use [Aurentia](https://aurentia.fr) in your n8n workflows.
 
@@ -21,7 +21,7 @@ Aurentia is the AI-native business OS for entrepreneurs — CRM, tasks, database
 
 Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes/installation-and-management/) in the n8n community nodes documentation.
 
-- **Self-hosted:** **Settings > Community Nodes > Install** and enter `n8n-nodes-aurentia`.
+- **Self-hosted:** **Settings > Community Nodes > Install** and enter `@aurentiaai/n8n-nodes-aurentia`.
 - **n8n Cloud:** once the node is verified, search for **Aurentia** directly in the nodes panel.
 
 ## Operations

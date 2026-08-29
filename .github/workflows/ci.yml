@@ -49,5 +49,5 @@ jobs:
       # NOTE: @n8n/scan-community-package resolves packages by their published
       # npm name, not from a local path, so it cannot run in pre-publish CI.
       # Run it manually against the published package after each release:
-      #   npx @n8n/scan-community-package n8n-nodes-aurentia
+      #   npx @n8n/scan-community-package @aurentiaai/n8n-nodes-aurentia
       # The lint step above already enforces the same community-node rules.

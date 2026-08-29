@@ -1,6 +1,6 @@
 {
-	"name": "n8n-nodes-aurentia",
-	"version": "0.1.1",
+	"name": "@aurentiaai/n8n-nodes-aurentia",
+	"version": "0.1.2",
 	"description": "n8n community node for Aurentia — the AI-native business OS for entrepreneurs (CRM, tasks, databases, social media, projects)",
 	"license": "MIT",
 	"homepage": "https://aurentia.fr",

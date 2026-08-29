@@ -1,4 +1,4 @@
-# Release runbook — `n8n-nodes-aurentia`
+# Release runbook — `@aurentiaai/n8n-nodes-aurentia`
 
 The node is developed **inside the private monorepo** (`packages/n8n-nodes-aurentia/`).
 The public repo `AurentiaFR/n8n-nodes-aurentia` is a **publication mirror** kept in
@@ -15,7 +15,7 @@ GitHub Actions with provenance (required for n8n Cloud verification).
    `npm run generate:check` and `npm run lint`.
 3. **E2E checklist** (`docs/e2e-checklist.md`) executed against a local stack.
 4. **npm Trusted Publisher configured** (one-time, done in the npm web UI by a
-   maintainer): npmjs.com → the `n8n-nodes-aurentia` package → *Settings > Publishing
+   maintainer): npmjs.com → the `@aurentiaai/n8n-nodes-aurentia` package → *Settings > Publishing
    access > Trusted Publishers* → add GitHub Actions, owner `AurentiaFR`, repo
    `n8n-nodes-aurentia`, workflow `publish.yml`. (Fallback: set an `NPM_TOKEN`
    repo secret on the mirror.) The first publish may need a manual `npm publish`
@@ -45,9 +45,9 @@ Use `--dry-run` first to preview what would change.
 ## After publishing
 
 1. Install on a clean self-hosted n8n (Docker): **Settings > Community Nodes >
-   Install** `n8n-nodes-aurentia` → smoke test credential + a few ops + a trigger.
+   Install** `@aurentiaai/n8n-nodes-aurentia` → smoke test credential + a few ops + a trigger.
 2. Run the scanner n8n uses at vetting:
-   `npx @n8n/scan-community-package n8n-nodes-aurentia` (resolves the *published*
+   `npx @n8n/scan-community-package @aurentiaai/n8n-nodes-aurentia` (resolves the *published*
    package, so it only works post-publish).
 3. Submit for verification at <https://creators.n8n.io/nodes> (n8n account
    login required). Approval is an external delay (7 days–1 month). Save the

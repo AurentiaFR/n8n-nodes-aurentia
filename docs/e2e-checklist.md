@@ -1,4 +1,4 @@
-# E2E checklist — `n8n-nodes-aurentia`
+# E2E checklist — `@aurentiaai/n8n-nodes-aurentia`
 
 Run this against a local stack before every release. It is the one gate that
 cannot be automated in CI (it needs a live Aurentia + a live n8n).
