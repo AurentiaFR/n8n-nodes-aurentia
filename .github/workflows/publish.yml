@@ -91,6 +91,14 @@ jobs:
           # No cache: the mirror ships without a lockfile (source of truth is a
           # pnpm monorepo). `npm install` resolves from package.json.
 
+      # Trusted Publishing (OIDC) exige npm >= 11.5.1 : c'est le CLI qui détecte
+      # l'environnement OIDC et fait l'échange de jeton. Node 22 embarque npm 10,
+      # qui ne connaît pas ce mécanisme — il publie alors sans authentification et
+      # le registre répond `404 PUT`, une réponse trompeuse qui ressemble à un
+      # problème de nom ou de droits plutôt qu'à un défaut d'authentification.
+      - name: Update npm (trusted publishing needs npm >= 11.5.1)
+        run: npm install -g npm@latest
+
       - name: Install dependencies
         run: 'npm install --no-audit --no-fund'
 
