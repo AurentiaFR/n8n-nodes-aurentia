@@ -311,7 +311,7 @@ export const whiteboardsResource: GeneratedResource = {
 			value: 'whiteboardGenerateImage',
 			name: 'Whiteboard Generate Image',
 			action: 'Generate an image from a prompt (standard image pipeline, 1:1) and place it on the canvas as an image shape (480 px)',
-			description: 'Generate an image from a prompt (standard image pipeline, 1:1) and place it on the canvas as an image shape (480 px). Standard image price (6 credits) — expensive, approval-gated for agents. Returns { aiBatchId, shapeIds, imageUrl, degraded }.',
+			description: 'Generate an image from a prompt (standard image pipeline, 1:1) and place it on the canvas as an image shape (480 px). Standard image price (6 credits) — expensive, approval-gated for collaborators. Returns { aiBatchId, shapeIds, imageUrl, degraded }.',
 			routeSpec: {"method":"POST","path":"/api/whiteboards/{whiteboard_id}/ai/generate-image","queryParams":[]},
 			properties: [
 				{
@@ -336,7 +336,7 @@ export const whiteboardsResource: GeneratedResource = {
 			value: 'whiteboardGenerateSticker',
 			name: 'Whiteboard Generate Sticker',
 			action: 'Generate a die-cut style sticker (white border, plain background) from a prompt and place it small (200 px) on the canvas',
-			description: 'Generate a die-cut style sticker (white border, plain background) from a prompt and place it small (200 px) on the canvas. Standard image price (6 credits) — expensive, approval-gated for agents. Returns { aiBatchId, shapeIds, imageUrl, degraded }.',
+			description: 'Generate a die-cut style sticker (white border, plain background) from a prompt and place it small (200 px) on the canvas. Standard image price (6 credits) — expensive, approval-gated for collaborators. Returns { aiBatchId, shapeIds, imageUrl, degraded }.',
 			routeSpec: {"method":"POST","path":"/api/whiteboards/{whiteboard_id}/ai/generate-sticker","queryParams":[]},
 			properties: [
 				{

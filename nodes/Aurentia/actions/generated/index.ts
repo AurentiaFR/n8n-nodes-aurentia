@@ -53,7 +53,6 @@ import { projectsResource } from './projects.generated';
 import { prospectionResource } from './prospection.generated';
 import { ragResource } from './rag.generated';
 import { recommendedToolsResource } from './recommended-tools.generated';
-import { resourcesResource } from './resources.generated';
 import { routingResource } from './routing.generated';
 import { sharingPreferencesResource } from './sharing-preferences.generated';
 import { siteWebResource } from './site-web.generated';
@@ -61,7 +60,6 @@ import { socialMediaResource } from './social-media.generated';
 import { studiosResource } from './studios.generated';
 import { tasksResource } from './tasks.generated';
 import { telegramResource } from './telegram.generated';
-import { toolsResource } from './tools.generated';
 import { whiteboardsResource } from './whiteboards.generated';
 import { workspaceDatabasesResource } from './workspace-databases.generated';
 import { xpResource } from './xp.generated';
@@ -123,7 +121,6 @@ export const GENERATED_RESOURCES: GeneratedResource[] = [
 	prospectionResource,
 	ragResource,
 	recommendedToolsResource,
-	resourcesResource,
 	routingResource,
 	sharingPreferencesResource,
 	siteWebResource,
@@ -131,7 +128,6 @@ export const GENERATED_RESOURCES: GeneratedResource[] = [
 	studiosResource,
 	tasksResource,
 	telegramResource,
-	toolsResource,
 	whiteboardsResource,
 	workspaceDatabasesResource,
 	xpResource,

@@ -9,7 +9,7 @@ export const adminResource: GeneratedResource = {
 			value: 'getLlmCost',
 			name: 'Get Llm Cost',
 			action: 'Get LLM token cost (EUR) for a period, optionally grouped',
-			description: 'Get LLM token cost (EUR) for a period, optionally grouped. Returns spend MTD/30d/90d, top consumers, and breakdown by feature/agent/model.',
+			description: 'Get LLM token cost (EUR) for a period, optionally grouped. Returns spend MTD/30d/90d, top consumers, and breakdown by feature/collaborator/model.',
 			routeSpec: {"method":"GET","path":"/api/admin/llm-costs","queryParams":["period","group_by"]},
 			properties: [
 				{

@@ -144,8 +144,8 @@ export const accountResource: GeneratedResource = {
 		{
 			value: 'getAutopilotConsent',
 			name: 'Get Autopilot Consent',
-			action: 'Whether the user has consented to autonomous agent actions (autopilot mode)',
-			description: 'Whether the user has consented to autonomous agent actions (autopilot mode)',
+			action: 'Whether the user has consented to autonomous collaborator actions (autopilot mode)',
+			description: 'Whether the user has consented to autonomous collaborator actions (autopilot mode)',
 			routeSpec: {"method":"GET","path":"/api/account/autopilot-consent","queryParams":[]},
 			properties: [
 

@@ -131,7 +131,7 @@ export const prospectionResource: GeneratedResource = {
 			value: 'createProspectionIcp',
 			name: 'Create Prospection Icp',
 			action: 'Create a new prospection ICP (Ideal Customer Profile)',
-			description: 'Create a new prospection ICP (Ideal Customer Profile). Prefer derive_icp_from_targets whenever the project already has a Clientèle Cible — it derives the ICP from what\'s already known instead of asking the user to redescribe their audience. A B2B ICP needs EITHER `description` (free text, LLM-derives NAF codes + keywords) OR `config_json.naf_codes`; a B2C ICP needs EITHER `description` OR `config_json.intent_queries` — both empty is rejected. `outbound_channels` cannot contain \'email\' for a B2C ICP (RGPD art. 6.1.f / CNIL délib. 2020-091). Idempotent on (name, audience_type, project_id): recreating with the same name updates the existing ICP instead of erroring. Always created PASSIVE (no recurring cadence, no agent auto-trigger) — this is enforced server-side and cannot be requested here; turning on autonomous runs is a human action in the ICP settings UI, same as create_scheduled_task never starting a schedule by itself.',
+			description: 'Create a new prospection ICP (Ideal Customer Profile). Prefer derive_icp_from_targets whenever the project already has a Clientèle Cible — it derives the ICP from what\'s already known instead of asking the user to redescribe their audience. A B2B ICP needs EITHER `description` (free text, LLM-derives NAF codes + keywords) OR `config_json.naf_codes`; a B2C ICP needs EITHER `description` OR `config_json.intent_queries` — both empty is rejected. `outbound_channels` cannot contain \'email\' for a B2C ICP (RGPD art. 6.1.f / CNIL délib. 2020-091). Idempotent on (name, audience_type, project_id): recreating with the same name updates the existing ICP instead of erroring. Always created PASSIVE (no recurring cadence, no collaborateur auto-trigger) — this is enforced server-side and cannot be requested here; turning on autonomous runs is a human action in the ICP settings UI, same as create_scheduled_task never starting a schedule by itself.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/prospection/icps","queryParams":[]},
 			properties: [
 				{
@@ -295,7 +295,7 @@ export const prospectionResource: GeneratedResource = {
 			value: 'estimateProspectionCost',
 			name: 'Estimate Prospection Cost',
 			action: 'Estimate the credit cost of a prospection batch BEFORE running',
-			description: 'Estimate the credit cost of a prospection batch BEFORE running. Returns canProceed (cap + balance check).',
+			description: 'Estimate the credit cost of a prospection batch BEFORE running. Returns a RANGE, not a price: `minCredits` (no conditional contactability search fires) and `totalCredits` (the ceiling — every lead triggers all of them). Quote both; never present `totalCredits` alone as the price. `canProceed` (cap + balance check) is decided on `totalCredits`.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/prospection/cost-estimate","queryParams":[]},
 			properties: [
 				{
@@ -647,7 +647,7 @@ export const prospectionResource: GeneratedResource = {
 			value: 'updateProspectionIcp',
 			name: 'Update Prospection Icp',
 			action: 'Update an existing prospection ICP',
-			description: 'Update an existing prospection ICP. The route requires resending `name`, `audience_type`, `outbound_channels` and `config_json` even to change only one field — read the current values first (list_prospection_icps) and send them all back alongside whatever changes. Changing `description`, `notes` or `config_json` flushes the cached derived filters (NAF codes/keywords or intent queries); they are lazily re-derived on the next batch. Same B2C \'email\' restriction as create_prospection_icp. Cannot turn ON the recurring cadence or the agent auto-trigger — those are stripped server-side from this call and stay whatever the user last set in the UI; you can still change everything else (name, description, config, channels…) without touching them.',
+			description: 'Update an existing prospection ICP. The route requires resending `name`, `audience_type`, `outbound_channels` and `config_json` even to change only one field — read the current values first (list_prospection_icps) and send them all back alongside whatever changes. Changing `description`, `notes` or `config_json` flushes the cached derived filters (NAF codes/keywords or intent queries); they are lazily re-derived on the next batch. Same B2C \'email\' restriction as create_prospection_icp. Cannot turn ON the recurring cadence or the collaborator auto-trigger — those are stripped server-side from this call and stay whatever the user last set in the UI; you can still change everything else (name, description, config, channels…) without touching them.',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/prospection/icps/{icp_id}","queryParams":[]},
 			properties: [
 				{

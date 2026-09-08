@@ -8,8 +8,8 @@ export const councilResource: GeneratedResource = {
 		{
 			value: 'getCouncilVerdict',
 			name: 'Get Council Verdict',
-			action: 'Reads what the Council (the user\'s multi-agent advisory panel) has already said about a subject — its opinions and, if generated, its minutes',
-			description: 'Reads what the Council (the user\'s multi-agent advisory panel) has already said about a subject — its opinions and, if generated, its minutes. Read-only and free — it does NOT convene the Council (a paid action the user must trigger from the subject\'s page, where the credit cost is shown before confirming). Returns a null session when the Council has never been convened on this subject; in that case, tell the user to open the subject\'s page and click "Réunir le conseil" rather than trying to convene it yourself.',
+			action: 'Reads what the Council (the user\'s multi-collaborateur advisory panel) has already said about a subject — its opinions and, if generated, its minutes',
+			description: 'Reads what the Council (the user\'s multi-collaborateur advisory panel) has already said about a subject — its opinions and, if generated, its minutes. Read-only and free — it does NOT convene the Council (a paid action the user must trigger from the subject\'s page, where the credit cost is shown before confirming). Returns a null session when the Council has never been convened on this subject; in that case, tell the user to open the subject\'s page and click "Réunir le conseil" rather than trying to convene it yourself.',
 			routeSpec: {"method":"GET","path":"/api/aurentia/council/session","queryParams":["subjectType","subjectId"]},
 			properties: [
 				{

@@ -284,7 +284,7 @@ export const brandDnaResource: GeneratedResource = {
 			value: 'updateBrandDna',
 			name: 'Update Brand DNA',
 			action: 'Propose Brand DNA additions for the project',
-			description: 'Propose Brand DNA additions for the project. Agent writes are FILL-EMPTY only (enforced server-side): a field the user already filled is NEVER overwritten — only empty fields are completed. Requires user approval. `patch` accepts partial DNA fields (name, description, mission, values, differentiators, tone, toneDescription, vocabularyDo, vocabularyDont, signatureMessage, extraDirectives, sector, niche, customerProblems, proofPoints).',
+			description: 'Propose Brand DNA additions for the project. Collaborator writes are FILL-EMPTY only (enforced server-side): a field the user already filled is NEVER overwritten — only empty fields are completed. Requires user approval. `patch` accepts partial DNA fields (name, description, mission, values, differentiators, tone, toneDescription, vocabularyDo, vocabularyDont, signatureMessage, extraDirectives, sector, niche, customerProblems, proofPoints).',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/brand-dna","queryParams":[],"body":{"mode":"fill-empty"}},
 			properties: [
 				{

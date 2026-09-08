@@ -9,7 +9,7 @@ export const financialForecastResource: GeneratedResource = {
 			value: 'createForecastLine',
 			name: 'Create Forecast Line',
 			action: 'Add a line to the financial forecast workbook — a revenue/cost/personnel/investment/loan/driver/parameter/computed row',
-			description: 'Add a line to the financial forecast workbook — a revenue/cost/personnel/investment/loan/driver/parameter/computed row. sheetKey must be one of the workbook\'s sheets (see get_project_forecast); if sectionId is set, the section must belong to the same sheet. unit is decorative (\'€\', \'€/mois\', \'mois\'…) — pass null when there is none.',
+			description: 'Add a line to the financial forecast workbook — a revenue/cost/personnel/investment/loan/driver/parameter/computed row. sheetKey must be one of the workbook\'s sheets (read them with get_forecast_workbook — sheets[].key, or writableSheetKeys for every sheet that accepts a line); if sectionId is set, the section must belong to the same sheet. unit is decorative (\'€\', \'€/mois\', \'mois\'…) — pass null when there is none.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/financial-forecast/workbook/line","queryParams":[]},
 			properties: [
 				{
@@ -196,6 +196,52 @@ export const financialForecastResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getForecastWorkbook',
+			name: 'Get Forecast Workbook',
+			action: 'Read the STRUCTURE of the financial forecast workbook (prévisionnel) of a project: its sheets (with acceptsLines + writableSheetKeys — where a line may be placed at all), its sections, and every line with its UUID, label, type, sheetKey, sectionId, unit, stored formula, isCustomFormula, isCalculated and position',
+			description: 'Read the STRUCTURE of the financial forecast workbook (prévisionnel) of a project: its sheets (with acceptsLines + writableSheetKeys — where a line may be placed at all), its sections, and every line with its UUID, label, type, sheetKey, sectionId, unit, stored formula, isCustomFormula, isCalculated and position. THIS IS HOW YOU OBTAIN AN ID: set_forecast_cell, update_forecast_line and delete_forecast_line all require a lineId, update_forecast_section and delete_forecast_section a sectionId, and an ID taken from another workbook is rejected — never invent one, read it here. isCalculated tells you upfront which lines refuse a written value. VALUES ARE NOT RETURNED BY DEFAULT: this is addressing, not the numbers. Ask for them explicitly with lineIds (comma-separated UUIDs, at most 10 per call), optionally windowed with fromMonth and monthCount. Falls back to the legacy forecast for a project whose workbook was never persisted; 404 when the project has no forecast at all. For aggregated figures rather than addressing, use get_project_forecast.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/financial-forecast/workbook/structure","queryParams":["projectId","lineIds","fromMonth","monthCount"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'From Month',
+							name: 'fromMonth',
+							type: 'number',
+							description: 'First month of the value window, 0-BASED (0 = month 1 on screen). Default 0. Ignored without lineIds.',
+							default: 0,
+						},
+						{
+							displayName: 'Line IDs',
+							name: 'lineIds',
+							type: 'string',
+							description: 'Optional — line UUIDs SEPARATED BY COMMAS (a single string, e.g. "uuid1,uuid2"), at most 10, whose monthly cells you also want. Omit it and no value is returned, only the structure.',
+							default: '',
+						},
+						{
+							displayName: 'Month Count',
+							name: 'monthCount',
+							type: 'number',
+							description: 'Width of the value window, between 1 and 36 months. Default 12, and clamped to the end of the workbook horizon. Ignored without lineIds.',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'getProjectForecast',
 			name: 'Get Project Forecast',
 			action: 'Get the project financial forecast (prévisionnel) — revenue/cost projection',
@@ -227,10 +273,34 @@ export const financialForecastResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'setForecastCell',
+			name: 'Set Forecast Cell',
+			action: 'Set (or clear) the VALUE of one or more cells of the financial forecast workbook',
+			description: 'Set (or clear) the VALUE of one or more cells of the financial forecast workbook. A cell is a LINE × MONTH. UNITS ARE A CONTRACT: value is a plain number in the workbook currency, EXCLUDING VAT and NOT in thousands (12000, never \'12 000 €\' nor 12); monthIndex is 0-BASED from the start of the workbook (0 = month 1 on screen). Pass value AND formula both null to CLEAR a cell. lineId is a workbook line UUID — the one create_forecast_line returned, or the one read with get_forecast_workbook; a line from another workbook is rejected, so never carry an ID over from another project and never invent one. YOU MAY ONLY WRITE ON INPUT LINES: a computed line, a line carrying a row formula, or any line living on an engine-filled sheet (P&L, cash flow, balance sheet, summary) is refused by the server — change the drivers it depends on instead. NO verb changes a LINE\'s formula: if the formula itself is wrong, say so to the person, or delete the line (delete_forecast_line) and recreate it. A \'parameter\' line\'s value is set HERE, through its cell (never through update_forecast_line attributes), and formulas are not accepted on one.',
+			routeSpec: {"method":"PUT","path":"/api/aurentia/financial-forecast/workbook/cell","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Cells',
+					name: 'cells',
+					type: 'json',
+					required: true,
+					description: 'One entry per cell. Up to 2160 per call. (provide a JSON array)',
+					default: '[]',
+				}
+			],
+		},
+		{
 			value: 'updateForecastLine',
 			name: 'Update Forecast Line',
 			action: 'Rename, reposition, reparent (to another section, or to the sheet root with sectionId=null), or update the attributes of a forecast workbook line',
-			description: 'Rename, reposition, reparent (to another section, or to the sheet root with sectionId=null), or update the attributes of a forecast workbook line. Each field is applied only when present — at least one of label/position/sectionId/attributes is required. UNITS ARE A CONTRACT, and getting one wrong is silent: annualRate is a DECIMAL FRACTION (0.04 means 4% a year, NEVER 4 — sending 4 would mean 400% and multiply financial charges by a hundred); principal/amount are in the workbook currency, excluding VAT; monthIndex is 0-BASED from the start of the workbook (0 = month 1 on screen); durationMonths/deferralMonths/amortYears are plain counts. A loan line reads exactly principal, monthIndex, annualRate, durationMonths, deferralMonths — any other spelling is ignored and read as 0. Never set attributes.value or attributes.key on a \'parameter\' line: its value is edited through its cell, not here.',
+			description: 'Rename, reposition, reparent (to another section, or to the sheet root with sectionId=null), or update the attributes of a forecast workbook line. Each field is applied only when present — at least one of label/position/sectionId/attributes is required. UNITS ARE A CONTRACT, and getting one wrong is silent: annualRate is a DECIMAL FRACTION (0.04 means 4% a year, NEVER 4 — sending 4 would mean 400% and multiply financial charges by a hundred); principal/amount are in the workbook currency, excluding VAT; monthIndex is 0-BASED from the start of the workbook (0 = month 1 on screen); durationMonths/deferralMonths/amortYears are plain counts. A loan line reads exactly principal, monthIndex, annualRate, durationMonths, deferralMonths — any other spelling is ignored and read as 0. Never set attributes.value or attributes.key on a \'parameter\' line: its value is edited through its cell, not here. attributes.formula and a top-level formula are REFUSED: no verb writes a line\'s formula, and the engine never reads an attribute of that name.',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/financial-forecast/workbook/line","queryParams":[]},
 			properties: [
 				{

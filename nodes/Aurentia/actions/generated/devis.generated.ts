@@ -294,7 +294,7 @@ export const devisResource: GeneratedResource = {
 			value: 'updateQuote',
 			name: 'Update Quote',
 			action: 'Update a quote (devis): title, description, line items, VAT, global discount, client, validity, conditions, notes or status',
-			description: 'Update a quote (devis): title, description, line items, VAT, global discount, client, validity, conditions, notes or status. Amounts recompute from the line items. Reflects live in the open editor (agent + human share the same quote).',
+			description: 'Update a quote (devis): title, description, line items, VAT, global discount, client, validity, conditions, notes or status. Amounts recompute from the line items. Reflects live in the open editor (collaborator + human share the same quote).',
 			routeSpec: {"method":"PUT","path":"/api/aurentia/devis/{id}","queryParams":[]},
 			properties: [
 				{

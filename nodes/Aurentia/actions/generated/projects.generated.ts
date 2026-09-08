@@ -1523,8 +1523,8 @@ export const projectsResource: GeneratedResource = {
 		{
 			value: 'veilleListSignals',
 			name: 'Veille List Signals',
-			action: 'List Veille signals for a project and tab (competitors|news|legal)',
-			description: 'List Veille signals for a project and tab (competitors|news|legal). Returns a paginated feed of competitor signals, news or legal alerts detected for the project. Read-only. Use to answer \'What\'s new with my competitors?\' or \'Any regulatory alerts?\'.',
+			action: 'List Veille signals for a project and tab (competitors|news|legal|mentions)',
+			description: 'List Veille signals for a project and tab (competitors|news|legal|mentions). Returns a paginated feed of competitor signals, sector news, legal alerts or brand mentions detected for the project. Read-only. Use to answer \'What\'s new with my competitors?\', \'Any regulatory alerts?\' or \'What are people saying about us?\'.',
 			routeSpec: {"method":"GET","path":"/api/projects/{project_id}/veille/signals","queryParams":["tab","limit","cursor"]},
 			properties: [
 				{
@@ -1561,11 +1561,12 @@ export const projectsResource: GeneratedResource = {
 							displayName: 'Tab',
 							name: 'tab',
 							type: 'options',
-							description: 'Feed to read — \'competitors\' (default), \'news\' or \'legal\'',
+							description: 'Feed to read — \'competitors\' (default), \'news\', \'legal\' or \'mentions\'',
 							default: 'competitors',
 							options: [
 								{ name: 'Competitors', value: 'competitors' },
 								{ name: 'Legal', value: 'legal' },
+								{ name: 'Mentions', value: 'mentions' },
 								{ name: 'News', value: 'news' },
 							],
 						},
@@ -1593,8 +1594,8 @@ export const projectsResource: GeneratedResource = {
 		{
 			value: 'veilleMarkTabSeen',
 			name: 'Veille Mark Tab Seen',
-			action: 'Mark a Veille feed tab (competitors | news | legal) as seen for the user, clearing its unread badge',
-			description: 'Mark a Veille feed tab (competitors | news | legal) as seen for the user, clearing its unread badge. Use after summarising a feed to the user so the badge reflects reality.',
+			action: 'Mark a Veille feed tab (competitors | news | legal | mentions) as seen for the user, clearing its unread badge',
+			description: 'Mark a Veille feed tab (competitors | news | legal | mentions) as seen for the user, clearing its unread badge. Use after summarising a feed to the user so the badge reflects reality.',
 			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/veille/seen","queryParams":[]},
 			properties: [
 				{
@@ -1621,6 +1622,7 @@ export const projectsResource: GeneratedResource = {
 							options: [
 								{ name: 'Competitors', value: 'competitors' },
 								{ name: 'Legal', value: 'legal' },
+								{ name: 'Mentions', value: 'mentions' },
 								{ name: 'News', value: 'news' },
 							],
 						},
@@ -1967,6 +1969,44 @@ export const projectsResource: GeneratedResource = {
 								{ name: 'National', value: 'national' },
 							],
 						},
+					],
+				}
+			],
+		},
+		{
+			value: 'veilleUpdateSignalStatus',
+			name: 'Veille Update Signal Status',
+			action: 'Set the processing status of a Veille signal: \'open\' (default — still to review, the only status the Radar shows by default), \'done\' (handled), or \'follow_up\' (park it for later)',
+			description: 'Set the processing status of a Veille signal: \'open\' (default — still to review, the only status the Radar shows by default), \'done\' (handled), or \'follow_up\' (park it for later)',
+			routeSpec: {"method":"PATCH","path":"/api/projects/{project_id}/veille/signals/{signal_id}/status","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project ID the signal belongs to (required — enforces tenant isolation)',
+					default: '',
+				},
+				{
+					displayName: 'Signal ID',
+					name: 'signal_id',
+					type: 'string',
+					required: true,
+					description: 'Signal ID to update (required)',
+					default: '',
+				},
+				{
+					displayName: 'Status',
+					name: 'status',
+					type: 'options',
+					required: true,
+					description: 'New processing status (required)',
+					default: 'done',
+					options: [
+						{ name: 'Done', value: 'done' },
+						{ name: 'Follow Up', value: 'follow_up' },
+						{ name: 'Open', value: 'open' },
 					],
 				}
 			],

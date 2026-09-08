@@ -8,8 +8,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'cmActionsList',
 			name: 'Cm Actions List',
-			action: 'List CM Agent audit feed (drafts, publications, replies, escalations)',
-			description: 'List CM Agent audit feed (drafts, publications, replies, escalations). Paginated.',
+			action: 'List CM Collaborator audit feed (drafts, publications, replies, escalations)',
+			description: 'List CM Collaborator audit feed (drafts, publications, replies, escalations). Paginated.',
 			routeSpec: {"method":"GET","path":"/api/aurentia/agents/community-manager/actions","queryParams":["assignmentId","actionTypes","mode","from","to","limit","offset"]},
 			properties: [
 				{
@@ -75,8 +75,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'cmAssignmentsCreate',
 			name: 'Cm Assignments Create',
-			action: 'Create a new Community Manager Agent assignment (defaults to suggest mode, 60min cadence)',
-			description: 'Create a new Community Manager Agent assignment (defaults to suggest mode, 60min cadence)',
+			action: 'Create a new Community Manager Collaborator assignment (defaults to suggest mode, 60min cadence)',
+			description: 'Create a new Community Manager Collaborator assignment (defaults to suggest mode, 60min cadence)',
 			routeSpec: {"method":"POST","path":"/api/aurentia/agents/community-manager/assignments","queryParams":[]},
 			properties: [
 				{
@@ -154,8 +154,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'cmAssignmentsDelete',
 			name: 'Cm Assignments Delete',
-			action: 'Delete a CM Agent assignment (and all its audit rows via cascade)',
-			description: 'Delete a CM Agent assignment (and all its audit rows via cascade)',
+			action: 'Delete a CM Collaborator assignment (and all its audit rows via cascade)',
+			description: 'Delete a CM Collaborator assignment (and all its audit rows via cascade)',
 			routeSpec: {"method":"DELETE","path":"/api/aurentia/agents/community-manager/assignments/{id}","queryParams":[]},
 			properties: [
 				{
@@ -171,8 +171,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'cmAssignmentsList',
 			name: 'Cm Assignments List',
-			action: 'List Community Manager Agent assignments for the authenticated user',
-			description: 'List Community Manager Agent assignments for the authenticated user',
+			action: 'List Community Manager Collaborator assignments for the authenticated user',
+			description: 'List Community Manager Collaborator assignments for the authenticated user',
 			routeSpec: {"method":"GET","path":"/api/aurentia/agents/community-manager/assignments","queryParams":[]},
 			properties: [
 
@@ -181,8 +181,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'cmAssignmentsUpdate',
 			name: 'Cm Assignments Update',
-			action: 'Update a CM Agent assignment (mode, guardrails, cadence)',
-			description: 'Update a CM Agent assignment (mode, guardrails, cadence)',
+			action: 'Update a CM Collaborator assignment (mode, guardrails, cadence)',
+			description: 'Update a CM Collaborator assignment (mode, guardrails, cadence)',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/agents/community-manager/assignments/{id}","queryParams":[]},
 			properties: [
 				{
@@ -261,8 +261,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'cmDraftsApprove',
 			name: 'Cm Drafts Approve',
-			action: 'Approve a pending CM Agent draft (ID = social_posts.ID)',
-			description: 'Approve a pending CM Agent draft (ID = social_posts.ID)',
+			action: 'Approve a pending CM Collaborator draft (ID = social_posts.ID)',
+			description: 'Approve a pending CM Collaborator draft (ID = social_posts.ID)',
 			routeSpec: {"method":"POST","path":"/api/aurentia/agents/community-manager/drafts/{id}/approve","queryParams":[]},
 			properties: [
 				{
@@ -278,8 +278,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'cmDraftsPending',
 			name: 'Cm Drafts Pending',
-			action: 'List CM Agent drafts awaiting human review',
-			description: 'List CM Agent drafts awaiting human review',
+			action: 'List CM Collaborator drafts awaiting human review',
+			description: 'List CM Collaborator drafts awaiting human review',
 			routeSpec: {"method":"GET","path":"/api/aurentia/agents/community-manager/drafts","queryParams":["limit"]},
 			properties: [
 				{
@@ -304,8 +304,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'cmDraftsReject',
 			name: 'Cm Drafts Reject',
-			action: 'Reject a pending CM Agent draft',
-			description: 'Reject a pending CM Agent draft',
+			action: 'Reject a pending CM Collaborator draft',
+			description: 'Reject a pending CM Collaborator draft',
 			routeSpec: {"method":"POST","path":"/api/aurentia/agents/community-manager/drafts/{id}/reject","queryParams":[]},
 			properties: [
 				{
@@ -336,8 +336,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'cmKillSwitch',
 			name: 'Cm Kill Switch',
-			action: 'Instantly suspend all autopilot actions for a CM Agent assignment (< 1s response)',
-			description: 'Instantly suspend all autopilot actions for a CM Agent assignment (< 1s response). Pass action=revive to un-kill.',
+			action: 'Instantly suspend all autopilot actions for a CM Collaborateur assignment (< 1s response)',
+			description: 'Instantly suspend all autopilot actions for a CM Collaborateur assignment (< 1s response). Pass action=revive to un-kill.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/agents/community-manager/assignments/{id}/kill","queryParams":["action"]},
 			properties: [
 				{
@@ -378,8 +378,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'cmRunNow',
 			name: 'Cm Run Now',
-			action: 'Trigger a CM Agent run immediately (fire-and-forget, durable workflow)',
-			description: 'Trigger a CM Agent run immediately (fire-and-forget, durable workflow)',
+			action: 'Trigger a CM Collaborator run immediately (fire-and-forget, durable workflow)',
+			description: 'Trigger a CM Collaborator run immediately (fire-and-forget, durable workflow)',
 			routeSpec: {"method":"POST","path":"/api/aurentia/agents/community-manager/assignments/{id}/run-now","queryParams":[]},
 			properties: [
 				{
@@ -418,8 +418,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'cmStatsOverview',
 			name: 'Cm Stats Overview',
-			action: 'CM Agent dashboard counters (this week posts/replies/escalations, pending drafts, credits spent)',
-			description: 'CM Agent dashboard counters (this week posts/replies/escalations, pending drafts, credits spent)',
+			action: 'CM Collaborator dashboard counters (this week posts/replies/escalations, pending drafts, credits spent)',
+			description: 'CM Collaborator dashboard counters (this week posts/replies/escalations, pending drafts, credits spent)',
 			routeSpec: {"method":"GET","path":"/api/aurentia/agents/community-manager/stats","queryParams":[]},
 			properties: [
 
@@ -428,8 +428,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'createScheduledTask',
 			name: 'Create Scheduled Task',
-			action: 'Propose la création d\'une tâche planifiée pour un agent (écrit sur agent_scheduled_tasks, le chemin que le planificateur lit réellement)',
-			description: 'Propose la création d\'une tâche planifiée pour un agent (écrit sur agent_scheduled_tasks, le chemin que le planificateur lit réellement). NE CRÉE RIEN : calcule et rend une proposition (nom, agent, consigne, fréquence, coût estimé) que l\'utilisateur confirme d\'un clic dans le fil — ne dis jamais que la tâche est créée avant ce clic. Appelle-le une fois que tu sais QUEL agent, CE QU\'IL doit faire à chaque exécution, et QUAND. Convertis toi-même la fréquence en cron 5 champs standard (ex \'0 9 * * *\' = tous les jours à 9h) — n\'expose jamais la syntaxe cron à l\'utilisateur, et ne lui demande jamais de l\'écrire.',
+			action: 'Propose la création d\'une tâche planifiée pour un collaborateur (écrit sur agent_scheduled_tasks, le chemin que le planificateur lit réellement)',
+			description: 'Propose la création d\'une tâche planifiée pour un collaborateur (écrit sur agent_scheduled_tasks, le chemin que le planificateur lit réellement). NE CRÉE RIEN : calcule et rend une proposition (nom, collaborateur, consigne, fréquence, coût estimé) que l\'utilisateur confirme d\'un clic dans le fil — ne dis jamais que la tâche est créée avant ce clic. Appelle-le une fois que tu sais QUEL collaborateur, CE QU\'IL doit faire à chaque exécution, et QUAND. Convertis toi-même la fréquence en cron 5 champs standard (ex \'0 9 * * *\' = tous les jours à 9h) — n\'expose jamais la syntaxe cron à l\'utilisateur, et ne lui demande jamais de l\'écrire.',
 			routeSpec: {"method":"POST","path":"/api/agents/scheduled-tasks/propose","queryParams":[]},
 			properties: [
 				{
@@ -437,7 +437,7 @@ export const agentsResource: GeneratedResource = {
 					name: 'agent_id',
 					type: 'string',
 					required: true,
-					description: 'ID de l\'agent qui exécutera la tâche',
+					description: 'ID du collaborateur qui exécutera la tâche',
 					default: '',
 				},
 				{
@@ -445,7 +445,7 @@ export const agentsResource: GeneratedResource = {
 					name: 'name',
 					type: 'string',
 					required: true,
-					description: 'Nom court de la tâche, ex: "Briefing quotidien"',
+					description: 'Nom court de la tâche, ex: "Briefing quotidien" (200 caractères max)',
 					default: '',
 				},
 				{
@@ -487,7 +487,7 @@ export const agentsResource: GeneratedResource = {
 							displayName: 'Task Prompt',
 							name: 'task_prompt',
 							type: 'string',
-							description: 'Ce que l\'agent doit faire à CHAQUE exécution planifiée — texte libre, max 4000 caractères. Avec une rotation, utilise le placeholder {rotation} pour insérer l\'élément du jour (ex: \'Lance un batch de prospection sur la région {rotation}\').',
+							description: 'Ce que le collaborateur doit faire à CHAQUE exécution planifiée — texte libre, max 4000 caractères. INTERDIT d\'y écrire un nom d\'outil machine (`list_standalone_tasks`, `web_search`, `ai_compose_email`…) : cette consigne est AFFICHÉE telle quelle sur la carte de la tâche et dans la modale, et un nom de fonction sous les yeux de l\'utilisateur est un défaut produit. Décris l\'INTENTION en langage naturel (« fais la synthèse de mes tâches du jour », « vérifie les réponses en attente de validation ») — le collaborateur choisira l\'outil au moment de l\'exécution, il n\'a pas besoin qu\'on le lui nomme. Avec une rotation, utilise le placeholder {rotation} pour insérer l\'élément du jour (ex: \'Lance un batch de prospection sur la région {rotation}\').',
 							default: '',
 						},
 						{
@@ -504,8 +504,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'getAgent',
 			name: 'Get Agent',
-			action: 'Config and definition of an agent',
-			description: 'Config and definition of an agent',
+			action: 'Config and definition of an AI collaborator',
+			description: 'Config and definition of an AI collaborator',
 			routeSpec: {"method":"GET","path":"/api/agents/{agent_id}","queryParams":[]},
 			properties: [
 				{
@@ -521,8 +521,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'getCriticDecision',
 			name: 'Get Critic Decision',
-			action: 'Get a critic agent decision (LLM judge) by ID',
-			description: 'Get a critic agent decision (LLM judge) by ID. Returns scores (factuality, relevance, brand_voice, risk, overall), decision (allow/regenerate/downgrade_to_suggest/block), reasoning, latency, cost.',
+			action: 'Get a critic collaborator decision (LLM judge) by ID',
+			description: 'Get a critic collaborator decision (LLM judge) by ID. Returns scores (factuality, relevance, brand_voice, risk, overall), decision (allow/regenerate/downgrade_to_suggest/block), reasoning, latency, cost.',
 			routeSpec: {"method":"GET","path":"/api/agents/critic/runs/{critic_run_id}","queryParams":[]},
 			properties: [
 				{
@@ -538,8 +538,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'listAgentRuns',
 			name: 'List Agent Runs',
-			action: 'Execution history of an agent',
-			description: 'Execution history of an agent',
+			action: 'Execution history of an AI collaborator',
+			description: 'Execution history of an AI collaborator',
 			routeSpec: {"method":"GET","path":"/api/agents/{agent_id}/runs","queryParams":[]},
 			properties: [
 				{
@@ -555,8 +555,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'listAgents',
 			name: 'List Agents',
-			action: 'List all AI agents with their config',
-			description: 'List all AI agents with their config',
+			action: 'List all AI collaborators with their config',
+			description: 'List all AI collaborators with their config',
 			routeSpec: {"method":"GET","path":"/api/agents","queryParams":[]},
 			properties: [
 
@@ -565,8 +565,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'replayAgentRun',
 			name: 'Replay Agent Run',
-			action: 'Replay or branch a previous agent run with optional overrides on system prompt or observations',
-			description: 'Replay or branch a previous agent run with optional overrides on system prompt or observations. Mode "dry_run" simulates actions without executing them; "live" executes them. Returns the new branch run ID and plan. PRD-93.',
+			action: 'Replay or branch a previous AI collaborator run with optional overrides on system prompt or observations',
+			description: 'Replay or branch a previous AI collaborator run with optional overrides on system prompt or observations. Mode "dry_run" simulates actions without executing them; "live" executes them. Returns the new branch run ID and plan. PRD-93.',
 			routeSpec: {"method":"POST","path":"/api/agents/runs/{run_id}/replay","queryParams":[]},
 			properties: [
 				{
@@ -610,8 +610,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'runAgent',
 			name: 'Run Agent',
-			action: 'Run an agent manually',
-			description: 'Run an agent manually',
+			action: 'Run an AI collaborator manually',
+			description: 'Run an AI collaborator manually',
 			routeSpec: {"method":"POST","path":"/api/agents/{agent_id}/run","queryParams":[]},
 			properties: [
 				{
@@ -627,8 +627,8 @@ export const agentsResource: GeneratedResource = {
 		{
 			value: 'stopAgent',
 			name: 'Stop Agent',
-			action: 'Stop a running agent',
-			description: 'Stop a running agent',
+			action: 'Stop a running AI collaborator',
+			description: 'Stop a running AI collaborator',
 			routeSpec: {"method":"POST","path":"/api/agents/{agent_id}/stop","queryParams":[]},
 			properties: [
 				{
@@ -642,10 +642,42 @@ export const agentsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'suggestScheduledTasks',
+			name: 'Suggest Scheduled Tasks',
+			action: 'Propose 3 a 5 taches automatisees SUR MESURE pour cet utilisateur, deduites de ses skills activees, de ses integrations connectees, de l\'etat de son projet et des taches qu\'il a deja (jamais de doublon)',
+			description: 'Propose 3 a 5 taches automatisees SUR MESURE pour cet utilisateur, deduites de ses skills activees, de ses integrations connectees, de l\'etat de son projet et des taches qu\'il a deja (jamais de doublon). NE CREE RIEN et NE COUTE RIEN : rends les propositions a l\'utilisateur, il choisit. Appelle-le quand il demande quoi automatiser, ce que tu pourrais faire pour lui en recurrent, ou quand il ouvre le sujet des taches planifiees sans savoir par ou commencer. Si l\'utilisateur veut d\'AUTRES idees que celles rendues, dis-lui d\'utiliser le bouton Regenerer de la page des taches automatisees : la regeneration coute un credit et reste une action humaine.',
+			routeSpec: {"method":"GET","path":"/api/agents/scheduled-tasks/recommendations","queryParams":["project_id","agent_id"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Agent ID',
+							name: 'agent_id',
+							type: 'string',
+							description: 'Restreint les propositions a ce qu\'un collaborateur precis peut prendre en charge. Omets pour laisser le moteur choisir le bon collaborateur pour chaque proposition.',
+							default: '',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'project_id',
+							type: 'string',
+							description: 'Projet dont il faut tenir compte pour contextualiser les propositions. Omets pour des propositions hors projet.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'updateAgentConfig',
 			name: 'Update Agent Config',
-			action: 'Enable/disable an agent or change its config',
-			description: 'Enable/disable an agent or change its config',
+			action: 'Enable/disable an AI collaborator or change its config',
+			description: 'Enable/disable an AI collaborator or change its config',
 			routeSpec: {"method":"PUT","path":"/api/agents/{agent_id}","queryParams":[]},
 			properties: [
 				{

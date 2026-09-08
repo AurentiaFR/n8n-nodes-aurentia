@@ -394,7 +394,7 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'createContactFromRedditThread',
 			name: 'Create Contact From Reddit Thread',
 			action: 'Reddit veille → CRM: convert a high-intent veille thread into a CRM contact (the thread author becomes a lead)',
-			description: 'Reddit veille → CRM: convert a high-intent veille thread into a CRM contact (the thread author becomes a lead). Creates a crm_contacts row + provenance note in the given project (defaults to your latest). Idempotent — a re-call returns the already-linked contact.',
+			description: 'Reddit veille → CRM: convert a high-intent veille thread into a CRM contact (the thread author becomes a lead). Creates a crm_contacts row + provenance note. Idempotent — a re-call returns the already-linked contact. `projectId` (mandatory) is the veille project the thread belongs to — it scopes which thread can be read/converted. `crmProjectId` (optional) is the destination Aurentia project for the CRM contact/note if different from the veille project; defaults to `projectId`.',
 			routeSpec: {"method":"POST","path":"/api/social-media/reddit/threads/{thread_id}/create-contact","queryParams":[]},
 			properties: [
 				{
@@ -403,6 +403,14 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'Reddit veille thread ID',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Veille project the thread belongs to — mandatory scoping',
 					default: '',
 				},
 				{
@@ -420,10 +428,10 @@ export const socialMediaResource: GeneratedResource = {
 							default: '',
 						},
 						{
-							displayName: 'Project ID',
-							name: 'projectId',
+							displayName: 'CRM Project ID',
+							name: 'crmProjectId',
 							type: 'string',
-							description: 'Project to attach the contact to (defaults to your latest)',
+							description: 'Destination Aurentia project for the CRM contact, if different from projectId. Defaults to projectId.',
 							default: '',
 						},
 					],
@@ -464,77 +472,6 @@ export const socialMediaResource: GeneratedResource = {
 							type: 'json',
 							description: 'Provide a JSON array',
 							default: '[]',
-						},
-					],
-				}
-			],
-		},
-		{
-			value: 'createListeningTopic',
-			name: 'Create Listening Topic',
-			action: 'Create a brand listening topic that polls LinkedIn / Twitter / Facebook for mentions every 30min',
-			description: 'Create a brand listening topic that polls LinkedIn / Twitter / Facebook for mentions every 30min',
-			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/listening-topics","queryParams":[]},
-			properties: [
-				{
-					displayName: 'Name',
-					name: 'name',
-					type: 'string',
-					required: true,
-					default: '',
-				},
-				{
-					displayName: 'Keyword',
-					name: 'keyword',
-					type: 'string',
-					required: true,
-					default: '',
-				},
-				{
-					displayName: 'Platforms',
-					name: 'platforms',
-					type: 'json',
-					required: true,
-					description: 'Provide a JSON array',
-					default: '[]',
-				},
-				{
-					displayName: 'Additional Fields',
-					name: 'additionalFields',
-					type: 'collection',
-					placeholder: 'Add Field',
-					default: {},
-					options: [
-						{
-							displayName: 'Cost Credits Per Poll',
-							name: 'cost_credits_per_poll',
-							type: 'number',
-							default: 0,
-						},
-						{
-							displayName: 'Exclude Keywords',
-							name: 'exclude_keywords',
-							type: 'json',
-							description: 'Provide a JSON array',
-							default: '[]',
-						},
-						{
-							displayName: 'Min Engagement',
-							name: 'min_engagement',
-							type: 'number',
-							default: 0,
-						},
-						{
-							displayName: 'Topic Kind',
-							name: 'topic_kind',
-							type: 'options',
-							default: 'brand',
-							options: [
-								{ name: 'Brand', value: 'brand' },
-								{ name: 'Competitor', value: 'competitor' },
-								{ name: 'Custom', value: 'custom' },
-								{ name: 'Industry', value: 'industry' },
-							],
 						},
 					],
 				}
@@ -713,13 +650,26 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'createPostsBatch',
 			name: 'Create Posts Batch',
-			action: 'Create posts in bulk',
-			description: 'Create posts in bulk',
+			action: 'Run a bulk ACTION on existing posts — approve, schedule, delete or archive several at once (approuver plusieurs posts, programmer mes posts en lot, supprimer ces posts, archiver en masse; bulk approve, schedule several posts)',
+			description: 'Run a bulk ACTION on existing posts — approve, schedule, delete or archive several at once (approuver plusieurs posts, programmer mes posts en lot, supprimer ces posts, archiver en masse; bulk approve, schedule several posts). NOT a creation tool. Scheduling requires a connected social account for EVERY targeted platform of EVERY post; posts that fail this check are returned in `failed` and the others still go through.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/posts/batch","queryParams":[]},
 			properties: [
 				{
-					displayName: 'Posts',
-					name: 'posts',
+					displayName: 'Action',
+					name: 'action',
+					type: 'options',
+					required: true,
+					default: 'approve',
+					options: [
+						{ name: 'Approve', value: 'approve' },
+						{ name: 'Archive', value: 'archive' },
+						{ name: 'Delete', value: 'delete' },
+						{ name: 'Schedule', value: 'schedule' },
+					],
+				},
+				{
+					displayName: 'Post IDs',
+					name: 'postIds',
 					type: 'json',
 					required: true,
 					description: 'Provide a JSON array',
@@ -733,9 +683,51 @@ export const socialMediaResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Project ID',
-							name: 'project_id',
-							type: 'string',
+							displayName: 'Payload',
+							name: 'payload',
+							type: 'json',
+							description: 'Action parameters — for `schedule`, `{ "scheduled_at": "&lt;ISO date&gt;" }`. (provide a JSON object).',
+							default: '{}',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createRedditTag',
+			name: 'Create Reddit Tag',
+			action: 'Create a manual tag (name + color) on a Reddit veille project, to sort entries by hand',
+			description: 'Create a manual tag (name + color) on a Reddit veille project, to sort entries by hand. Names are unique per project, case-insensitive — creating an existing one returns a conflict rather than a duplicate.',
+			routeSpec: {"method":"POST","path":"/api/social-media/reddit/tags","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Reddit veille project ID — mandatory scoping',
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: 'Tag name (max 50 chars)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							description: 'Hex color #rrggbb. Optional.',
 							default: '',
 						},
 					],
@@ -868,23 +860,6 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
-			value: 'deleteListeningTopic',
-			name: 'Delete Listening Topic',
-			action: 'Delete a brand listening topic',
-			description: 'Delete a brand listening topic',
-			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/listening-topics/{id}","queryParams":[]},
-			properties: [
-				{
-					displayName: 'ID',
-					name: 'id',
-					type: 'string',
-					required: true,
-					description: 'The ID for this operation',
-					default: '',
-				}
-			],
-		},
-		{
 			value: 'deleteMedia',
 			name: 'Delete Media',
 			action: 'Delete a media file',
@@ -948,6 +923,31 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The account ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteRedditTag',
+			name: 'Delete Reddit Tag',
+			action: 'Delete a manual Reddit veille tag',
+			description: 'Delete a manual Reddit veille tag. The tag is also detached from every entry that carried it.',
+			routeSpec: {"method":"DELETE","path":"/api/social-media/reddit/tags/{tag_id}","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Tag ID',
+					name: 'tag_id',
+					type: 'string',
+					required: true,
+					description: 'Tag ID from list_reddit_tags',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Reddit veille project ID — mandatory scoping',
 					default: '',
 				}
 			],
@@ -1061,6 +1061,106 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'editOwnSocialComment',
+			name: 'Edit Own Social Comment',
+			action: 'Rewrite a comment WE published ourselves (our own reply to someone), in place on the network, via Bundle.social',
+			description: 'Rewrite a comment WE published ourselves (our own reply to someone), in place on the network, via Bundle.social. Use it to fix a typo or a wrong link in a reply already sent. This is NOT moderation of someone else\'s comment — for that use `moderate_comment`. Ownership is proven against our own inbox rows before any network call: a third party\'s comment ID is rejected. LinkedIn replies are routed to the native LinkedIn endpoint, every other network to the generic comment endpoint. The reply text stored on the inbox item is realigned after the network accepts.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/inbox/comments/{comment_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Comment ID',
+					name: 'comment_id',
+					type: 'string',
+					required: true,
+					description: 'Bundle.social comment ID of OUR reply (social_inbox_items.reply_external_id)',
+					default: '',
+				},
+				{
+					displayName: 'Text',
+					name: 'text',
+					type: 'string',
+					required: true,
+					description: 'The full new text of our comment (it replaces the old one). No minimum length — just not empty.',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'Project the inbox item belongs to',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'editPublishedPostOnPlatform',
+			name: 'Edit Published Post On Platform',
+			action: 'Fix a post that is ALREADY LIVE, in place on the network (LinkedIn or YouTube only — the two platforms Bundle.social can edit after publication)',
+			description: 'Fix a post that is ALREADY LIVE, in place on the network (LinkedIn or YouTube only — the two platforms Bundle.social can edit after publication). Use this to correct a typo, a wrong link or wrong YouTube metadata on a post that is already public; use `update_post` instead for a draft, since it only rewrites our own copy and never touches the network. LinkedIn takes `description` (the new post text). YouTube takes `metadata` (title, description, tags, categoryId, privacyStatus, defaultLanguage, defaultAudioLanguage) — send only the fields to change. The platform row must be in `published` state, otherwise the call is rejected without any network request. There is no undo: the network does not keep the previous version.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/posts/{post_id}/edit-on-platform","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Post ID',
+					name: 'post_id',
+					type: 'string',
+					required: true,
+					description: 'Aurentia post ID (social_posts.ID) — NOT the network post ID',
+					default: '',
+				},
+				{
+					displayName: 'Platform',
+					name: 'platform',
+					type: 'options',
+					required: true,
+					description: 'The live platform to fix. Any other platform is rejected: Bundle.social cannot edit them after publication.',
+					default: 'linkedin',
+					options: [
+						{ name: 'Linkedin', value: 'linkedin' },
+						{ name: 'Youtube', value: 'youtube' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							description: 'LinkedIn only — the full new text of the post (it replaces the old one)',
+							default: '',
+						},
+						{
+							displayName: 'Metadata',
+							name: 'metadata',
+							type: 'json',
+							description: 'YouTube only — { title?, description?, tags?: string[], categoryId?, privacyStatus?: private|unlisted|public, defaultLanguage?, defaultAudioLanguage? }. Only the supplied fields change. (provide a JSON object)',
+							default: '{}',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'Project the post belongs to',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'fetchRssFeedNow',
 			name: 'Fetch Rss Feed Now',
 			action: 'Trigger an immediate fetch of an RSS feed (max 25 items)',
@@ -1126,7 +1226,7 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'generateCarousel',
 			name: 'Generate Carousel',
 			action: 'AI-generate a multi-network carousel from a brief',
-			description: 'AI-generate a multi-network carousel from a brief. Charges 5 credits. Returns the rendered PNGs grouped by aspect ratio (1:1, 4:5, 9:16, 1.91:1, 2:3). Networks sharing the same aspect are merged into 1 rendering. The Aurentia footer is auto-appended to the final CTA slide unless aurentiaFooter=false.',
+			description: 'AI-generate a multi-network carousel from a brief. Charges 5 credits. Returns the rendered PNGs grouped by aspect ratio (1:1, 4:5, 9:16, 1.91:1, 2:3). Networks sharing the same aspect are merged into 1 rendering. The Aurentia badge on the final CTA slide is opt-in — pass aurentiaFooter=true to add it.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels","queryParams":[]},
 			properties: [
 				{
@@ -1344,7 +1444,7 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'generateRedditPost',
 			name: 'Generate Reddit Post',
 			action: 'PRD-221 — Generate an original native Reddit post (title + body) in your brand voice, subreddit-rule aware (flair, length)',
-			description: 'PRD-221 — Generate an original native Reddit post (title + body) in your brand voice, subreddit-rule aware (flair, length). Returns draft + rationale + risk level. Charges 2 credits (suggest).',
+			description: 'PRD-221 — Generate an original native Reddit post (title + body) in your brand voice, subreddit-rule aware (flair, length). Returns draft + rationale + risk level. Charges 2 credits (suggest). `projectId` (mandatory) is the veille project the generated post/reply row is stamped to; `contextProjectId` (optional) overrides the brand-voice context (an Aurentia project or Entreprises agency ID) and defaults to `projectId`.',
 			routeSpec: {"method":"POST","path":"/api/social-media/reddit/posts","queryParams":[]},
 			properties: [
 				{
@@ -1356,12 +1456,27 @@ export const socialMediaResource: GeneratedResource = {
 					default: '',
 				},
 				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Veille project — mandatory scoping',
+					default: '',
+				},
+				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
 					type: 'collection',
 					placeholder: 'Add Field',
 					default: {},
 					options: [
+						{
+							displayName: 'Context Project ID',
+							name: 'contextProjectId',
+							type: 'string',
+							description: 'Optional brand-voice context override, defaults to projectId',
+							default: '',
+						},
 						{
 							displayName: 'Mode',
 							name: 'mode',
@@ -1371,12 +1486,6 @@ export const socialMediaResource: GeneratedResource = {
 								{ name: 'Autopilot', value: 'autopilot' },
 								{ name: 'Suggest', value: 'suggest' },
 							],
-						},
-						{
-							displayName: 'Project ID',
-							name: 'projectId',
-							type: 'string',
-							default: '',
 						},
 						{
 							displayName: 'Topic',
@@ -1393,9 +1502,17 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'generateRedditReply',
 			name: 'Generate Reddit Reply',
 			action: 'Generate a voice-matched Reddit reply draft for a veille thread (respects the subreddit rules)',
-			description: 'Generate a voice-matched Reddit reply draft for a veille thread (respects the subreddit rules). Returns draft + rationale + risk level. Charges 2 credits (suggest).',
+			description: 'Generate a voice-matched Reddit reply draft for a veille thread (respects the subreddit rules). Returns draft + rationale + risk level. Charges 2 credits (suggest). `projectId` (mandatory) is the veille project that scopes the thread; `contextProjectId` (optional) overrides the brand-voice context (an Aurentia project or Entreprises agency ID) and defaults to `projectId`.',
 			routeSpec: {"method":"POST","path":"/api/social-media/reddit/replies","queryParams":[]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Veille project — mandatory scoping',
+					default: '',
+				},
 				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
@@ -1403,6 +1520,13 @@ export const socialMediaResource: GeneratedResource = {
 					placeholder: 'Add Field',
 					default: {},
 					options: [
+						{
+							displayName: 'Context Project ID',
+							name: 'contextProjectId',
+							type: 'string',
+							description: 'Optional brand-voice context override, defaults to projectId',
+							default: '',
+						},
 						{
 							displayName: 'Match ID',
 							name: 'matchId',
@@ -1419,12 +1543,6 @@ export const socialMediaResource: GeneratedResource = {
 								{ name: 'Autopilot', value: 'autopilot' },
 								{ name: 'Suggest', value: 'suggest' },
 							],
-						},
-						{
-							displayName: 'Project ID',
-							name: 'projectId',
-							type: 'string',
-							default: '',
 						},
 					],
 				}
@@ -2349,9 +2467,17 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'listHighIntentMatches',
 			name: 'List High Intent Matches',
 			action: 'List Reddit veille threads ranked by buying intent',
-			description: 'List Reddit veille threads ranked by buying intent. Filter by intent label (high/medium/low) and minScore. Use to surface the hottest opportunities.',
-			routeSpec: {"method":"GET","path":"/api/social-media/reddit/threads","queryParams":["intent","minScore","status","limit"]},
+			description: 'List Reddit veille threads ranked by buying intent. Filter by intent label (high/medium/low), minScore, and manual tag (`tagId`, cf. list_reddit_tags). Use to surface the hottest opportunities. `projectId` (mandatory since Lot P1) scopes which veille threads are visible.',
+			routeSpec: {"method":"GET","path":"/api/social-media/reddit/threads","queryParams":["projectId","intent","minScore","status","tagId","limit"]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Reddit veille project ID — mandatory scoping',
+					default: '',
+				},
 				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
@@ -2388,6 +2514,13 @@ export const socialMediaResource: GeneratedResource = {
 							displayName: 'Status',
 							name: 'status',
 							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Tag ID',
+							name: 'tagId',
+							type: 'string',
+							description: 'Only entries carrying this manual tag — a `reddit_tags` ID, use list_reddit_tags to discover them',
 							default: '',
 						},
 					],
@@ -2506,16 +2639,6 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
-			value: 'listListeningTopics',
-			name: 'List Listening Topics',
-			action: 'List active brand listening topics for the user',
-			description: 'List active brand listening topics for the user',
-			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/listening-topics","queryParams":[]},
-			properties: [
-
-			],
-		},
-		{
 			value: 'listMediaLibrary',
 			name: 'List Media Library',
 			action: 'List user media library assets (Bundle.social uploads cached with metadata) — PRD-186',
@@ -2579,6 +2702,33 @@ export const socialMediaResource: GeneratedResource = {
 					required: true,
 					default: '',
 				}
+			],
+		},
+		{
+			value: 'listRedditTags',
+			name: 'List Reddit Tags',
+			action: 'List the manual tags of a Reddit veille project (ID, name, color)',
+			description: 'List the manual tags of a Reddit veille project (ID, name, color). Call this before tagging an entry or filtering by tag — every other tag tool needs an ID from here. Read-only, free.',
+			routeSpec: {"method":"GET","path":"/api/social-media/reddit/tags","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Reddit veille project ID — mandatory scoping',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listRedditVeilleProjects',
+			name: 'List Reddit Veille Projects',
+			action: 'List the projects you can scope a Reddit veille to (ID + name)',
+			description: 'List the projects you can scope a Reddit veille to (ID + name). Call this first when a Reddit veille tool asks for a `projectId` and you do not have one — every other Reddit veille tool requires it. Only returns projects you own; client spaces are excluded (no collaborator run is allowed on them). Read-only, free.',
+			routeSpec: {"method":"GET","path":"/api/social-media/reddit/projects","queryParams":[]},
+			properties: [
+
 			],
 		},
 		{
@@ -2856,23 +3006,6 @@ export const socialMediaResource: GeneratedResource = {
 					required: true,
 					description: 'Whether true to pin, false to unpin',
 					default: false,
-				}
-			],
-		},
-		{
-			value: 'pollListeningTopicNow',
-			name: 'Poll Listening Topic Now',
-			action: 'Trigger an immediate poll for a listening topic (durable workflow, credits debited)',
-			description: 'Trigger an immediate poll for a listening topic (durable workflow, credits debited)',
-			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/listening-topics/{id}/poll-now","queryParams":[]},
-			properties: [
-				{
-					displayName: 'ID',
-					name: 'id',
-					type: 'string',
-					required: true,
-					description: 'The ID for this operation',
-					default: '',
 				}
 			],
 		},
@@ -3230,8 +3363,8 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'publishBatch',
 			name: 'Publish Batch',
-			action: 'Publish posts in bulk',
-			description: 'Publish posts in bulk',
+			action: 'Publish posts in bulk (publier en masse, publier plusieurs posts d\'un coup, tout publier maintenant; bulk publish, publish several posts at once)',
+			description: 'Publish posts in bulk (publier en masse, publier plusieurs posts d\'un coup, tout publier maintenant; bulk publish, publish several posts at once). A connected social account is required for EVERY targeted platform of EVERY post; posts that fail this check come back with a `failed` status in `results`, the others still go through.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/publish/batch","queryParams":[]},
 			properties: [
 				{
@@ -3247,8 +3380,8 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'publishPost',
 			name: 'Publish Post',
-			action: 'Publish a post to the platform',
-			description: 'Publish a post to the platform',
+			action: 'Publish a post to the platform (publier sur LinkedIn, poster sur Instagram, envoyer mon post, publish to my networks)',
+			description: 'Publish a post to the platform (publier sur LinkedIn, poster sur Instagram, envoyer mon post, publish to my networks). A connected social account is required for EVERY targeted platform, otherwise publishing is rejected with NO_CONNECTED_ACCOUNT and the list of missing platforms.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/publish/{post_id}","queryParams":[]},
 			properties: [
 				{
@@ -3264,8 +3397,8 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'publishPostNow',
 			name: 'Publish Post Now',
-			action: 'Publish a post immediately',
-			description: 'Publish a post immediately',
+			action: 'Publish a post immediately (publier maintenant, poster maintenant, diffuser mon post, post it now, publish right away)',
+			description: 'Publish a post immediately (publier maintenant, poster maintenant, diffuser mon post, post it now, publish right away). A connected social account is required for EVERY targeted platform, otherwise publishing is rejected with NO_CONNECTED_ACCOUNT and the list of missing platforms.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/posts/{post_id}/publish-now","queryParams":[]},
 			properties: [
 				{
@@ -3362,9 +3495,17 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'redditBestTimes',
 			name: 'Reddit Best Times',
 			action: 'PRD-221 — Best posting windows (weekday + hour, UTC) for a subreddit, derived from the threads already collected',
-			description: 'PRD-221 — Best posting windows (weekday + hour, UTC) for a subreddit, derived from the threads already collected. Falls back to generic windows when there is not enough signal.',
-			routeSpec: {"method":"GET","path":"/api/social-media/reddit/best-times","queryParams":["subreddit"]},
+			description: 'PRD-221 — Best posting windows (weekday + hour, UTC) for a subreddit, derived from the threads already collected. Falls back to generic windows when there is not enough signal. `projectId` (mandatory since Lot P1) scopes which collected threads are used.',
+			routeSpec: {"method":"GET","path":"/api/social-media/reddit/best-times","queryParams":["projectId","subreddit"]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Reddit veille project ID — mandatory scoping',
+					default: '',
+				},
 				{
 					displayName: 'Subreddit',
 					name: 'subreddit',
@@ -3379,10 +3520,17 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'redditDashboard',
 			name: 'Reddit Dashboard',
 			action: 'PRD-221 — Reddit veille daily-loop KPIs: high-intent opportunities still to handle, threads to review, pending reply drafts, and last scan time',
-			description: 'PRD-221 — Reddit veille daily-loop KPIs: high-intent opportunities still to handle, threads to review, pending reply drafts, and last scan time',
-			routeSpec: {"method":"GET","path":"/api/social-media/reddit/dashboard","queryParams":[]},
+			description: 'PRD-221 — Reddit veille daily-loop KPIs: high-intent opportunities still to handle, threads to review, pending reply drafts, and last scan time. `projectId` (mandatory since Lot P1) scopes the counters to that veille project.',
+			routeSpec: {"method":"GET","path":"/api/social-media/reddit/dashboard","queryParams":["projectId"]},
 			properties: [
-
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Reddit veille project ID — mandatory scoping',
+					default: '',
+				}
 			],
 		},
 		{
@@ -3777,9 +3925,17 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'scoreVeilleIntent',
 			name: 'Score Veille Intent',
 			action: 'Score (or re-score) buying intent on Reddit veille threads',
-			description: 'Score (or re-score) buying intent on Reddit veille threads. Without threadIds, scores all unscored threads. Charges 1 credit per batch of ≤25 threads.',
+			description: 'Score (or re-score) buying intent on Reddit veille threads. Without threadIds, scores all unscored threads. Charges 1 credit per batch of ≤25 threads. `projectId` (mandatory since Lot P1) scopes which veille threads are read/scored.',
 			routeSpec: {"method":"POST","path":"/api/social-media/reddit/score-intent","queryParams":[]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Reddit veille project ID — mandatory scoping',
+					default: '',
+				},
 				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
@@ -3933,6 +4089,39 @@ export const socialMediaResource: GeneratedResource = {
 							],
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'setRedditThreadTags',
+			name: 'Set Reddit Thread Tags',
+			action: 'Set the manual tags of a Reddit veille entry (thread or brand mention — same table)',
+			description: 'Set the manual tags of a Reddit veille entry (thread or brand mention — same table). REPLACES the whole list: send every tag the entry should carry, an empty array clears them. Tag IDs must belong to the same project.',
+			routeSpec: {"method":"PUT","path":"/api/social-media/reddit/threads/{thread_id}/tags","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Thread ID',
+					name: 'thread_id',
+					type: 'string',
+					required: true,
+					description: 'Reddit veille thread ID',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Reddit veille project ID — mandatory scoping',
+					default: '',
+				},
+				{
+					displayName: 'Tag IDs',
+					name: 'tagIds',
+					type: 'json',
+					required: true,
+					description: 'Full list of tag IDs the entry should carry (max 20). Use list_reddit_tags. (provide a JSON array)',
+					default: '[]',
 				}
 			],
 		},
@@ -5121,71 +5310,6 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
-			value: 'updateListeningTopic',
-			name: 'Update Listening Topic',
-			action: 'Update an existing brand listening topic',
-			description: 'Update an existing brand listening topic',
-			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/listening-topics/{id}","queryParams":[]},
-			properties: [
-				{
-					displayName: 'ID',
-					name: 'id',
-					type: 'string',
-					required: true,
-					description: 'The ID for this operation',
-					default: '',
-				},
-				{
-					displayName: 'Additional Fields',
-					name: 'additionalFields',
-					type: 'collection',
-					placeholder: 'Add Field',
-					default: {},
-					options: [
-						{
-							displayName: 'Active',
-							name: 'active',
-							type: 'boolean',
-							description: 'Whether to enable active',
-							default: false,
-						},
-						{
-							displayName: 'Exclude Keywords',
-							name: 'exclude_keywords',
-							type: 'json',
-							description: 'Provide a JSON array',
-							default: '[]',
-						},
-						{
-							displayName: 'Keyword',
-							name: 'keyword',
-							type: 'string',
-							default: '',
-						},
-						{
-							displayName: 'Min Engagement',
-							name: 'min_engagement',
-							type: 'number',
-							default: 0,
-						},
-						{
-							displayName: 'Name',
-							name: 'name',
-							type: 'string',
-							default: '',
-						},
-						{
-							displayName: 'Platforms',
-							name: 'platforms',
-							type: 'json',
-							description: 'Provide a JSON array',
-							default: '[]',
-						},
-					],
-				}
-			],
-		},
-		{
 			value: 'updatePillar',
 			name: 'Update Pillar',
 			action: 'Update a content pillar',
@@ -5286,6 +5410,53 @@ export const socialMediaResource: GeneratedResource = {
 						{
 							displayName: 'Username',
 							name: 'username',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateRedditTag',
+			name: 'Update Reddit Tag',
+			action: 'Rename or recolor a manual Reddit veille tag',
+			description: 'Rename or recolor a manual Reddit veille tag',
+			routeSpec: {"method":"PATCH","path":"/api/social-media/reddit/tags/{tag_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Tag ID',
+					name: 'tag_id',
+					type: 'string',
+					required: true,
+					description: 'Tag ID from list_reddit_tags',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Reddit veille project ID — mandatory scoping',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							description: 'Hex color #rrggbb',
+							default: '',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
 							type: 'string',
 							default: '',
 						},

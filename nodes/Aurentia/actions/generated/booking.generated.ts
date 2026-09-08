@@ -561,8 +561,8 @@ export const bookingResource: GeneratedResource = {
 		{
 			value: 'listBookingLeads',
 			name: 'List Booking Leads',
-			action: 'Unconverted leads (filled the form but did not book)',
-			description: 'Unconverted leads (filled the form but did not book). Use to follow up.',
+			action: 'List of unconverted leads (filled the booking form but did not book an appointment)',
+			description: 'List of unconverted leads (filled the booking form but did not book an appointment)',
 			routeSpec: {"method":"GET","path":"/api/booking/leads","queryParams":["bookingPageId","limit"]},
 			properties: [
 				{

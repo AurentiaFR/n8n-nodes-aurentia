@@ -1426,8 +1426,8 @@ export const crmResource: GeneratedResource = {
 		{
 			value: 'listContactActivityEvents',
 			name: 'List Contact Activity Events',
-			action: 'List recent activity events on a CRM contact (auto follow-ups, agent actions, webhook events, manual notes)',
-			description: 'List recent activity events on a CRM contact (auto follow-ups, agent actions, webhook events, manual notes). Free.',
+			action: 'List recent activity events on a CRM contact (auto follow-ups, collaborator actions, webhook events, manual notes)',
+			description: 'List recent activity events on a CRM contact (auto follow-ups, collaborator actions, webhook events, manual notes). Free.',
 			routeSpec: {"method":"GET","path":"/api/aurentia/crm/contacts/{contact_id}/activity","queryParams":["source","type","since","limit","cursor"]},
 			properties: [
 				{
@@ -1557,8 +1557,8 @@ export const crmResource: GeneratedResource = {
 		{
 			value: 'listDealActivityEvents',
 			name: 'List Deal Activity Events',
-			action: 'List recent activity events on a CRM deal (stage changes, won/lost, payments, agent actions)',
-			description: 'List recent activity events on a CRM deal (stage changes, won/lost, payments, agent actions). Free.',
+			action: 'List recent activity events on a CRM deal (stage changes, won/lost, payments, collaborator actions)',
+			description: 'List recent activity events on a CRM deal (stage changes, won/lost, payments, collaborator actions). Free.',
 			routeSpec: {"method":"GET","path":"/api/aurentia/crm/deals/{deal_id}/activity","queryParams":["source","type","since","limit","cursor"]},
 			properties: [
 				{

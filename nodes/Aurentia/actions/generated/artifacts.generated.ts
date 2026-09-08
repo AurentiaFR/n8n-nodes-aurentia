@@ -54,7 +54,7 @@ export const artifactsResource: GeneratedResource = {
 							displayName: 'Project ID',
 							name: 'project_id',
 							type: 'string',
-							description: 'Optional project UUID to bind the artifact to (exempts it from 30-day purge)',
+							description: 'Optional UUID of one of the user\'s Aurentia projects — pins the file to that project. Pinning is what KEEPS a file: an unpinned generated file is deleted 30 days after generation, a pinned one never expires. Pass it only when the file really belongs to that project; never invent an ID.',
 							default: '',
 						},
 						{

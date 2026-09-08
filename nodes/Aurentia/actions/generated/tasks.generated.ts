@@ -1547,8 +1547,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'executeTaskWithAgent',
 			name: 'Execute Task With Agent',
-			action: 'Run the AI agent on a task card: mode "chat" (actionable advice, 1 credit) or "deliverable" (first draft attached to the task, 3 credits)',
-			description: 'Run the AI agent on a task card: mode "chat" (actionable advice, 1 credit) or "deliverable" (first draft attached to the task, 3 credits). Paid AI action — approval-gated.',
+			action: 'Run the AI collaborator on a task card: mode "chat" (actionable advice, 1 credit) or "deliverable" (first draft attached to the task, 3 credits)',
+			description: 'Run the AI collaborator on a task card: mode "chat" (actionable advice, 1 credit) or "deliverable" (first draft attached to the task, 3 credits). Paid AI action — approval-gated.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/cards/{card_id}/agent/execute","queryParams":[]},
 			properties: [
 				{
@@ -1581,7 +1581,7 @@ export const tasksResource: GeneratedResource = {
 							displayName: 'Agent ID',
 							name: 'agentId',
 							type: 'string',
-							description: 'Optional persona agent ID',
+							description: 'Optional persona collaborator ID',
 							default: '',
 						},
 						{
@@ -1956,8 +1956,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'listCardAgentRuns',
 			name: 'List Card Agent Runs',
-			action: 'History of AI agent runs on a task card (last 20)',
-			description: 'History of AI agent runs on a task card (last 20)',
+			action: 'History of AI collaborator runs on a task card (last 20)',
+			description: 'History of AI collaborator runs on a task card (last 20)',
 			routeSpec: {"method":"GET","path":"/api/aurentia/tasks/cards/{card_id}/agent/runs","queryParams":[]},
 			properties: [
 				{

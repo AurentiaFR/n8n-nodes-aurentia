@@ -151,7 +151,7 @@ export const meetingsResource: GeneratedResource = {
 			value: 'listMeetingActionItems',
 			name: 'List Meeting Action Items',
 			action: 'Liste les tâches PROPOSÉES par le compte rendu IA d\'un meeting (en attente de validation)',
-			description: 'Liste les tâches PROPOSÉES par le compte rendu IA d\'un meeting (en attente de validation). Lecture seule — l\'acceptation d\'une proposition reste un geste humain, jamais automatisé par un agent.',
+			description: 'Liste les tâches PROPOSÉES par le compte rendu IA d\'un meeting (en attente de validation). Lecture seule — l\'acceptation d\'une proposition reste un geste humain, jamais automatisé par un collaborateur.',
 			routeSpec: {"method":"GET","path":"/api/aurentia/meetings/{id}/action-items","queryParams":[]},
 			properties: [
 				{

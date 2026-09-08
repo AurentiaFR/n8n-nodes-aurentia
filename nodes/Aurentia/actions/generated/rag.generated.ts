@@ -9,7 +9,7 @@ export const ragResource: GeneratedResource = {
 			value: 'searchKnowledge',
 			name: 'Search Knowledge',
 			action: 'Search your personal knowledge base using semantic vector search',
-			description: 'Search your personal knowledge base using semantic vector search. Returns relevant chunks from your modules, CRM notes, deals, emails, tasks, social posts, and agent insights. Quota-limited by subscription plan. Use project_id to scope results to a specific project.',
+			description: 'Search your personal knowledge base using semantic vector search. Returns relevant chunks from your modules, CRM notes, deals, emails, tasks, social posts, and collaborator insights. Quota-limited by subscription plan. Use project_id to scope results to a specific project.',
 			routeSpec: {"method":"GET","path":"/api/aurentia/rag/search","queryParams":["query","project_id","top_k","source_types"]},
 			properties: [
 				{

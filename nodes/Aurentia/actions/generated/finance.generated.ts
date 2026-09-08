@@ -151,6 +151,73 @@ export const financeResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createProjectFinanceCategory',
+			name: 'Create Project Finance Category',
+			action: 'Create a finance category on an Aurentia PROJECT',
+			description: 'Create a finance category on an Aurentia PROJECT',
+			routeSpec: {"method":"POST","path":"/api/aurentia/finance/categories","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Type',
+					name: 'type',
+					type: 'options',
+					required: true,
+					default: 'credit',
+					options: [
+						{ name: 'Credit', value: 'credit' },
+						{ name: 'Expense', value: 'expense' },
+						{ name: 'Fixed Expense', value: 'fixed_expense' },
+						{ name: 'Revenue', value: 'revenue' },
+						{ name: 'Savings', value: 'savings' },
+						{ name: 'Variable Expense', value: 'variable_expense' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							description: '#RRGGBB',
+							default: '',
+						},
+						{
+							displayName: 'Forecast Line ID',
+							name: 'forecast_line_id',
+							type: 'string',
+							description: 'Optional: ID of the financial_forecast line this category is derived from',
+							default: '',
+						},
+						{
+							displayName: 'Icon',
+							name: 'icon',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createProjectFinanceRecurring',
 			name: 'Create Project Finance Recurring',
 			action: 'Create a recurring rule (rent, subscription, salary…) on an Aurentia PROJECT',

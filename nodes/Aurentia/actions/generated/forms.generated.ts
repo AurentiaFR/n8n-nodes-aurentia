@@ -190,6 +190,133 @@ export const formsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getFormsOverview',
+			name: 'Get Forms Overview',
+			action: 'Aggregated analytics across ALL of the caller\'s accessible forms: total responses, completion rate, median + p90 completion time, forms comparison (velocity vs quality), channel attribution (source → started/completed), status breakdown, payment completion',
+			description: 'Aggregated analytics across ALL of the caller\'s accessible forms: total responses, completion rate, median + p90 completion time, forms comparison (velocity vs quality), channel attribution (source → started/completed), status breakdown, payment completion. Rates are null under 10 observations — never a silently-rounded 0.',
+			routeSpec: {"method":"GET","path":"/api/forms/analytics","queryParams":["period","customStart","customEnd"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Custom End',
+							name: 'customEnd',
+							type: 'string',
+							description: 'ISO date, required when period=custom',
+							default: '',
+						},
+						{
+							displayName: 'Custom Start',
+							name: 'customStart',
+							type: 'string',
+							description: 'ISO date, required when period=custom',
+							default: '',
+						},
+						{
+							displayName: 'Period',
+							name: 'period',
+							type: 'options',
+							default: '12m',
+							options: [
+								{ name: '12m', value: '12m' },
+								{ name: '30d', value: '30d' },
+								{ name: '7d', value: '7d' },
+								{ name: '90d', value: '90d' },
+								{ name: 'Custom', value: 'custom' },
+								{ name: 'YTD', value: 'YTD' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'getFormsRecommendations',
+			name: 'Get Forms Recommendations',
+			action: 'Deterministic, rule-based recommendations over the caller\'s forms: which forms perform best and why, which field drives abandonment, which acquisition channel converts vs wastes traffic, silent forms, forgotten drafts, over-long forms, suspected spam',
+			description: 'Deterministic, rule-based recommendations over the caller\'s forms: which forms perform best and why, which field drives abandonment, which acquisition channel converts vs wastes traffic, silent forms, forgotten drafts, over-long forms, suspected spam. FREE — pure algorithm, NO model call and NO credits. Every rule has a sample-size floor and stays silent below it, so an empty list means \'not enough data yet\', never \'nothing to improve\'. Each item carries ID, severity (info | warning | success), title and body.',
+			routeSpec: {"method":"GET","path":"/api/forms/recommendations","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'listAllFormResponses',
+			name: 'List All Form Responses',
+			action: 'List responses across ALL of the caller\'s accessible forms, newest first — the cross-form inbox, distinct from `get_form_responses` which is scoped to a single form',
+			description: 'List responses across ALL of the caller\'s accessible forms, newest first — the cross-form inbox, distinct from `get_form_responses` which is scoped to a single form. Filter by formId, status, date range or free-text search; paginate with page/limit (limit caps at 100). Returns raw respondent answers, so treat the payload as PII.',
+			routeSpec: {"method":"GET","path":"/api/forms/responses","queryParams":["formId","status","dateFrom","dateTo","search","page","limit"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Date From',
+							name: 'dateFrom',
+							type: 'string',
+							description: 'ISO date, inclusive',
+							default: '',
+						},
+						{
+							displayName: 'Date To',
+							name: 'dateTo',
+							type: 'string',
+							description: 'ISO date, inclusive',
+							default: '',
+						},
+						{
+							displayName: 'Form ID',
+							name: 'formId',
+							type: 'string',
+							description: 'Restrict to one form (UUID)',
+							default: '',
+						},
+						{
+							displayName: 'Limit',
+							name: 'limit',
+							type: 'number',
+							description: 'Max number of results to return',
+							typeOptions: {"minValue":1},
+							default: 50,
+						},
+						{
+							displayName: 'Page',
+							name: 'page',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Search',
+							name: 'search',
+							type: 'string',
+							description: 'Free-text search across answers',
+							default: '',
+						},
+						{
+							displayName: 'Status',
+							name: 'status',
+							type: 'options',
+							default: 'abandoned',
+							options: [
+								{ name: 'Abandoned', value: 'abandoned' },
+								{ name: 'Completed', value: 'completed' },
+								{ name: 'In Progress', value: 'in_progress' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'listFormTemplates',
 			name: 'List Form Templates',
 			action: 'List the form templates available to the caller (system templates + own/agency templates)',
