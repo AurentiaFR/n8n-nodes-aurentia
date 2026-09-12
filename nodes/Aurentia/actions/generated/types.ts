@@ -16,7 +16,7 @@ export interface GeneratedOperation {
 	value: string;
 	name: string;
 	action: string;
-	description: string;
+	description?: string;
 	routeSpec: GeneratedRouteSpec;
 	properties: INodeProperties[];
 }

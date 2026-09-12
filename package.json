@@ -1,6 +1,6 @@
 {
 	"name": "@aurentiaai/n8n-nodes-aurentia",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "n8n community node for Aurentia — the AI-native business OS for entrepreneurs (CRM, tasks, databases, social media, projects)",
 	"license": "MIT",
 	"homepage": "https://aurentia.fr",
@@ -39,7 +39,7 @@
 		"build": "n8n-node build",
 		"build:watch": "tsc --watch",
 		"dev": "n8n-node dev",
-		"lint": "n8n-node lint",
+		"lint": "n8n-node lint && eslint nodes/Aurentia credentials --no-inline-config",
 		"lint:fix": "n8n-node lint --fix",
 		"validate:generated": "node scripts/validate-generated.mjs",
 		"test:executor": "node scripts/test-executor.mjs",

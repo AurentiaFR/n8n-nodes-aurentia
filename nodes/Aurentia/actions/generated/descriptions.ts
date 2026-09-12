@@ -32,8 +32,8 @@ export const generatedProperties: INodeProperties[] = GENERATED_RESOURCES.flatMa
 			.map((o) => {
 				// Drop the option description when it is trivially identical to the
 				// name (node-param-option-description-identical-to-name).
-				const triviaLess = o.description.replace(/^The\s/, '').replace(/\.$/, '');
-				const omitDescription = triviaLess.toLowerCase() === o.name.toLowerCase();
+				const triviaLess = (o.description ?? '').replace(/^The\s/, '').replace(/\.$/, '');
+				const omitDescription = !triviaLess || triviaLess.toLowerCase() === o.name.toLowerCase();
 				return {
 					name: o.name,
 					value: o.value,
