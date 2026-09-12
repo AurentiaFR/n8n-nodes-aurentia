@@ -31,6 +31,23 @@ export const clipsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'deleteVideoClip',
+			name: 'Delete Video Clip',
+			action: 'Delete a generated clip, definitively — there is no bin and no restore',
+			description: 'Delete a generated clip, definitively — there is no bin and no restore. The database cascade takes its A/B variants with it and the rendered MP4 and thumbnail are purged from storage (this is also the Art. 17 erasure path). What was already PUBLISHED on a network is NOT recalled: deleting here only removes Aurentia\'s copy, the post stays online — say so to the person if `get_video_clip` shows a publication. Get the ID from `list_video_clips`. Name the clip (title, source) before calling this: nothing on screen warns them.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/clips/{clipId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Clip ID',
+					name: 'clipId',
+					type: 'string',
+					required: true,
+					description: 'Clip ID (from list_video_clips)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'generateClipsFromVideo',
 			name: 'Generate Clips From Video',
 			action: 'Aurentia Clips: (re)generate short-form clips from a transcribed long-form video source — LLM moment detection creates draft 9:16 clips in the Clip Library',
@@ -111,6 +128,31 @@ export const clipsResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The clip ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'importClipSourceFromUrl',
+			name: 'Import Clip Source From URL',
+			action: 'Import a PUBLIC video by URL as a new Clips source — YouTube, Vimeo, Loom, Google Drive share links or a direct MP4 URL',
+			description: 'Import a PUBLIC video by URL as a new Clips source — YouTube, Vimeo, Loom, Google Drive share links or a direct MP4 URL. The file is fetched in the background (a container that can run up to ~25 minutes on a long video); the source comes back at once with status `uploading` and moves to `transcribing` → `ready` on its own — poll `list_clip_sources`. CREDITS: 1 per minute of ACTUAL video duration, charged once the file is in (not on this call), so a 40-minute talk costs 40 credits before a single clip exists — say so, and get a yes, before importing anything long. `title` is the name shown in the library (1-200). Private or login-only videos fail after the fetch, not here. Uploading a file from the person\'s disk is not possible from here: that goes through the app\'s upload dialog. Then `generate_clips_from_video` detects the moments, and `render_clips` produces the videos.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/clips/sources","queryParams":[],"body":{"action":"import_url"}},
+			properties: [
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					description: '1-200 chars',
+					default: '',
+				},
+				{
+					displayName: 'Source URL',
+					name: 'sourceUrl',
+					type: 'string',
+					required: true,
+					description: 'Public YouTube / Vimeo / Loom / Drive / MP4 URL',
 					default: '',
 				}
 			],
@@ -345,6 +387,38 @@ export const clipsResource: GeneratedResource = {
 							name: 'winnerClipId',
 							type: 'string',
 							description: 'Optional winning clip to imitate',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'renderClips',
+			name: 'Render Clips',
+			action: 'RENDER draft clips into real 9:16 videos — the heavy, paid step of Aurentia Clips (ffmpeg container + AI reframing)',
+			description: 'RENDER draft clips into real 9:16 videos — the heavy, paid step of Aurentia Clips (ffmpeg container + AI reframing). `generate_clips_from_video` detects the moments and creates DRAFT clips; THIS is what turns them into files that can be published (`publish_video_clip`). Pass either `sourceId` (render every draft clip of that video source) or `clipIds` (1-20 specific clips from `list_video_clips`) — one or the other, never both. COST: 1 credit per clip, plus 66 credits per clip when B-roll is actually inserted, charged once per clip and not again on a retry. Best-effort per clip: a failing clip goes to `failed` and does not block the others; `rendered` is how many were enqueued. `notConfigured: true` means the render worker is off in this environment — nothing happened, nothing was charged, tell the person and do not retry. Rendering is asynchronous: poll `get_video_clip` until `ready`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/clips/render","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Clip IDs',
+							name: 'clipIds',
+							type: 'json',
+							description: 'Or: render exactly these clips (list_video_clips). (provide a JSON array).',
+							default: '[]',
+						},
+						{
+							displayName: 'Source ID',
+							name: 'sourceId',
+							type: 'string',
+							description: 'Render all draft clips of this video source',
 							default: '',
 						},
 					],

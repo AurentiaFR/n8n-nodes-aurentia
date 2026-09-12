@@ -6,6 +6,33 @@ export const brandingResource: GeneratedResource = {
 	displayName: 'Branding',
 	operations: [
 		{
+			value: 'extractBrandVoiceDraft',
+			name: 'Extract Brand Voice Draft',
+			action: 'Déduit un BROUILLON de voix de marque (ton, description du ton, vocabulaire à utiliser / à éviter, 1-3 personas, justification) à partir de 3 à 5 extraits RÉELS de l\'écriture de l\'utilisateur — ses e-mails, ses posts, sa page À propos',
+			description: 'Déduit un BROUILLON de voix de marque (ton, description du ton, vocabulaire à utiliser / à éviter, 1-3 personas, justification) à partir de 3 à 5 extraits RÉELS de l\'écriture de l\'utilisateur — ses e-mails, ses posts, sa page À propos. Appelle-le quand il dit « analyse comment j\'écris », « déduis ma voix de marque de ces textes ». Fournis exactement 3 à 5 `samples`, chacun d\'au moins 20 caractères (8 000 max) ; en dessous de 3 la route refuse. FACTURÉ à la consommation réelle de tokens (marge ×5), une fois par appel : ne le relance pas pour « affiner », affine le brouillon toi-même. Le résultat n\'est PAS enregistré : c\'est une proposition à montrer à l\'utilisateur, qui l\'adopte ensuite en modifiant son profil de marque. Ne colle pas des textes que tu as écrits toi-même : la voix déduite serait la tienne, pas la sienne.',
+			routeSpec: {"method":"POST","path":"/api/branding/brand-profile/extract","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Samples',
+					name: 'samples',
+					type: 'json',
+					required: true,
+					description: '3 à 5 extraits écrits par l\'utilisateur lui-même. (provide a JSON array).',
+					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'getBrandVoiceProfile',
+			name: 'Get Brand Voice Profile',
+			action: 'Rend le profil de VOIX de marque de l\'utilisateur (ou de son agence s\'il en a une) : nom, mission, valeurs, ton et sa description, vocabulaire à utiliser / à éviter, exemples, personas, logo, plus `ID` — l\'identifiant que `restore_brand_profile_version` et `list_brand_profile_versions` exigent',
+			description: 'Rend le profil de VOIX de marque de l\'utilisateur (ou de son agence s\'il en a une) : nom, mission, valeurs, ton et sa description, vocabulaire à utiliser / à éviter, exemples, personas, logo, plus `ID` — l\'identifiant que `restore_brand_profile_version` et `list_brand_profile_versions` exigent. À ne pas confondre avec `get_brand_profile`, qui rend le profil de marque SOCIAL d\'un projet (autre objet, autre table). Lis-le avant `test_brand_voice` : sans profil rempli, l\'échantillon ne démontre rien.',
+			routeSpec: {"method":"GET","path":"/api/branding/brand-profile","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
 			value: 'lintText',
 			name: 'Lint Text',
 			action: 'Score a piece of content (email, post, proposal, support reply) against the user brand voice',
@@ -32,6 +59,87 @@ export const brandingResource: GeneratedResource = {
 							name: 'content_type',
 							type: 'options',
 							description: 'Content category (default: email)',
+							default: 'email',
+							options: [
+								{ name: 'Email', value: 'email' },
+								{ name: 'Post', value: 'post' },
+								{ name: 'Proposal', value: 'proposal' },
+								{ name: 'Support Reply', value: 'support_reply' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'listBrandProfileVersions',
+			name: 'List Brand Profile Versions',
+			action: 'Liste l\'historique des versions d\'un profil de voix de marque (ID de version, date, auteur)',
+			description: 'Liste l\'historique des versions d\'un profil de voix de marque (ID de version, date, auteur). C\'est ce qui rend le `versionId` de `restore_brand_profile_version` : sans lui, la restauration est aveugle. `profile_id` vient de `get_brand_voice_profile`.',
+			routeSpec: {"method":"GET","path":"/api/branding/brand-profile/versions","queryParams":["profile_id:profileId"]},
+			properties: [
+				{
+					displayName: 'Profile ID',
+					name: 'profile_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du profil de marque (get_brand_voice_profile)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'restoreBrandProfileVersion',
+			name: 'Restore Brand Profile Version',
+			action: 'Remet le profil de voix de marque dans l\'état d\'une version antérieure de son historique (nom, mission, valeurs, ton, vocabulaire, exemples, personas, logo)',
+			description: 'Remet le profil de voix de marque dans l\'état d\'une version antérieure de son historique (nom, mission, valeurs, ton, vocabulaire, exemples, personas, logo). Appelle-le quand l\'utilisateur dit « reviens à la version d\'avant », « annule les changements de ce matin ». `profile_id` est l\'identifiant du profil de marque (`get_brand_voice_profile`), `versionId` celui d\'une entrée de son historique (`list_brand_profile_versions`) — un `versionId` d\'un autre profil est refusé (404). L\'état COURANT est lui-même archivé comme nouvelle version avant l\'écrasement (trigger en base) : le geste est réversible, il n\'y a rien à sauvegarder avant. Le cache de voix de marque est invalidé : les prochains lint et générations utilisent la version restaurée.',
+			routeSpec: {"method":"POST","path":"/api/branding/brand-profile/versions","queryParams":["profile_id:profileId"]},
+			properties: [
+				{
+					displayName: 'Profile ID',
+					name: 'profile_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du profil de marque (brand_profiles.ID)',
+					default: '',
+				},
+				{
+					displayName: 'Version ID',
+					name: 'versionId',
+					type: 'string',
+					required: true,
+					description: 'UUID de la version à restaurer, appartenant à ce profil',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'testBrandVoice',
+			name: 'Test Brand Voice',
+			action: 'Fait produire un COURT échantillon (≤ 150 mots) par le modèle en appliquant strictement la voix de marque ENREGISTRÉE de l\'utilisateur, puis le passe au linter de marque et rend `{ sample, lint }` (score 1-10, écarts)',
+			description: 'Fait produire un COURT échantillon (≤ 150 mots) par le modèle en appliquant strictement la voix de marque ENREGISTRÉE de l\'utilisateur, puis le passe au linter de marque et rend `{ sample, lint }` (score 1-10, écarts). C\'est l\'outil de « à quoi ressemble ma voix sur un e-mail de relance ? » — une démonstration, pas un livrable : ne colle pas `sample` dans un vrai envoi. `context` décrit le scénario en 3-500 caractères (« relance d\'un devis resté sans réponse ») ; `contentType` : `email` (défaut) | `post` | `proposal` | `support_reply`. FACTURÉ à la consommation de tokens à chaque appel. Sans profil de marque rempli, le résultat ne montre rien d\'utile — vérifie d\'abord qu\'il existe avec `get_brand_voice_profile`.',
+			routeSpec: {"method":"POST","path":"/api/branding/brand-profile/test-voice","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Context',
+					name: 'context',
+					type: 'string',
+					required: true,
+					description: 'Le scénario à tester, en quelques mots',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Content Type',
+							name: 'contentType',
+							type: 'options',
+							description: 'Défaut : email',
 							default: 'email',
 							options: [
 								{ name: 'Email', value: 'email' },

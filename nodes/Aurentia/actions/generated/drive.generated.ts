@@ -6,6 +6,46 @@ export const driveResource: GeneratedResource = {
 	displayName: 'Drive',
 	operations: [
 		{
+			value: 'archiveDriveFileVersion',
+			name: 'Archive Drive File Version',
+			action: 'Aurentia: snapshot the CURRENT content of a Drive file as a new numbered version, with an optional comment ("v2 envoyée au client")',
+			description: 'Aurentia: snapshot the CURRENT content of a Drive file as a new numbered version, with an optional comment ("v2 envoyée au client"). It uploads nothing — it records the file as it is now so the user can come back to it after a later replacement. Use it before an overwrite the user asks for, or when they say "garde cette version". Pass projectId when the file lives in a project (same scoping as get_drive_file). Brand-kit projections cannot be versioned.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/drive/files/{file_id}/versions","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'File ID',
+					name: 'file_id',
+					type: 'string',
+					required: true,
+					description: 'The file ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Comment',
+							name: 'comment',
+							type: 'string',
+							description: 'Optional label of the version',
+							default: '',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'Project scope when the file is a project file',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createDriveFolder',
 			name: 'Create Drive Folder',
 			action: 'Aurentia: create a folder',
@@ -106,6 +146,31 @@ export const driveResource: GeneratedResource = {
 							displayName: 'Project ID',
 							name: 'projectId',
 							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'emptyDriveTrash',
+			name: 'Empty Drive Trash',
+			action: 'Permanently delete EVERYTHING currently in the Drive trash — files, folders, every archived version and thumbnail — for one scope: the person\'s personal Drive when `projectId` is omitted, the project\'s Drive when it is given',
+			description: 'Permanently delete EVERYTHING currently in the Drive trash — files, folders, every archived version and thumbnail — for one scope: the person\'s personal Drive when `projectId` is omitted, the project\'s Drive when it is given. There is no undo: `restore_drive_file` works only on items still in the trash, and this empties it. Name to the person what is about to disappear before calling (the trash holds what `trash_drive_file` produced), or use `purge_drive_file` for a single item instead. Requires the `delete` right on the project\'s Drive; the person\'s own personal scope always qualifies.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/drive/trash","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'Project whose Drive trash to empty. Omit for the personal Drive.',
 							default: '',
 						},
 					],
@@ -225,7 +290,7 @@ export const driveResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -305,7 +370,7 @@ export const driveResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 					],
@@ -397,6 +462,78 @@ export const driveResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The file ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'restoreDriveFileVersion',
+			name: 'Restore Drive File Version',
+			action: 'Aurentia: make an older version the current content of a Drive file',
+			description: 'Aurentia: make an older version the current content of a Drive file. Safe: the current content is archived as a new version ("auto: avant restauration") first, so the user can go back. Version IDs come from list_drive_file_versions. Pass projectId for project files.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/drive/files/{file_id}/versions/{version_id}/restore","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'File ID',
+					name: 'file_id',
+					type: 'string',
+					required: true,
+					description: 'The file ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Version ID',
+					name: 'version_id',
+					type: 'string',
+					required: true,
+					description: 'The version ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'restoreDriveFolder',
+			name: 'Restore Drive Folder',
+			action: 'Aurentia: bring a trashed Drive FOLDER back with its whole subtree (sub-folders and files)',
+			description: 'Aurentia: bring a trashed Drive FOLDER back with its whole subtree (sub-folders and files). If its original parent folder is itself deleted, it comes back at the root. Counterpart of restore_drive_file for folders; pass projectId for project drives.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/drive/folders/{folder_id}/restore","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Folder ID',
+					name: 'folder_id',
+					type: 'string',
+					required: true,
+					description: 'The folder ID for this operation',
 					default: '',
 				},
 				{

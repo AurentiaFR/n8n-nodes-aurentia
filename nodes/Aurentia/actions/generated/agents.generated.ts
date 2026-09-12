@@ -6,6 +6,107 @@ export const agentsResource: GeneratedResource = {
 	displayName: 'Agents',
 	operations: [
 		{
+			value: 'activateGovMcpServer',
+			name: 'Activate Gov MCP Server',
+			action: 'Activate a FRENCH PUBLIC MCP server from the catalogue and wire it to its recommended collaborators: `datagouv` (data.gouv.fr → analyst, orchestrator), `service-public`, `french-admin`, `vosdroits`, `droit-francais` (procedures and law → orchestrator, project lead, analyst), `insee-sirene` (→ sales, analyst), `pappers` (→ sales, analyst, client relations)',
+			description: 'Activate a FRENCH PUBLIC MCP server from the catalogue and wire it to its recommended collaborators: `datagouv` (data.gouv.fr → analyst, orchestrator), `service-public`, `french-admin`, `vosdroits`, `droit-francais` (procedures and law → orchestrator, project lead, analyst), `insee-sirene` (→ sales, analyst), `pappers` (→ sales, analyst, client relations). Idempotent: already active returns the existing connection and creates nothing. Only `pappers` needs `apiKey` (free key on pappers.fr) — ask for it, invent nothing; the others have no auth at all. This grants the fleet access to external data: on request only. Activation discovers the tools straight away, so an unavailable public server fails the call.',
+			routeSpec: {"method":"POST","path":"/api/agents/gov-mcp/{server_id}/activate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Server ID',
+					name: 'server_id',
+					type: 'string',
+					required: true,
+					description: 'The server ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'API Key',
+							name: 'apiKey',
+							type: 'string',
+							description: 'Only for pappers',
+							typeOptions: { password: true },
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'approvePendingAction',
+			name: 'Approve Pending Action',
+			action: 'Approve ONE action a collaborator proposed, and RUN it — the tool fires for real (the email leaves, the post publishes) and nothing rolls it back',
+			description: 'Approve ONE action a collaborator proposed, and RUN it — the tool fires for real (the email leaves, the post publishes) and nothing rolls it back. Only when the person said yes to THAT action, named (« yes, send the email to client X »). TWO server-side refusals you cannot argue with: a collaborator NEVER approves what it proposed itself (403 `AGENT_SELF_APPROVAL`, decided by comparing `agent_pending_actions.agent_id` to the caller, not to anything you pass), and a collaborator in suggest mode never approves at all (403 `AGENT_APPROVAL_REQUIRES_AUTONOMOUS` — one that must ask before acting cannot answer for the person). Both mean the same thing: stop retrying, say where to click. `ID` = `agent_pending_actions.ID`, from `list_pending_actions`.',
+			routeSpec: {"method":"POST","path":"/api/agents/pending-actions/{id}/approve","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Agent_pending_actions.ID (uuid)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Expected Revision',
+							name: 'expectedRevision',
+							type: 'number',
+							description: 'Exact revision returned by get_pending_action. Required after an edit; stale or missing versions are refused. Run prepare_pending_action and review its checks before approving a revised proposal.',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'askOrchestrator',
+			name: 'Ask Orchestrator',
+			action: 'Hand a request over to the Aurentia Associate (the orchestrator), who either does the work or dispatches it to the collaborator whose trade it is (CRM, social, finance, legal, delivery...)',
+			description: 'Hand a request over to the Aurentia Associate (the orchestrator), who either does the work or dispatches it to the collaborator whose trade it is (CRM, social, finance, legal, delivery...). USE IT when the user asks for the Associate by name ("let the Associate handle it", "ask my Associate to..."), or when one request spans several trades and no single tool covers it end to end. DO NOT USE IT when a direct tool already does the job: creating a task, listing deals, sending an email each have their own tool, and routing them through the Associate spends a whole agent run (credits and latency) to reach the same result -- call the direct tool instead. Pass the request in natural language, as the user phrased it, one request per call. Returns the run ID, its status and its summary. Never call it from inside an orchestrator run: the concurrency guard refuses a second run of the same collaborator.',
+			routeSpec: {"method":"POST","path":"/api/agents/orchestrator/run","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Request',
+					name: 'request',
+					type: 'string',
+					required: true,
+					description: 'The request in natural language. E.g.: \'Prepare a report and a briefing for tomorrow\'s meeting, then follow up on the stale deals\'.',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'cancelScheduledAction',
+			name: 'Cancel Scheduled Action',
+			action: 'Cancel a programmed FOLLOW-UP — the ones the built-in `schedule_followup` posts (« check in 24h whether the email got a reply », « chase the deal in 3 days »)',
+			description: 'Cancel a programmed FOLLOW-UP — the ones the built-in `schedule_followup` posts (« check in 24h whether the email got a reply », « chase the deal in 3 days »). They are durable workflows of kind `agent_followup`, and the route only cancels one that is still `running` and belongs to the caller. Call it when the follow-up has lost its point (deal closed, reply received) or on request. Irreversible: it has to be re-posted by the agent if the person changes their mind. This is NOT a recurring scheduled task (→ `toggle_scheduled_task` / `delete_scheduled_task`).',
+			routeSpec: {"method":"DELETE","path":"/api/agents/scheduled-actions/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Durable_workflows.ID of the follow-up (uuid)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'cmActionsList',
 			name: 'Cm Actions List',
 			action: 'List CM Collaborator audit feed (drafts, publications, replies, escalations)',
@@ -43,7 +144,7 @@ export const agentsResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -294,7 +395,7 @@ export const agentsResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 					],
@@ -426,6 +527,246 @@ export const agentsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'confirmScheduledTask',
+			name: 'Confirm Scheduled Task',
+			action: 'WRITE for real the scheduled task that `create_scheduled_task` only PROPOSED',
+			description: 'WRITE for real the scheduled task that `create_scheduled_task` only PROPOSED. Mandatory order: (1) `create_scheduled_task` computes and returns the proposal, (2) you show it, (3) the person says YES explicitly on THAT proposal, (4) only then this tool — never in the same turn, never on your own initiative. In the app the proposal card makes this very POST when the person clicks « Créer la tâche »: if a card is on screen, do not double it, let them click. Reuse the fields exactly as the proposal returned them: `agent_id`, `name`, `task_prompt` (a plain-language instruction, never a tool name — it is displayed as is), a 5-field `cron` (or null for a manual task), `timezone`, `rotation`, `project_id`, and `source: "assistant"`. `auto_approve` goes to true ONLY if the person asked for it word for word: its actions then execute with no validation on every run. Each scheduled run costs credits (the collaborator\'s per-run estimate) — say it once before writing.',
+			routeSpec: {"method":"POST","path":"/api/agents/scheduled-tasks","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Agent ID',
+					name: 'agent_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Auto Approve',
+							name: 'auto_approve',
+							type: 'boolean',
+							description: 'Whether true = the run executes its actions without validation. Explicit request only.',
+							default: false,
+						},
+						{
+							displayName: 'Bot Output Enabled',
+							name: 'bot_output_enabled',
+							type: 'boolean',
+							description: 'Whether deprecated, kept for older callers. Prefer `output_channels`.',
+							default: false,
+						},
+						{
+							displayName: 'Cron',
+							name: 'cron',
+							type: 'string',
+							description: '5-field cron expression. null = manual task.',
+							default: '',
+						},
+						{
+							displayName: 'Nl Input',
+							name: 'nl_input',
+							type: 'string',
+							description: 'The frequency in the words the person used',
+							default: '',
+						},
+						{
+							displayName: 'Output Channels',
+							name: 'output_channels',
+							type: 'json',
+							description: 'Where the result of each run is delivered. THREE meanings, all distinct: omit the field or send null = every channel currently available, re-resolved at every delivery (linking Telegram three weeks later is enough to start seeing it there); [] = deliver nowhere; an explicit list = exactly those, frozen. A channel that is not linked is filtered out at delivery, never attempted. Delivery costs the same whatever the number of channels. (provide a JSON array)',
+							default: '[]',
+						},
+						{
+							displayName: 'Pinned Capabilities',
+							name: 'pinned_capabilities',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'project_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Rotation',
+							name: 'rotation',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Skip Holidays',
+							name: 'skip_holidays',
+							type: 'boolean',
+							description: 'Whether to enable skip holidays',
+							default: false,
+						},
+						{
+							displayName: 'Source',
+							name: 'source',
+							type: 'options',
+							default: 'ai_recommendation',
+							options: [
+								{ name: 'AI Recommendation', value: 'ai_recommendation' },
+								{ name: 'Assistant', value: 'assistant' },
+								{ name: 'Manual', value: 'manual' },
+								{ name: 'Template', value: 'template' },
+							],
+						},
+						{
+							displayName: 'Task Prompt',
+							name: 'task_prompt',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Template Slug',
+							name: 'template_slug',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Timezone',
+							name: 'timezone',
+							type: 'string',
+							description: 'IANA, e.g. Europe/Paris',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createAgentGoal',
+			name: 'Create Agent Goal',
+			action: 'Set a MEASURABLE, DATED goal on one AI collaborator (« 10 signed deals by end of quarter » for the sales director, « 4 posts a week » for the community manager)',
+			description: 'Set a MEASURABLE, DATED goal on one AI collaborator (« 10 signed deals by end of quarter » for the sales director, « 4 posts a week » for the community manager). Call it when the person states a target with a number and a deadline for a named collaborator. NOT for a one-off instruction (that is a run or a scheduled task), and NOT for the person\'s own habit (that is `habits`). `title` in plain language, exactly as they said it; `targetMetric` is what gets counted; `targetValue` the number; `deadline` an ISO date. The service does NOT de-duplicate — read `list_agent_goals` first rather than minting a twin. Never set `source`: `manual` is the only legitimate value from a conversation, `action_plan`/`auto` belong to the engine.',
+			routeSpec: {"method":"POST","path":"/api/agents/{agent_id}/goals","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Agent ID',
+					name: 'agent_id',
+					type: 'string',
+					required: true,
+					description: 'Collaborator carrying the goal',
+					default: '',
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					description: 'The goal in plain language',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Deadline',
+							name: 'deadline',
+							type: 'string',
+							description: 'ISO deadline (YYYY-MM-DD)',
+							default: '',
+						},
+						{
+							displayName: 'Target Metric',
+							name: 'targetMetric',
+							type: 'string',
+							description: 'What gets counted (e.g. « signed deals »)',
+							default: '',
+						},
+						{
+							displayName: 'Target Value',
+							name: 'targetValue',
+							type: 'number',
+							description: 'Target number',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createMcpConnection',
+			name: 'Create MCP Connection',
+			action: 'Wire an EXTERNAL MCP server onto the fleet: the tools it exposes become callable by the collaborators listed in `agentIds`',
+			description: 'Wire an EXTERNAL MCP server onto the fleet: the tools it exposes become callable by the collaborators listed in `agentIds`. This GRANTS ACCESS to agents — only on an explicit request, with a URL the person gave you; never invent a URL, a token or a key. `authConfig` carries the secret (`{ "token": "…" }` for `bearer`, `{ "key": "…", "header_name": "X-API-Key" }` for `api_key`): ask for it and do not echo it back in your answer. Creation DISCOVERS the tools immediately by calling the server: an unreachable server or a wrong auth fails the call — surface the error, do not retry in a loop. For public French data (data.gouv, INSEE, Pappers, Service Public…) do not use this: `activate_gov_mcp_server` already has the right settings.',
+			routeSpec: {"method":"POST","path":"/api/agents/mcp-connections","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Server URL',
+					name: 'serverUrl',
+					type: 'string',
+					required: true,
+					description: 'MCP server URL, exactly as the person gave it',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Agent IDs',
+							name: 'agentIds',
+							type: 'json',
+							description: 'Collaborators granted the tools. (provide a JSON array).',
+							default: '[]',
+						},
+						{
+							displayName: 'Auth Config',
+							name: 'authConfig',
+							type: 'json',
+							description: 'Auth secret: { token } or { key, header_name }. (provide a JSON object).',
+							default: '{}',
+						},
+						{
+							displayName: 'Auth Type',
+							name: 'authType',
+							type: 'options',
+							description: 'Defaults to bearer',
+							default: 'api_key',
+							options: [
+								{ name: 'API Key', value: 'api_key' },
+								{ name: 'Bearer', value: 'bearer' },
+								{ name: 'None', value: 'none' },
+								{ name: 'Oauth', value: 'oauth' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createScheduledTask',
 			name: 'Create Scheduled Task',
 			action: 'Propose la création d\'une tâche planifiée pour un collaborateur (écrit sur agent_scheduled_tasks, le chemin que le planificateur lit réellement)',
@@ -502,6 +843,115 @@ export const agentsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'deactivateGovMcpServer',
+			name: 'Deactivate Gov MCP Server',
+			action: 'Deactivate a public server of the French catalogue: it deletes the connection and takes its tools away from the collaborators',
+			description: 'Deactivate a public server of the French catalogue: it deletes the connection and takes its tools away from the collaborators. A no-op when the server was not active (« Pas activé »). Re-activatable identically with `activate_gov_mcp_server` — Pappers will ask for its API key again. On request only.',
+			routeSpec: {"method":"POST","path":"/api/agents/gov-mcp/{server_id}/deactivate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Server ID',
+					name: 'server_id',
+					type: 'string',
+					required: true,
+					description: 'The server ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteAgentGoal',
+			name: 'Delete Agent Goal',
+			action: 'Delete a collaborator\'s goal AND its progress history, for good — there is no bin and no restore route',
+			description: 'Delete a collaborator\'s goal AND its progress history, for good — there is no bin and no restore route. Only on an explicit request naming the goal. For a goal that was REACHED, do not delete: call `update_agent_goal_progress` WITHOUT `currentValue` — the server pushes the progress to the target itself and the goal flips to `completed`, history kept. For an abandoned goal, tell the person what disappears before calling. `goal_id` from `list_agent_goals`; the `agent_id` in the path is not read by the route, ownership is checked on the goal alone. ⚠️ The answer `{ deleted: true }` is NOT proof: on an ID that belongs to someone else the route deletes zero rows and answers the same thing, so read `list_agent_goals` again before telling the person the goal is gone.',
+			routeSpec: {"method":"DELETE","path":"/api/agents/{agent_id}/goals/{goal_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Agent ID',
+					name: 'agent_id',
+					type: 'string',
+					required: true,
+					description: 'The agent ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Goal ID',
+					name: 'goal_id',
+					type: 'string',
+					required: true,
+					description: 'Agent_goals.ID (uuid)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteMcpConnection',
+			name: 'Delete MCP Connection',
+			action: 'Delete an MCP connection AND its discovered tool list, for good',
+			description: 'Delete an MCP connection AND its discovered tool list, for good. Irreversible: the connection has to be recreated and the secret given again. If the person only wants to stop using that server, `update_mcp_connection` with `enabled: false` does the same thing and loses nothing. For a public server of the French catalogue, prefer `deactivate_gov_mcp_server`.',
+			routeSpec: {"method":"DELETE","path":"/api/agents/mcp-connections/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteScheduledTask',
+			name: 'Delete Scheduled Task',
+			action: 'Delete a scheduled task AND its whole run history, for good',
+			description: 'Delete a scheduled task AND its whole run history, for good. If the person only wants it to stop running, `toggle_scheduled_task` is enough and keeps the history. On an explicit request, on a named task. The route answers 404 (never 403) on a task that is not the caller\'s, so a 404 here means « not yours or gone », not « try again ». ONE exception, and it does answer 403: a collaborator\'s own SIGNATURE INITIATIVE (the recurring appointment an agent arms by itself when it is switched to autonomous mode) can never be deleted, only paused — switch the collaborator back to suggestion mode, or use `toggle_scheduled_task`. Its settings are kept either way. Do not retry the delete, offer the pause.',
+			routeSpec: {"method":"DELETE","path":"/api/agents/scheduled-tasks/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'forgetAgentMemory',
+			name: 'Forget Agent Memory',
+			action: 'Remove ONE fact from a collaborator\'s memory, or WIPE it entirely',
+			description: 'Remove ONE fact from a collaborator\'s memory, or WIPE it entirely. With `fact` = the EXACT text of the fact as it appears in `get_agent_memory` (not a paraphrase — a near-miss removes nothing and reports success), only that fact goes. WITHOUT `fact`, the collaborator\'s WHOLE memory is reset, irreversibly, with no bin: omit it only on an explicit reset request, and say what it erases first. When in doubt, pass the fact.',
+			routeSpec: {"method":"DELETE","path":"/api/agents/{agent_id}/memory","queryParams":["fact"]},
+			properties: [
+				{
+					displayName: 'Agent ID',
+					name: 'agent_id',
+					type: 'string',
+					required: true,
+					description: 'The agent ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Fact',
+							name: 'fact',
+							type: 'string',
+							description: 'Exact text of the fact to remove. Omitted = wipes the whole memory.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'getAgent',
 			name: 'Get Agent',
 			action: 'Config and definition of an AI collaborator',
@@ -519,6 +969,85 @@ export const agentsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getAgentActivityInsights',
+			name: 'Get Agent Activity Insights',
+			action: 'Read full-scope daily activity and optional evidence for ONE owned proposal: distinct active collaborators, successful operations and latest activity in the requested timezone; comparable historical cost/duration/results estimates and actual persisted progress when supported',
+			description: 'Read full-scope daily activity and optional evidence for ONE owned proposal: distinct active collaborators, successful operations and latest activity in the requested timezone; comparable historical cost/duration/results estimates and actual persisted progress when supported. Estimates are observed ranges, never guaranteed spending limits. Unknown values remain unavailable, never invented. approvalId binds the result to its saved revision; preserve the explicit project or account scope, never substitute a latest project.',
+			routeSpec: {"method":"GET","path":"/api/agents/activity/insights","queryParams":["agentId","projectId","scope","timezone","approvalId"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Agent ID',
+							name: 'agentId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Approval ID',
+							name: 'approvalId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Scope',
+							name: 'scope',
+							type: 'options',
+							default: 'account',
+							options: [
+								{ name: 'Account', value: 'account' },
+							],
+						},
+						{
+							displayName: 'Timezone',
+							name: 'timezone',
+							type: 'string',
+							description: 'IANA timezone, e.g. Europe/Paris',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'getAgentMemory',
+			name: 'Get Agent Memory',
+			action: 'What one collaborator durably knows about the person: `key_facts` (the exact strings `teach_agent_fact` wrote), summary, last actions and observations',
+			description: 'What one collaborator durably knows about the person: `key_facts` (the exact strings `teach_agent_fact` wrote), summary, last actions and observations. Read it before teaching a fact (to avoid a near-duplicate) and before `forget_agent_memory`, which needs the fact\'s EXACT text — a paraphrase removes nothing. Each collaborator has its OWN memory: what the lawyer learned is unknown to the sales director.',
+			routeSpec: {"method":"GET","path":"/api/agents/{agent_id}/memory","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Agent ID',
+					name: 'agent_id',
+					type: 'string',
+					required: true,
+					description: 'The agent ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getAgentOutputChannels',
+			name: 'Get Agent Output Channels',
+			action: 'Where this person\'s agents deliver their output',
+			description: 'Where this person\'s agents deliver their output. Returns `channels` (their default: `null` = everywhere possible, `[]` = nothing relayed, or the explicit list) AND `available` — what is REALLY reachable right now, which the caller cannot compute: it accounts for a requested silence, the plan gate and e-mail verification. Read `available` before proposing a channel, or you will offer one that cannot receive.',
+			routeSpec: {"method":"GET","path":"/api/agents/output-channels","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
 			value: 'getCriticDecision',
 			name: 'Get Critic Decision',
 			action: 'Get a critic collaborator decision (LLM judge) by ID',
@@ -531,6 +1060,84 @@ export const agentsResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'Agent_critic_runs.ID (uuid)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getPendingAction',
+			name: 'Get Pending Action',
+			action: 'Read ONE owned proposal: exact revision, editable fields prefilled with the full saved content, schema constraints, and timestamped prerequisite checks',
+			description: 'Read ONE owned proposal: exact revision, editable fields prefilled with the full saved content, schema constraints, and timestamped prerequisite checks. Project access is checked. Never exposes scope/identity/credential fields for editing. Use before update_pending_action or approval; a revision from an earlier read may no longer be current.',
+			routeSpec: {"method":"GET","path":"/api/agents/pending-actions/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'giveCriticFeedback',
+			name: 'Give Critic Feedback',
+			action: 'Record the PERSON\'S verdict on one decision of the Critic (the LLM judge that allows, regenerates, downgrades or blocks the collaborators\' outgoing actions): `correct`, `false_positive` (blocked wrongly), `false_negative` (let through wrongly)',
+			description: 'Record the PERSON\'S verdict on one decision of the Critic (the LLM judge that allows, regenerates, downgrades or blocks the collaborators\' outgoing actions): `correct`, `false_positive` (blocked wrongly), `false_negative` (let through wrongly). It calibrates the Critic — call it only when the person judges a NAMED decision, never on your own initiative, and never to improve your own scores. `critic_run_id` comes from `get_critic_decision` or a run detail. ZERO effect on the action itself: a false positive does not replay the blocked action.',
+			routeSpec: {"method":"POST","path":"/api/agents/critic/feedback","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Critic Run ID',
+					name: 'critic_run_id',
+					type: 'string',
+					required: true,
+					description: 'Agent_critic_runs.ID (uuid)',
+					default: '',
+				},
+				{
+					displayName: 'Verdict',
+					name: 'verdict',
+					type: 'options',
+					required: true,
+					default: 'correct',
+					options: [
+						{ name: 'Correct', value: 'correct' },
+						{ name: 'False Negative', value: 'false_negative' },
+						{ name: 'False Positive', value: 'false_positive' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Comment',
+							name: 'comment',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'listAgentGoals',
+			name: 'List Agent Goals',
+			action: 'The measurable goals set on one AI collaborator, with their ID, target metric, target value, current value, deadline and status',
+			description: 'The measurable goals set on one AI collaborator, with their ID, target metric, target value, current value, deadline and status. Read it BEFORE `create_agent_goal` (the service never de-duplicates: calling it twice mints a second identical goal) and to get the `goal_id` that `delete_agent_goal` needs. Progress itself is updated by `update_agent_goal_progress` (the registry tool on `PUT .../goals/{goal_id}`), never by recreating the goal — and never by deleting a goal that was reached.',
+			routeSpec: {"method":"GET","path":"/api/agents/{agent_id}/goals","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Agent ID',
+					name: 'agent_id',
+					type: 'string',
+					required: true,
+					description: 'Collaborator ID, e.g. commercial',
 					default: '',
 				}
 			],
@@ -560,6 +1167,179 @@ export const agentsResource: GeneratedResource = {
 			routeSpec: {"method":"GET","path":"/api/agents","queryParams":[]},
 			properties: [
 
+			],
+		},
+		{
+			value: 'listMcpConnections',
+			name: 'List MCP Connections',
+			action: 'The external MCP servers wired onto the fleet, with their `ID`, name, server URL, discovered tool list, `enabled` flag and the `agentIds` allowed to call them',
+			description: 'The external MCP servers wired onto the fleet, with their `ID`, name, server URL, discovered tool list, `enabled` flag and the `agentIds` allowed to call them. The auth secret is never returned. Read it before `update_mcp_connection` (whose `agentIds` REPLACES the list, so you must start from the current one), before `delete_mcp_connection`, and to get the `ID` `sync_mcp_connection_tools` needs.',
+			routeSpec: {"method":"GET","path":"/api/agents/mcp-connections","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'listPendingActions',
+			name: 'List Pending Actions',
+			action: 'The actions the collaborators PROPOSED and that wait for a human decision, with their `ID`, agent, tool, arguments and reason',
+			description: 'The actions the collaborators PROPOSED and that wait for a human decision, with their `ID`, agent, tool, arguments and reason. Read it to tell the person what is queued and to get the `ID` that `reject_pending_action` and `approve_pending_action` need. Filter with `agentId` and/or `projectId` (a present but malformed `projectId` is a 400, never a silent widening); `all: true` also returns the already-decided ones. The `agent` of each row is what decides who may approve it: a collaborator can approve ANOTHER collaborator\'s proposal, never its own — that is a second pair of eyes, not a self-granted go-ahead.',
+			routeSpec: {"method":"GET","path":"/api/agents/pending-actions","queryParams":["agentId","projectId","all"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Agent ID',
+							name: 'agentId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'All',
+							name: 'all',
+							type: 'boolean',
+							description: 'Whether true = also the already-decided actions',
+							default: false,
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'listScheduledTasks',
+			name: 'List Scheduled Tasks',
+			action: 'The recurring jobs the user\'s AI collaborators are ARMED with — each one\'s agent, name, cron schedule, timezone, whether it is enabled, when it last ran and with what status, and how many consecutive failures it carries',
+			description: 'The recurring jobs the user\'s AI collaborators are ARMED with — each one\'s agent, name, cron schedule, timezone, whether it is enabled, when it last ran and with what status, and how many consecutive failures it carries. This is the only forward-looking read of the fleet: `list_agents` returns configuration and the last run, `list_pending_actions` returns what was already proposed. Read it to answer "what is planned this week", to avoid arming a duplicate, and to get the `ID` that `toggle_scheduled_task`, `update_scheduled_task`, `delete_scheduled_task` and `run_scheduled_task_now` all need. A task with 3 consecutive failures has been auto-paused: say so instead of re-arming it blind.',
+			routeSpec: {"method":"GET","path":"/api/agents/scheduled-tasks","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Project ID',
+							name: 'project_id',
+							type: 'string',
+							description: 'Restrict to the tasks attached to this project. Omit for every task the user owns.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'personalizeAgent',
+			name: 'Personalize Agent',
+			action: 'Change the tone and avatar of one collaborator FOR ONE PROJECT',
+			description: 'Change the tone and avatar of one collaborator FOR ONE PROJECT. `projectId` is required: personalization is per project, not global — the same person can want a « direct » sales director on one project and a « warm » one on another. `tone` is a preset among `direct`, `chaleureux`, `formel`, `decontracte`; `toneDescription` (1600 chars max) refines it in free text (« use vous, short sentences, no emoji »). `avatarUrl` must be one of the preset URLs the personalization read returns — NEVER invent one, the service rejects anything else. An omitted field is left untouched; `null` resets it to the default. This is not the memory (→ `teach_agent_fact`): here you set how it speaks, not what it knows.',
+			routeSpec: {"method":"PATCH","path":"/api/agents/{agent_id}/personalization","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Agent ID',
+					name: 'agent_id',
+					type: 'string',
+					required: true,
+					description: 'The agent ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project concerned (uuid). Required.',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Avatar URL',
+							name: 'avatarUrl',
+							type: 'string',
+							description: 'A preset avatar URL, or null for the default',
+							default: '',
+						},
+						{
+							displayName: 'Tone',
+							name: 'tone',
+							type: 'options',
+							default: 'chaleureux',
+							options: [
+								{ name: 'Chaleureux', value: 'chaleureux' },
+								{ name: 'Decontracte', value: 'decontracte' },
+								{ name: 'Direct', value: 'direct' },
+								{ name: 'Formel', value: 'formel' },
+								{ name: 'Null', value: 'null' },
+							],
+						},
+						{
+							displayName: 'Tone Description',
+							name: 'toneDescription',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'preparePendingAction',
+			name: 'Prepare Pending Action',
+			action: 'Check ONE exact pending proposal revision without executing it',
+			description: 'Check ONE exact pending proposal revision without executing it. Verifies schema, saved project access and supported exact resource/integration prerequisites; returns timestamped source references and distinguishes blocked from unavailable checks. Unsupported deeper checks are explicit, never invented. Checks expire after at most 15 minutes and edits invalidate them. Read the returned full proposal and checks before approving with that revision.',
+			routeSpec: {"method":"POST","path":"/api/agents/pending-actions/{id}/prepare","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Expected Revision',
+					name: 'expectedRevision',
+					type: 'number',
+					required: true,
+					default: 0,
+				}
+			],
+		},
+		{
+			value: 'rejectPendingAction',
+			name: 'Reject Pending Action',
+			action: 'Refuse ONE action a collaborator proposed and that waits for approval: it will never be executed',
+			description: 'Refuse ONE action a collaborator proposed and that waits for approval: it will never be executed. Only when the person said no to THAT action, named (« refuse the email to client X »). Its mirror is `approve_pending_action`, and the two are NOT symmetric: refusing costs nothing and is open to anyone who owns the action, approving runs the tool for real and is refused to the collaborator that proposed it. `ID` = `agent_pending_actions.ID`, from `list_pending_actions`.',
+			routeSpec: {"method":"POST","path":"/api/agents/pending-actions/{id}/reject","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Agent_pending_actions.ID (uuid)',
+					default: '',
+				}
 			],
 		},
 		{
@@ -625,6 +1405,80 @@ export const agentsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'runScheduledTaskNow',
+			name: 'Run Scheduled Task Now',
+			action: '« Run now »: EXECUTES the task\'s collaborator immediately with THAT task\'s instruction, project and approval setting — unlike `run_agent`, which runs the collaborator with no instruction',
+			description: '« Run now »: EXECUTES the task\'s collaborator immediately with THAT task\'s instruction, project and approval setting — unlike `run_agent`, which runs the collaborator with no instruction. It COSTS credits like a scheduled run (the collaborator\'s per-run estimate, reserved up front). The route refuses with 409 `agent_already_running` when that collaborator is already running: do not insist, wait for it to finish. NEVER call it from an orchestrator run on a task whose collaborator IS the orchestrator — that is the same lock, the second run is refused. In suggest mode (almost every configuration), the run PROPOSES its actions into the approval queue: tell the person to go and validate them. A successful run resets the task\'s consecutive-failure counter. Return the run status and its summary.',
+			routeSpec: {"method":"POST","path":"/api/agents/scheduled-tasks/{id}/run","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'setAgentEventSubscriptions',
+			name: 'Set Agent Event Subscriptions',
+			action: 'Choose WHICH app events wake a collaborator up ON ITS OWN (`deal.won`, `email.received`, `invoice.overdue`, `task.overdue`, `booking.created`, `post.published`, `site.published`…)',
+			description: 'Choose WHICH app events wake a collaborator up ON ITS OWN (`deal.won`, `email.received`, `invoice.overdue`, `task.overdue`, `booking.created`, `post.published`, `site.published`…). THIS GRANTS AUTONOMY: every wake-up is an autonomous run and costs credits, so it goes through human approval and is only ever done on an explicit request. Subscribe a collaborator to the events of ITS OWN job and nothing else. Types must be REAL events of the `EVENT_DOMAINS` catalogue: the route validates nothing, a typo silently creates a dead subscription that will never fire. `unsubscribe` disables without deleting. Read the returned list — it is what actually holds.',
+			routeSpec: {"method":"PUT","path":"/api/agents/{agent_id}/subscriptions","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Agent ID',
+					name: 'agent_id',
+					type: 'string',
+					required: true,
+					description: 'The agent ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Subscribe',
+							name: 'subscribe',
+							type: 'json',
+							description: 'Event types to enable (e.g. deal.won). (provide a JSON array).',
+							default: '[]',
+						},
+						{
+							displayName: 'Unsubscribe',
+							name: 'unsubscribe',
+							type: 'json',
+							description: 'Event types to disable. (provide a JSON array).',
+							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'setAgentOutputChannels',
+			name: 'Set Agent Output Channels',
+			action: 'Set where this person\'s agents deliver by default',
+			description: 'Set where this person\'s agents deliver by default. `channels` is a VALUE, not an option: `null` means « everywhere possible », `[]` means « relay nowhere » (in-app only), and a list pins the exact channels. Allowed values: in_app, email, discord, telegram. Call `get_agent_output_channels` first — writing a channel that is not in `available` stores a preference that silently delivers nothing.',
+			routeSpec: {"method":"PUT","path":"/api/agents/output-channels","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Channels',
+					name: 'channels',
+					type: 'json',
+					required: true,
+					description: 'Null = everywhere possible · [] = nowhere · list = exactly these. (provide a JSON array).',
+					default: '[]',
+				}
+			],
+		},
+		{
 			value: 'stopAgent',
 			name: 'Stop Agent',
 			action: 'Stop a running AI collaborator',
@@ -674,6 +1528,107 @@ export const agentsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'syncMcpConnectionTools',
+			name: 'Sync MCP Connection Tools',
+			action: 'Re-discover the tools of an MCP connection (the remote server added or removed some)',
+			description: 'Re-discover the tools of an MCP connection (the remote server added or removed some). Call it when an expected tool is missing, or after an announced update of the server. It is a NETWORK call to the external server and can fail if it is unreachable — surface the error, do not loop. Returns the connection with its refreshed tool list.',
+			routeSpec: {"method":"POST","path":"/api/agents/mcp-connections/{id}/sync","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'teachAgentFact',
+			name: 'Teach Agent Fact',
+			action: 'Teach one collaborator a DURABLE fact about the person or about how they want to be helped (« I use first names with clients », « never a meeting on Friday », « my co-founder is Marc »)',
+			description: 'Teach one collaborator a DURABLE fact about the person or about how they want to be helped (« I use first names with clients », « never a meeting on Friday », « my co-founder is Marc »). One fact per call, one short sentence, written from the person\'s point of view. NEVER put anything ephemeral in it (today\'s task, a number that moves every week) nor a secret (password, IBAN, API key). This is not the tone or the avatar (→ `personalize_agent`) nor a goal (→ `create_agent_goal`). Each collaborator has its own memory: a fact taught to the lawyer is unknown to the sales director — a fact that concerns everyone goes to the orchestrator. To take a fact back, `forget_agent_memory`.',
+			routeSpec: {"method":"POST","path":"/api/agents/{agent_id}/memory","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Agent ID',
+					name: 'agent_id',
+					type: 'string',
+					required: true,
+					description: 'The agent ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Fact',
+					name: 'fact',
+					type: 'string',
+					required: true,
+					description: 'The fact, one short durable sentence',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'toggleAgentFavorite',
+			name: 'Toggle Agent Favorite',
+			action: 'Pin or unpin a collaborator as a favourite',
+			description: 'Pin or unpin a collaborator as a favourite. It is a TOGGLE: the route flips the state and returns the resulting `is_favorite` — call it ONCE per request, a second call undoes the first. Read the result to tell the person what actually happened rather than assuming. A collaborator that is neither in the registry nor in the `custom_*` namespace is refused with a 404.',
+			routeSpec: {"method":"POST","path":"/api/agents/{agent_id}/favorite","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Agent ID',
+					name: 'agent_id',
+					type: 'string',
+					required: true,
+					description: 'The agent ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'toggleScheduledTask',
+			name: 'Toggle Scheduled Task',
+			action: 'PAUSE (`enabled: false`) or RESUME (`enabled: true`) a scheduled task without deleting it',
+			description: 'PAUSE (`enabled: false`) or RESUME (`enabled: true`) a scheduled task without deleting it. Not a toggle: you send the state you want. Resuming RE-ARMS paid runs, which is why it goes through approval. A task auto-paused after 3 consecutive failures is resumed here — but check the cause first (its last result, or `trial_run_scheduled_task`) instead of re-arming blind: the same failure will burn the same credits at the next tick. Pausing keeps the whole history, which is what to offer instead of `delete_scheduled_task`.',
+			routeSpec: {"method":"POST","path":"/api/agents/scheduled-tasks/{id}/toggle","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Enabled',
+					name: 'enabled',
+					type: 'boolean',
+					required: true,
+					description: 'Whether the state you want. true re-arms paid runs.',
+					default: false,
+				}
+			],
+		},
+		{
+			value: 'trialRunScheduledTask',
+			name: 'Trial Run Scheduled Task',
+			action: 'The « essai » of a scheduled task: runs its collaborator in FORCED suggestion mode and returns what it WOULD have done (proposed actions, translated into the person\'s language), sending and executing nothing — even when the task or the collaborator are on autopilot (`forceSuggest` overrides both)',
+			description: 'The « essai » of a scheduled task: runs its collaborator in FORCED suggestion mode and returns what it WOULD have done (proposed actions, translated into the person\'s language), sending and executing nothing — even when the task or the collaborator are on autopilot (`forceSuggest` overrides both). Use it right after creating or changing a task to show the expected result, or when the person doubts what it produces. It COSTS credits like a real run — there is no other way to preview it, so say so before calling. 409 when the collaborator is already running; 403 when the task is not theirs. The trial counts neither as « last result » nor in the task history, and does not reset its failure counter. An empty `actions: []` is a legitimate outcome (« nothing to propose »), not an error. Aurentia for Entrepreneurs only.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/agents/scheduled-tasks/{id}/trial","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'updateAgentConfig',
 			name: 'Update Agent Config',
 			action: 'Enable/disable an AI collaborator or change its config',
@@ -701,6 +1656,246 @@ export const agentsResource: GeneratedResource = {
 							type: 'boolean',
 							description: 'Whether to enable enabled',
 							default: false,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateAgentGoalProgress',
+			name: 'Update Agent Goal Progress',
+			action: 'Update the value REACHED on a measurable goal carried by an AI collaborator (« we are at 7 signed deals out of 10 »), or declare the goal REACHED',
+			description: 'Update the value REACHED on a measurable goal carried by an AI collaborator (« we are at 7 signed deals out of 10 »), or declare the goal REACHED. OMIT `currentValue` when the person says « that one is done »: the server pushes the progress exactly to the target and the goal flips to `completed` — you do NOT have to read `list_agent_goals` first to learn the target. Pass `currentValue` only for an intermediate figure the person actually names, and then it is the CURRENT ABSOLUTE value, never an increment: read `list_agent_goals` and send the total, otherwise you overwrite the progress with a delta. Dropping back under the target puts the goal back to `active`. NEVER delete a goal that was reached: `delete_agent_goal` erases the goal AND its progress history, and there is no trash. A goal with NO target number cannot be marked reached — the tool says so in a 400 instead of writing a progress that changes nothing; give it a target or leave it active. `goal_id` comes from `list_agent_goals`; the `agent_id` in the path is not read by the route, ownership is checked on the goal alone (a goal from another account answers 403). If you do pass `currentValue`, it MUST be a number — a string is refused with a 400 that names the field.',
+			routeSpec: {"method":"PUT","path":"/api/agents/{agent_id}/goals/{goal_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Agent ID',
+					name: 'agent_id',
+					type: 'string',
+					required: true,
+					description: 'Collaborator carrying the goal (e.g. commercial)',
+					default: '',
+				},
+				{
+					displayName: 'Goal ID',
+					name: 'goal_id',
+					type: 'string',
+					required: true,
+					description: 'Agent_goals.ID (uuid), returned by list_agent_goals',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Current Value',
+							name: 'currentValue',
+							type: 'number',
+							description: 'Value REACHED today, in absolute terms — never an increment. OMIT IT to mean « it is done »: the server then pushes the progress to the target itself.',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateMcpConnection',
+			name: 'Update MCP Connection',
+			action: 'Change an existing MCP connection: rename it, rotate its secret, change WHO may use it, enable or disable it',
+			description: 'Change an existing MCP connection: rename it, rotate its secret, change WHO may use it, enable or disable it. `agentIds` REPLACES the list, it does not extend it — start from `list_mcp_connections` before adding a collaborator, or you silently revoke the others. Widening `agentIds` grants access: only on request. `enabled: false` cuts the connection without losing it — that is what to offer when the person hesitates, rather than `delete_mcp_connection`. Omitted fields are untouched.',
+			routeSpec: {"method":"PUT","path":"/api/agents/mcp-connections/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Agent IDs',
+							name: 'agentIds',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Auth Config',
+							name: 'authConfig',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Enabled',
+							name: 'enabled',
+							type: 'boolean',
+							description: 'Whether to enable enabled',
+							default: false,
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updatePendingAction',
+			name: 'Update Pending Action',
+			action: 'Save explicit edits to ONE pending proposal, preserving the original account, project, resources and proposer',
+			description: 'Save explicit edits to ONE pending proposal, preserving the original account, project, resources and proposer. Read get_pending_action first, send its exact expectedRevision and only changed editable fields. Scope, identifiers, credentials and execution safeguards cannot change. This saves a new revision and clears previous checks; it executes NOTHING. Run prepare_pending_action next and obtain approval for the revised content. An agent may edit ONLY its own original proposal, never rewrite another author then approve the new content. Delegate revisions to the original proposer. A collaborator still cannot approve its own proposal. Conflicts require rereading; never overwrite blindly.',
+			routeSpec: {"method":"PATCH","path":"/api/agents/pending-actions/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Expected Revision',
+					name: 'expectedRevision',
+					type: 'number',
+					required: true,
+					default: 0,
+				},
+				{
+					displayName: 'Changes',
+					name: 'changes',
+					type: 'json',
+					required: true,
+					description: 'Changed fields only, matching the field schemas returned by get_pending_action. May be empty when unset removes an optional field. (provide a JSON object)',
+					default: '{}',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Unset',
+							name: 'unset',
+							type: 'json',
+							description: 'Optional editable fields to remove entirely. Required fields, identifiers and safeguards cannot be removed. Never specify a field in both changes and unset. (provide a JSON array)',
+							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateScheduledTask',
+			name: 'Update Scheduled Task',
+			action: 'Change an existing scheduled task — ONLY the fields you send change, no default is rewritten over an omitted one',
+			description: 'Change an existing scheduled task — ONLY the fields you send change, no default is rewritten over an omitted one. To change the frequency, send a 5-field `cron` (or null to make it manual) and, when the person spoke in plain language, `nl_input` to keep their wording. To change what the collaborator does, `task_prompt` in plain language — never a machine tool name, the instruction is displayed as is. `auto_approve: true` makes the run execute its actions WITHOUT validation on every tick: it grants autonomy, so it only ever goes through on an explicit request. `pinned_capabilities` refuses an explicitly empty list — omit the field to leave it alone. To pause, `toggle_scheduled_task`; to delete, `delete_scheduled_task`; to see what it would produce, `trial_run_scheduled_task`.',
+			routeSpec: {"method":"PATCH","path":"/api/agents/scheduled-tasks/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Auto Approve',
+							name: 'auto_approve',
+							type: 'boolean',
+							description: 'Whether true = actions execute with no validation on every run',
+							default: false,
+						},
+						{
+							displayName: 'Bot Output Enabled',
+							name: 'bot_output_enabled',
+							type: 'boolean',
+							description: 'Whether deprecated, kept for older callers. Prefer `output_channels`.',
+							default: false,
+						},
+						{
+							displayName: 'Cron',
+							name: 'cron',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Nl Input',
+							name: 'nl_input',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Output Channels',
+							name: 'output_channels',
+							type: 'json',
+							description: 'Where the result of each run is delivered. null = every channel currently available, re-resolved at every delivery; [] = deliver nowhere; an explicit list = exactly those, frozen. This is THE setting to change on a collaborator\'s own signature initiative when the person says « send it to me on Telegram instead » or « stop emailing me that ». An unlinked channel is filtered at delivery, never attempted; the delivery costs the same whatever the number of channels. (provide a JSON array)',
+							default: '[]',
+						},
+						{
+							displayName: 'Pinned Capabilities',
+							name: 'pinned_capabilities',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Rotation',
+							name: 'rotation',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Skip Holidays',
+							name: 'skip_holidays',
+							type: 'boolean',
+							description: 'Whether to enable skip holidays',
+							default: false,
+						},
+						{
+							displayName: 'Task Prompt',
+							name: 'task_prompt',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Timezone',
+							name: 'timezone',
+							type: 'string',
+							default: '',
 						},
 					],
 				}

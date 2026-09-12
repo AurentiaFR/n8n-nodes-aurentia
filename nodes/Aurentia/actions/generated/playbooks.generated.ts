@@ -6,6 +6,179 @@ export const playbooksResource: GeneratedResource = {
 	displayName: 'Playbooks',
 	operations: [
 		{
+			value: 'createMySkill',
+			name: 'Create My Skill',
+			action: 'Create an EXECUTABLE SKILL (a « recipe »: a chain of DSL steps `tool_call`, `llm_step`, `condition`, `foreach`, `delay`, `playbook_call`, `set_var`, `output`) that collaborators then launch with `run_skill`',
+			description: 'Create an EXECUTABLE SKILL (a « recipe »: a chain of DSL steps `tool_call`, `llm_step`, `condition`, `foreach`, `delay`, `playbook_call`, `set_var`, `output`) that collaborators then launch with `run_skill`. This is the automation of the /skills page — NOT the SKILL.md file skill of the Atelier (→ the chat built-in `save_skill_draft`, then `update_file_skill`). `name` and `description` are bilingual `{ fr, en }` and both required. `visibility`: `personal` by default; `project` requires `projectId`; never `marketplace` here, publishing is a separate gesture (`publish_skill_to_marketplace`). Write `steps` that match the DSL schema (an unknown step type is refused) and `applicable_agents` that exist in the registry. Try it with `test_my_skill` before telling the person it works.',
+			routeSpec: {"method":"POST","path":"/api/playbooks","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
+				},
+				{
+					displayName: 'Description',
+					name: 'description',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
+				},
+				{
+					displayName: 'Visibility',
+					name: 'visibility',
+					type: 'options',
+					required: true,
+					default: 'agency',
+					options: [
+						{ name: 'Agency', value: 'agency' },
+						{ name: 'Personal', value: 'personal' },
+						{ name: 'Project', value: 'project' },
+					],
+				},
+				{
+					displayName: 'Steps',
+					name: 'steps',
+					type: 'json',
+					required: true,
+					description: 'DSL steps (lib/services/playbooks/dsl-schema.ts). (provide a JSON array).',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Applicable Agents',
+							name: 'applicable_agents',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Estimated Credits',
+							name: 'estimated_credits',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Inputs Schema',
+							name: 'inputs_schema',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Output Format',
+							name: 'output_format',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Outputs Schema',
+							name: 'outputs_schema',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Slug',
+							name: 'slug',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Tags',
+							name: 'tags',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Trigger Keyword',
+							name: 'trigger_keyword',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'decideSkillSuggestion',
+			name: 'Decide Skill Suggestion',
+			action: 'Decide on a SKILL SUGGESTION the engine detected in the person\'s habits',
+			description: 'Decide on a SKILL SUGGESTION the engine detected in the person\'s habits. `accept` creates a personal skill from the proposed DSL — `overrides` lets you set the bilingual name and description, the applicable collaborators and the visibility; `dismiss` drops it. ALWAYS after the person\'s decision, never in their name. A suggestion that was already decided answers 400: do not retry, read `list_skill_suggestions` again.',
+			routeSpec: {"method":"POST","path":"/api/playbooks/suggestions/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Agent_playbook_suggestions.ID (uuid)',
+					default: '',
+				},
+				{
+					displayName: 'Action',
+					name: 'action',
+					type: 'options',
+					required: true,
+					default: 'accept',
+					options: [
+						{ name: 'Accept', value: 'accept' },
+						{ name: 'Dismiss', value: 'dismiss' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Overrides',
+							name: 'overrides',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'deleteMySkill',
+			name: 'Delete My Skill',
+			action: 'Retire a DSL skill (soft delete: it disappears from the lists and stops being executable, the run history is kept)',
+			description: 'Retire a DSL skill (soft delete: it disappears from the lists and stops being executable, the run history is kept). A skill published on the marketplace has to be pulled from it first (`unlist_marketplace_skill`). On an explicit request, on a named skill — never a system skill, which the service refuses.',
+			routeSpec: {"method":"DELETE","path":"/api/playbooks/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'getSkillMetrics',
 			name: 'Get Skill Metrics',
 			action: 'Get 30-day metrics for a skill (runs, success_rate, avg_credits, avg_latency_ms)',
@@ -64,7 +237,7 @@ export const playbooksResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -120,6 +293,99 @@ export const playbooksResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'listSkillSuggestions',
+			name: 'List Skill Suggestions',
+			action: 'The SKILL SUGGESTIONS the engine spotted in the person\'s habits (« you repeat this sequence often, make it a skill?',
+			description: 'The SKILL SUGGESTIONS the engine spotted in the person\'s habits (« you repeat this sequence often, make it a skill? »), still `pending`: ID, pattern summary, occurrence count, proposed DSL and expiry. Read it before `decide_skill_suggestion`, which needs the `ID` and refuses a suggestion that was already decided. Show them, let the person choose — never decide for them.',
+			routeSpec: {"method":"GET","path":"/api/playbooks/suggestions","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'publishSkillToMarketplace',
+			name: 'Publish Skill To Marketplace',
+			action: 'Submit a DSL skill to the public marketplace review, optionally priced (`price_eur_cents`, 0 or omitted = free)',
+			description: 'Submit a DSL skill to the public marketplace review, optionally priced (`price_eur_cents`, 0 or omitted = free). It commits the person publicly, under their name: explicit request only, with a price THEY set. The skill goes « in review », it does not go live immediately, and a skill already pending or published is refused with a 409. `marketplace_slug` must be unique (lowercase-with-dashes). To pull it back afterwards, `unlist_marketplace_skill`.',
+			routeSpec: {"method":"POST","path":"/api/playbooks/{id}/publish","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Cover Image URL',
+							name: 'cover_image_url',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Marketplace Slug',
+							name: 'marketplace_slug',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Price Eur Cents',
+							name: 'price_eur_cents',
+							type: 'number',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'reviewMarketplaceSkill',
+			name: 'Review Marketplace Skill',
+			action: 'Post, in the person\'s name, a RATING (1 to 5) and a review on a marketplace skill they installed',
+			description: 'Post, in the person\'s name, a RATING (1 to 5) and a review on a marketplace skill they installed. Only their words and their rating — never an invented or « suggested » review. The review is PUBLIC under their name, which is why it goes through approval. The route refuses when the skill is not installed by the caller. Do not post a second review where one already stands.',
+			routeSpec: {"method":"POST","path":"/api/playbooks/{id}/reviews","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Rating',
+					name: 'rating',
+					type: 'number',
+					required: true,
+					default: 0,
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Comment',
+							name: 'comment',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'runSkill',
 			name: 'Run Skill',
 			action: 'Execute a skill by ID with structured inputs',
@@ -153,6 +419,155 @@ export const playbooksResource: GeneratedResource = {
 							type: 'json',
 							description: 'Provide a JSON object',
 							default: '{}',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'testMySkill',
+			name: 'Test My Skill',
+			action: 'Run a DSL skill in TEST mode: the SAME engine as a real run, but no credits are charged',
+			description: 'Run a DSL skill in TEST mode: the SAME engine as a real run, but no credits are charged. WARNING — « test » does not mean « dry run »: the `tool_call` steps really execute. A skill that sends an email sends it; a skill that creates a contact creates it. Keep it for read-only or generation skills, or tell the person exactly what the test is about to do before calling. `inputs` follows the skill\'s `inputs_schema`; `agentId` is the collaborator to run as (defaults to the orchestrator). Return the output and any step errors.',
+			routeSpec: {"method":"POST","path":"/api/playbooks/{id}/test","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Agent ID',
+							name: 'agentId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Inputs',
+							name: 'inputs',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'unlistMarketplaceSkill',
+			name: 'Unlist Marketplace Skill',
+			action: 'Pull a skill from the marketplace: it stops being visible and installable, but the existing installations of other people stay intact',
+			description: 'Pull a skill from the marketplace: it stops being visible and installable, but the existing installations of other people stay intact. On request. It does not delete the skill itself (→ `delete_my_skill` afterwards if that is what they want). A skill that is not `published` is refused.',
+			routeSpec: {"method":"POST","path":"/api/playbooks/{id}/unlist","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'updateMySkill',
+			name: 'Update My Skill',
+			action: 'Change a DSL skill: name, description, steps, applicable collaborators, tags, output format… `visibility` and `slug` cannot be changed here (the update type excludes both)',
+			description: 'Change a DSL skill: name, description, steps, applicable collaborators, tags, output format… `visibility` and `slug` cannot be changed here (the update type excludes both). Send only what changes; `steps` REPLACES the whole list — read the skill back with `full=true` before rewriting it, or you silently erase steps. A system skill (the `system` tab) is not editable and answers 403.',
+			routeSpec: {"method":"PUT","path":"/api/playbooks/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Applicable Agents',
+							name: 'applicable_agents',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Estimated Credits',
+							name: 'estimated_credits',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Inputs Schema',
+							name: 'inputs_schema',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Output Format',
+							name: 'output_format',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Outputs Schema',
+							name: 'outputs_schema',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Steps',
+							name: 'steps',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Tags',
+							name: 'tags',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Trigger Keyword',
+							name: 'trigger_keyword',
+							type: 'string',
+							default: '',
 						},
 					],
 				}

@@ -112,7 +112,7 @@ export const analyticsResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 					],
@@ -155,7 +155,7 @@ export const analyticsResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 					],
@@ -229,6 +229,31 @@ export const analyticsResource: GeneratedResource = {
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'mergeAttributionSubjects',
+			name: 'Merge Attribution Subjects',
+			action: 'Merge two attribution subjects (two identities tracked across LinkedIn touchpoints and revenue) that are really the same person: `{ID}` in the path is the subject that SURVIVES, `mergeSubjectId` is the one ABSORBED into it — its touchpoints and journeys move over and it disappears',
+			description: 'Merge two attribution subjects (two identities tracked across LinkedIn touchpoints and revenue) that are really the same person: `{ID}` in the path is the subject that SURVIVES, `mergeSubjectId` is the one ABSORBED into it — its touchpoints and journeys move over and it disappears. Irreversible. This is the manual correction for an ambiguous match the system deliberately kept separate; only call it when the person states the two are one, naming both. Both subjects must be theirs (404 otherwise) and Aurentia for Entrepreneurs only. Subject IDs are the `subjectId` values shown by `attribution_subject_journey` and the attribution screens.',
+			routeSpec: {"method":"POST","path":"/api/analytics/attribution/subjects/{id}/merge","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Target subject ID (kept)',
+					default: '',
+				},
+				{
+					displayName: 'Merge Subject ID',
+					name: 'mergeSubjectId',
+					type: 'string',
+					required: true,
+					description: 'Source subject ID (absorbed, UUID)',
+					default: '',
 				}
 			],
 		}

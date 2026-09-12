@@ -24,6 +24,33 @@ export const telegramResource: GeneratedResource = {
 			properties: [
 
 			],
+		},
+		{
+			value: 'unlinkTelegram',
+			name: 'Unlink Telegram',
+			action: 'Unlink the person\'s Telegram account: a goodbye DM from the bot, a revocation written to the audit log (Schrems II compliance path), and no more Telegram notifications',
+			description: 'Unlink the person\'s Telegram account: a goodbye DM from the bot, a revocation written to the audit log (Schrems II compliance path), and no more Telegram notifications. Reversible by running `/link` again from Telegram (`link_telegram`). On an explicit request only. This is the COMMUNITY bot of the Aurentia account — a PERSONAL Telegram bot the person registered is disconnected with `disconnect_telegram_bot`, another object entirely.',
+			routeSpec: {"method":"DELETE","path":"/api/telegram/link","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'updateTelegramNotificationPrefs',
+			name: 'Update Telegram Notification Prefs',
+			action: 'Same gesture as `update_discord_notification_prefs` for the Telegram bot: `daily_report`, `agent_alerts`, `automation_alerts`, `credit_low`, `announcements`, `other_alerts`, `incubator`',
+			description: 'Same gesture as `update_discord_notification_prefs` for the Telegram bot: `daily_report`, `agent_alerts`, `automation_alerts`, `credit_low`, `announcements`, `other_alerts`, `incubator`. There is no `response_public` and no `dm_muted` here (those keys are ignored). Merged key by key; a linked Telegram account is required (`get_telegram_connection`).',
+			routeSpec: {"method":"PATCH","path":"/api/telegram/link","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Notification Prefs',
+					name: 'notification_prefs',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
+				}
+			],
 		}
 	],
 };

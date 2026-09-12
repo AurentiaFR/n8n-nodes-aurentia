@@ -84,6 +84,39 @@ export const dashboardResource: GeneratedResource = {
 			properties: [
 
 			],
+		},
+		{
+			value: 'snoozeDashboardAction',
+			name: 'Snooze Dashboard Action',
+			action: 'Postpone (snooze) a pending "awaiting you" dashboard action',
+			description: 'Postpone (snooze) a pending "awaiting you" dashboard action. Defaults to 24h from now if `until` is omitted. Pass a past ISO timestamp to cancel an existing snooze and bring the action back immediately.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/dashboard/actions/{actionId}/snooze","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Action ID',
+					name: 'actionId',
+					type: 'string',
+					required: true,
+					description: 'The dashboard action ID to snooze',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Until',
+							name: 'until',
+							type: 'string',
+							description: 'ISO timestamp to snooze until (default: now + 24h). A past timestamp cancels the snooze.',
+							default: '',
+						},
+					],
+				}
+			],
 		}
 	],
 };

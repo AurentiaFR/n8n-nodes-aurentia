@@ -140,6 +140,222 @@ export const closeResource: GeneratedResource = {
 					],
 				}
 			],
+		},
+		{
+			value: 'createCloseAutomation',
+			name: 'Create Close Automation',
+			action: 'Create an Aurentia Close automation: when a call event fires (`booked`, `outcome_logged`, `no_show`, `meet_now`), the steps run one after the other and MESSAGE THE LEAD — by email or push — after their delay',
+			description: 'Create an Aurentia Close automation: when a call event fires (`booked`, `outcome_logged`, `no_show`, `meet_now`), the steps run one after the other and MESSAGE THE LEAD — by email or push — after their delay. Once `is_active` is true (the default) real people start receiving these messages automatically, so write `title`/`body` as the person would send them, read them back, and create it inactive (`is_active:false`) when in doubt. `delay_minutes` is counted from the trigger, max 7 days. Up to 10 steps. Only `email` and `push` are deliverable channels.',
+			routeSpec: {"method":"POST","path":"/api/close/automations","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: '1-120 chars',
+					default: '',
+				},
+				{
+					displayName: 'Trigger',
+					name: 'trigger',
+					type: 'options',
+					required: true,
+					default: 'booked',
+					options: [
+						{ name: 'Booked', value: 'booked' },
+						{ name: 'Meet Now', value: 'meet_now' },
+						{ name: 'No Show', value: 'no_show' },
+						{ name: 'Outcome Logged', value: 'outcome_logged' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Is Active',
+							name: 'is_active',
+							type: 'boolean',
+							description: 'Whether default true — messages start going out',
+							default: false,
+						},
+						{
+							displayName: 'Steps',
+							name: 'steps',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'deleteCloseAutomation',
+			name: 'Delete Close Automation',
+			action: 'Delete an Aurentia Close automation',
+			description: 'Delete an Aurentia Close automation. Messages already scheduled by a past trigger are not recalled by this call; only future triggers stop. To stop it while keeping it, use `update_close_automation` with `is_active:false`. No undo.',
+			routeSpec: {"method":"DELETE","path":"/api/close/automations/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Automation ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getCloseSettings',
+			name: 'Get Close Settings',
+			action: 'Read the per-user Aurentia Close defaults: default deal value, currency, the objection list offered in the outcome wizard, and the meet-now grace period',
+			description: 'Read the per-user Aurentia Close defaults: default deal value, currency, the objection list offered in the outcome wizard, and the meet-now grace period. MANDATORY before `update_close_settings`, which is an upsert that RESETS every field you omit — without this read, changing the currency would wipe the objection list.',
+			routeSpec: {"method":"GET","path":"/api/close/settings","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'setCloseContactStage',
+			name: 'Set Close Contact Stage',
+			action: 'Tag a Close contact (a booking lead) with a follow-up stage: `follow_up`, `nurturing`, `hot_lead`, or `null` to clear',
+			description: 'Tag a Close contact (a booking lead) with a follow-up stage: `follow_up`, `nurturing`, `hot_lead`, or `null` to clear. Pure classification for the Close database view — it sends nothing and changes nothing on the CRM contact. `ID` is the booking lead ID from `close_list_contacts`, not a CRM contact ID. Refused (403) when the lead belongs to a booking page the caller cannot access.',
+			routeSpec: {"method":"PATCH","path":"/api/close/contacts/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Booking lead ID (from close_list_contacts)',
+					default: '',
+				},
+				{
+					displayName: 'Contact Stage',
+					name: 'contact_stage',
+					type: 'options',
+					required: true,
+					description: 'Null clears the stage',
+					default: 'follow_up',
+					options: [
+						{ name: 'Follow Up', value: 'follow_up' },
+						{ name: 'Hot Lead', value: 'hot_lead' },
+						{ name: 'Null', value: 'null' },
+						{ name: 'Nurturing', value: 'nurturing' },
+					],
+				}
+			],
+		},
+		{
+			value: 'updateCloseAutomation',
+			name: 'Update Close Automation',
+			action: 'Replace an Aurentia Close automation',
+			description: 'Replace an Aurentia Close automation. This is a FULL REPLACE, not a patch: `name` and `trigger` are required every time, `steps` omitted means NO steps (they are wiped), `is_active` omitted means active. Read the current automation with `close_list_automations` and send everything back with your change applied. Same care as at creation: active steps message real leads.',
+			routeSpec: {"method":"PUT","path":"/api/close/automations/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Automation ID (from close_list_automations)',
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Trigger',
+					name: 'trigger',
+					type: 'options',
+					required: true,
+					default: 'booked',
+					options: [
+						{ name: 'Booked', value: 'booked' },
+						{ name: 'Meet Now', value: 'meet_now' },
+						{ name: 'No Show', value: 'no_show' },
+						{ name: 'Outcome Logged', value: 'outcome_logged' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Is Active',
+							name: 'is_active',
+							type: 'boolean',
+							description: 'Whether omitted = true',
+							default: false,
+						},
+						{
+							displayName: 'Steps',
+							name: 'steps',
+							type: 'json',
+							description: 'FULL list — omitting it deletes every step. (provide a JSON array).',
+							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateCloseSettings',
+			name: 'Update Close Settings',
+			action: 'Set the per-user Aurentia Close defaults: default deal value proposed when logging a sale, currency, the objection list offered in the outcome wizard, and the meet-now grace period',
+			description: 'Set the per-user Aurentia Close defaults: default deal value proposed when logging a sale, currency, the objection list offered in the outcome wizard, and the meet-now grace period. This is an UPSERT that RESETS whatever you omit (default value → none, currency → EUR, objections → empty list, grace → 5 min): read the current settings with `get_close_settings` and send them all back with your change. `objection_types` replaces the whole list; keep the built-in slugs the person still uses.',
+			routeSpec: {"method":"PUT","path":"/api/close/settings","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Currency',
+							name: 'currency',
+							type: 'string',
+							description: 'ISO 4217, default EUR',
+							default: '',
+						},
+						{
+							displayName: 'Default Transaction Value',
+							name: 'default_transaction_value',
+							type: 'number',
+							description: 'Default deal value (plain number in `currency`)',
+							default: 0,
+						},
+						{
+							displayName: 'Meet Now Grace Minutes',
+							name: 'meet_now_grace_minutes',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Objection Types',
+							name: 'objection_types',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+					],
+				}
+			],
 		}
 	],
 };

@@ -6,6 +6,51 @@ export const modulesResource: GeneratedResource = {
 	displayName: 'Modules',
 	operations: [
 		{
+			value: 'autofillModuleAnswers',
+			name: 'Autofill Module Answers',
+			action: 'Get the module\'s questionnaire pre-filled by AI from what the project already knows (its brief, its previously generated modules) — WITHOUT generating the module and without spending credits',
+			description: 'Get the module\'s questionnaire pre-filled by AI from what the project already knows (its brief, its previously generated modules) — WITHOUT generating the module and without spending credits. READ-ONLY: nothing is written. Use it before `generate_module`: show the returned `inputData` to the person, let them correct anything, then pass the result as `answers` to `generate_module`. `guidance` (up to 2 000 chars) steers the fill (« focus on the B2B offer »). `instanceId` targets an existing module instance when the module is multi-instance. Owner-only: the project must belong to the person (collaborators get a 404). Rate-limited as an AI call.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/modules/autofill","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Module Slug',
+					name: 'moduleSlug',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Guidance',
+							name: 'guidance',
+							type: 'string',
+							description: 'Optional steering, max 2000 chars',
+							default: '',
+						},
+						{
+							displayName: 'Instance ID',
+							name: 'instanceId',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'cancelModule',
 			name: 'Cancel Module',
 			action: 'Cancel an in-flight module generation workflow',
@@ -23,22 +68,39 @@ export const modulesResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'cancelModuleBatch',
+			name: 'Cancel Module Batch',
+			action: 'Stop a multi-module generation batch: every item still PENDING is cancelled and will not be started, so no further credits are spent on them',
+			description: 'Stop a multi-module generation batch: every item still PENDING is cancelled and will not be started, so no further credits are spent on them. Items already running or completed are left as they are — to stop a single running module use `cancel_module` with its completion ID. Only the person who started the batch can cancel it (403 otherwise); a batch that is not running any more is returned unchanged. Get `runId` from `list_module_batches`, and read the result with `get_module_batch`.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/modules/batch/{runId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Run ID',
+					name: 'runId',
+					type: 'string',
+					required: true,
+					description: 'Batch run ID (UUID, from list_module_batches)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'generateModule',
 			name: 'Generate Module',
 			action: 'Start a module generation',
-			description: 'Start a module generation. Returns { completionId }. Poll get_module_status({completion_id}) to track progress, or open the user-facing URL /modules/{projectId}/{module_slug}.',
+			description: 'Start a module generation. Returns { completionId }. Poll get_module_status({completion_id}) to track progress, or open the user-facing URL /modules/{projectId}/{moduleSlug}.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/modules/generate","queryParams":[]},
 			properties: [
 				{
 					displayName: 'Module Slug',
-					name: 'module_slug',
+					name: 'moduleSlug',
 					type: 'string',
 					required: true,
 					default: '',
 				},
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -51,8 +113,8 @@ export const modulesResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Answers',
-							name: 'answers',
+							displayName: 'Input Data',
+							name: 'inputData',
 							type: 'json',
 							description: 'Provide a JSON object',
 							default: '{}',
@@ -153,6 +215,101 @@ export const modulesResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getPotentielRunStatus',
+			name: 'Get Potentiel Run Status',
+			action: 'Status of a « Ton potentiel » run started by `launch_potentiel_module`',
+			description: 'Status of a « Ton potentiel » run started by `launch_potentiel_module`. Pass back the SAME `runToken` you sent to launch it. This is how you tell « still running » from « finished » without relaunching — relaunching bills the targets again at 200 credits each.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/modules/potentiel/generate","queryParams":["projectId","runToken"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Run Token',
+					name: 'runToken',
+					type: 'string',
+					required: true,
+					description: 'The UUID sent as runToken to launch_potentiel_module',
+					typeOptions: { password: true },
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'launchPotentielModule',
+			name: 'Launch Potentiel Module',
+			action: 'Launch the « Ton potentiel » module: for each buyer target it analyses the market potential in the project\'s zone and consolidates a synthesis',
+			description: 'Launch the « Ton potentiel » module: for each buyer target it analyses the market potential in the project\'s zone and consolidates a synthesis. PAID: 200 CREDITS PER TARGET (a run of 3 targets = 600 credits, 15 targets max = 3 000) — count the targets, say the price, get a yes. Send that confirmed total as `expectedCredits` and a stable UUID as `runToken`; replay the same token for the same intent. Targets come from `list_targets` (`targetIds`) and/or from `suggest_potentiel_segments` (`derivedSegments`, each with `segment`, `description`, `category` B2C|B2B|ORGANISM — they become targets on launch). `zone` is optional: the project\'s geographic area is used when omitted; pass it only to override. `reconsolidate: true` with no target costs 0 credits. Returns 202 immediately with the pending completion IDs; follow it with `get_module_status`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/modules/potentiel/generate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Run Token',
+					name: 'runToken',
+					type: 'string',
+					required: true,
+					description: 'Stable UUID for this exact launch intent',
+					typeOptions: { password: true },
+					default: '',
+				},
+				{
+					displayName: 'Expected Credits',
+					name: 'expectedCredits',
+					type: 'number',
+					required: true,
+					description: 'Exact confirmed total: 200 × paid targets, or 0 for reconsolidation',
+					default: 0,
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Derived Segments',
+							name: 'derivedSegments',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Reconsolidate',
+							name: 'reconsolidate',
+							type: 'boolean',
+							description: 'Whether re-run only the synthesis. Default false.',
+							default: false,
+						},
+						{
+							displayName: 'Target IDs',
+							name: 'targetIds',
+							type: 'json',
+							description: 'Existing target IDs (list_targets). (provide a JSON array).',
+							default: '[]',
+						},
+						{
+							displayName: 'Zone',
+							name: 'zone',
+							type: 'string',
+							description: 'Override of the project\'s geographic zone. Optional.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'listModuleBatches',
 			name: 'List Module Batches',
 			action: 'List ongoing module generation batches (multi-module generations)',
@@ -173,6 +330,138 @@ export const modulesResource: GeneratedResource = {
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'resetModuleContent',
+			name: 'Reset Module Content',
+			action: 'Throw away every manual edit made to a module deliverable and restore the version the AI generated',
+			description: 'Throw away every manual edit made to a module deliverable and restore the version the AI generated. Works only when a manual edit exists (409 otherwise — nothing to restore). The edits are LOST for good: quote to the person what `get_module_status` currently shows before calling this, or copy the edited text into a note first (`send_module_to_note`).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/modules/completions/{completionId}/content/reset","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Completion ID',
+					name: 'completionId',
+					type: 'string',
+					required: true,
+					description: 'Module completion ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'retryModuleGeneration',
+			name: 'Retry Module Generation',
+			action: 'Re-run a module generation that FAILED, with the inputs it was started with',
+			description: 'Re-run a module generation that FAILED, with the inputs it was started with. `moduleId` is the ID of the FAILED COMPLETION (as shown by `get_module_status` / `list_completed_modules`), not a module slug. This COSTS CREDITS: the failed run was refunded at failure time, so the retry is charged at the module\'s normal price like a fresh generation — 402 when the balance is short (check `get_credits_usage` first). Answers 202 with a NEW completion ID: poll `get_module_status` on it, never on the old one. Do not call it on a completion that succeeded (use `generate_module` if the person wants a new version).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/modules/{moduleId}/retry","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Module ID',
+					name: 'moduleId',
+					type: 'string',
+					required: true,
+					description: 'ID of the FAILED completion to retry',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'sendModuleToNote',
+			name: 'Send Module To Note',
+			action: 'Copy a module deliverable into the person\'s Notes as a markdown note (the « Envoyer vers une note » button)',
+			description: 'Copy a module deliverable into the person\'s Notes as a markdown note (the « Envoyer vers une note » button). No AI, no credits: the current `output_data` (manual edits included) is rendered to markdown and saved as a NEW note — calling it twice makes two notes. Only the owner of the completion may do it (403). Returns `{ noteId }`; open it with `get_note`. Get the completion ID from `list_completed_modules`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/modules/completions/{completionId}/send-to-note","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Completion ID',
+					name: 'completionId',
+					type: 'string',
+					required: true,
+					description: 'Module completion ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'startModuleBatch',
+			name: 'Start Module Batch',
+			action: 'Launch several module generations at once (« generate the whole Marketing category »), each auto-filled by AI unless you pass `inputDataOverride`, with optional dependencies between items (`dependsOn` names other items\' `localId`; an item waits for those to finish so it can read their output)',
+			description: 'Launch several module generations at once (« generate the whole Marketing category »), each auto-filled by AI unless you pass `inputDataOverride`, with optional dependencies between items (`dependsOn` names other items\' `localId`; an item waits for those to finish so it can read their output). EVERY item is billed like one `generate_module` call — state the number of modules and get a clear yes before launching; modules already generated for the project are skipped and not re-charged. `localId` is any unique string you choose per item, `label` what the person will see. Up to 32 items. Returns the run (202) with its `ID` for `get_module_batch`, which reports progress; `cancel_module_batch` stops the run and `retry_module_generation` replays a failed item. Requires the `edit` right on the project\'s modules.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/modules/batch","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Items',
+					name: 'items',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Source',
+							name: 'source',
+							type: 'string',
+							description: 'Free tag of what triggered the batch, max 40 chars',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'suggestPotentielSegments',
+			name: 'Suggest Potentiel Segments',
+			action: 'Ask the AI for buyer segments the project could analyse in the « Ton potentiel » module — free, nothing is written, a suggestion is not a target',
+			description: 'Ask the AI for buyer segments the project could analyse in the « Ton potentiel » module — free, nothing is written, a suggestion is not a target. Show the list to the person and pass the ones they keep to `launch_potentiel_module` as `derivedSegments` (same `segment`/`description`/`category` shape); only the launch creates targets and charges credits (200 per target). Requires a verified e-mail (it runs a model call) and access to the project.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/modules/potentiel/suggest-segments","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'updateModuleContent',
+			name: 'Update Module Content',
+			action: 'Rewrite the text of a COMPLETED module deliverable by hand (a paragraph to fix, a figure to correct, a section to rephrase)',
+			description: 'Rewrite the text of a COMPLETED module deliverable by hand (a paragraph to fix, a figure to correct, a section to rephrase). `output_data` is the WHOLE document, not a patch: read the current one with `get_module_status` (`output_data`), edit it, send everything back. The server checks the shape against the original — every top-level section must still be there, the structure (objects/arrays/strings) must match, and no array that had items may come back empty — a 400 explains which path is wrong. Strings are sanitised on save. A deliverable still generating is refused (409). The first manual edit keeps a copy of the generated version, so `reset_module_content` can always undo you. Only members who can edit the project may write (403).',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/modules/completions/{completionId}/content","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Completion ID',
+					name: 'completionId',
+					type: 'string',
+					required: true,
+					description: 'Module completion ID (from list_completed_modules / get_module_status)',
+					default: '',
+				},
+				{
+					displayName: 'Output Data',
+					name: 'output_data',
+					type: 'json',
+					required: true,
+					description: 'The FULL edited document, same structure as get_module_status().output_data. (provide a JSON object).',
+					default: '{}',
 				}
 			],
 		}

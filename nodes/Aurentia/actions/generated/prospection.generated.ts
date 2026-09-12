@@ -43,7 +43,7 @@ export const prospectionResource: GeneratedResource = {
 					options: [
 						{
 							displayName: 'Contact Type',
-							name: 'contact_type',
+							name: 'contactType',
 							type: 'options',
 							description: 'For \'add_to_crm\'',
 							default: 'client',
@@ -56,7 +56,7 @@ export const prospectionResource: GeneratedResource = {
 						},
 						{
 							displayName: 'Target Project ID',
-							name: 'target_project_id',
+							name: 'targetProjectId',
 							type: 'string',
 							description: 'For \'add_to_crm\'. Falls back to each lead\'s own project.',
 							default: '',
@@ -106,7 +106,7 @@ export const prospectionResource: GeneratedResource = {
 					options: [
 						{
 							displayName: 'Contact Type',
-							name: 'contact_type',
+							name: 'contactType',
 							type: 'options',
 							default: 'client',
 							options: [
@@ -118,7 +118,7 @@ export const prospectionResource: GeneratedResource = {
 						},
 						{
 							displayName: 'Target Project ID',
-							name: 'target_project_id',
+							name: 'targetProjectId',
 							type: 'string',
 							description: 'Falls back to lead.project_id when omitted',
 							default: '',
@@ -384,7 +384,7 @@ export const prospectionResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -422,7 +422,7 @@ export const prospectionResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 					],
@@ -453,7 +453,7 @@ export const prospectionResource: GeneratedResource = {
 					options: [
 						{
 							displayName: 'Business Context',
-							name: 'business_context',
+							name: 'businessContext',
 							type: 'string',
 							description: 'Optional sender context (kept private, not quoted verbatim)',
 							default: '',
@@ -544,6 +544,13 @@ export const prospectionResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
+							displayName: 'Auto CRM',
+							name: 'auto_crm',
+							type: 'boolean',
+							description: 'Whether auto-add every KEPT B2B contact of THIS session to the CRM (AI-classified client / partner / supplier / network). Overrides the ICP\'s own `auto_crm` setting for this run only; omit to let the ICP decide.',
+							default: false,
+						},
+						{
 							displayName: 'Mode',
 							name: 'mode',
 							type: 'options',
@@ -624,7 +631,7 @@ export const prospectionResource: GeneratedResource = {
 					options: [
 						{
 							displayName: 'Is AI Generated',
-							name: 'is_ai_generated',
+							name: 'isAiGenerated',
 							type: 'boolean',
 							description: 'Whether triggers the AI Act art. 50 footer when true.',
 							default: false,

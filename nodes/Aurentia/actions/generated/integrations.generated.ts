@@ -6,6 +6,31 @@ export const integrationsResource: GeneratedResource = {
 	displayName: 'Integrations',
 	operations: [
 		{
+			value: 'connectIcalCalendar',
+			name: 'Connect Ical Calendar',
+			action: 'Subscribe the person\'s agenda to a read-only ICS feed (`https://` or `webcal://` — a shared Google/Outlook/Notion calendar URL, a school timetable…) under a display `label`; events start syncing right away and feed the booking availability',
+			description: 'Subscribe the person\'s agenda to a read-only ICS feed (`https://` or `webcal://` — a shared Google/Outlook/Notion calendar URL, a school timetable…) under a display `label`; events start syncing right away and feed the booking availability. The URL is checked server-side (private hosts are refused). Treat a private ICS URL as a secret: do not echo it back. Remove with `delete_calendar_connection`.',
+			routeSpec: {"method":"POST","path":"/api/integrations/ical/connect","queryParams":[]},
+			properties: [
+				{
+					displayName: 'URL',
+					name: 'url',
+					type: 'string',
+					required: true,
+					description: 'Https:// or webcal:// ICS URL',
+					default: '',
+				},
+				{
+					displayName: 'Label',
+					name: 'label',
+					type: 'string',
+					required: true,
+					description: 'Display name, 1-120 chars',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'connectIntegration',
 			name: 'Connect Integration',
 			action: 'Initiate the OAuth/connect flow for a third-party integration',
@@ -92,6 +117,274 @@ export const integrationsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createGmailDraft',
+			name: 'Create Gmail Draft',
+			action: 'Save an email as a DRAFT in the person\'s Gmail — nothing is sent, they finish it in Gmail',
+			description: 'Save an email as a DRAFT in the person\'s Gmail — nothing is sent, they finish it in Gmail. The safe default whenever you wrote the text and they have not read it: draft first, `send_gmail_message` only on their explicit go. `to`/`cc`/`bcc` are comma-separated addresses; `body` is the message text. 403 while the Gmail inbox feature is off.',
+			routeSpec: {"method":"POST","path":"/api/integrations/gmail/messages/draft","queryParams":[]},
+			properties: [
+				{
+					displayName: 'To',
+					name: 'to',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Subject',
+					name: 'subject',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Body',
+					name: 'body',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Bcc',
+							name: 'bcc',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Cc',
+							name: 'cc',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Reply To',
+							name: 'replyTo',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createGmailLabel',
+			name: 'Create Gmail Label',
+			action: 'Create a label in the person\'s Gmail (two-way: it appears in Gmail itself)',
+			description: 'Create a label in the person\'s Gmail (two-way: it appears in Gmail itself). `name` only. Returns the label with its ID, which `modify_gmail_message_labels` needs. Refused with 403 while the Gmail inbox feature is off for this deployment (pending Google verification) — tell the person, do not retry.',
+			routeSpec: {"method":"POST","path":"/api/integrations/gmail/labels","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: 'Label name',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'createGoogleCalendarEvent',
+			name: 'Create Google Calendar Event',
+			action: 'Create an event DIRECTLY in the person\'s Google Calendar (it then syncs back into the Aurentia agenda)',
+			description: 'Create an event DIRECTLY in the person\'s Google Calendar (it then syncs back into the Aurentia agenda). Use it when they say « mets un rendez-vous dans mon Google Agenda » and Google is connected; for an Aurentia meeting report with a CRM contact use `create_meeting` instead. `start`/`end`: give `dateTime` (ISO 8601 with offset, plus `timeZone`) for a timed event, or `date` (YYYY-MM-DD) for an all-day one — one or the other in both. `calendarId` defaults to `primary` (others from `list_google_calendars`). Creating writes on Google immediately, invitations included if the description names attendees — read the details back to the person first.',
+			routeSpec: {"method":"POST","path":"/api/integrations/google-calendar/events","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Summary',
+					name: 'summary',
+					type: 'string',
+					required: true,
+					description: 'Event title (required)',
+					default: '',
+				},
+				{
+					displayName: 'Start',
+					name: 'start',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
+				},
+				{
+					displayName: 'End',
+					name: 'end',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Calendar ID',
+							name: 'calendarId',
+							type: 'string',
+							description: 'Google calendar ID, default \'primary\'',
+							default: '',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Location',
+							name: 'location',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createZoomMeeting',
+			name: 'Create Zoom Meeting',
+			action: 'Schedule a meeting on the person\'s Zoom account and get its join URL — use it when they want a Zoom link for a call',
+			description: 'Schedule a meeting on the person\'s Zoom account and get its join URL — use it when they want a Zoom link for a call. `startTime` ISO 8601 (with `timezone` if not UTC), `duration` in minutes. This creates on Zoom only: to log the meeting in the CRM with a contact, pass the returned join URL as `video_conference_url` to `create_meeting`. Zoom must be connected (401/403 otherwise).',
+			routeSpec: {"method":"POST","path":"/api/integrations/zoom/meetings","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Topic',
+					name: 'topic',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Start Time',
+					name: 'startTime',
+					type: 'string',
+					required: true,
+					description: 'ISO 8601 start',
+					default: '',
+				},
+				{
+					displayName: 'Duration',
+					name: 'duration',
+					type: 'number',
+					required: true,
+					description: 'Minutes',
+					default: 0,
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Agenda',
+							name: 'agenda',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Timezone',
+							name: 'timezone',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'deleteGoogleCalendarEvent',
+			name: 'Delete Google Calendar Event',
+			action: 'Delete an event from the person\'s Google Calendar — gone on Google too, attendees get a cancellation',
+			description: 'Delete an event from the person\'s Google Calendar — gone on Google too, attendees get a cancellation. `eventId` from `list_google_calendar_events`; `calendarId` defaults to `primary`. Name the event and its date to the person before calling.',
+			routeSpec: {"method":"DELETE","path":"/api/integrations/google-calendar/events/{eventId}","queryParams":["calendarId"]},
+			properties: [
+				{
+					displayName: 'Event ID',
+					name: 'eventId',
+					type: 'string',
+					required: true,
+					description: 'Google event ID',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Calendar ID',
+							name: 'calendarId',
+							type: 'string',
+							description: 'Default \'primary\'',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'deleteZoomMeeting',
+			name: 'Delete Zoom Meeting',
+			action: 'Cancel a Zoom meeting on Zoom — the join link dies',
+			description: 'Cancel a Zoom meeting on Zoom — the join link dies. `meetingId` from `list_zoom_meetings`. Name the meeting and its time to the person first. The CRM meeting record (if any) is not touched: update it with `update_meeting` (`status: cancelled`).',
+			routeSpec: {"method":"DELETE","path":"/api/integrations/zoom/meetings/{meetingId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Meeting ID',
+					name: 'meetingId',
+					type: 'string',
+					required: true,
+					description: 'Zoom numeric meeting ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'disconnectGithub',
+			name: 'Disconnect Github',
+			action: 'Disconnect the person\'s GitHub account from Aurentia: the connection AND its synced repositories and repo↔project links are deleted (cascade)',
+			description: 'Disconnect the person\'s GitHub account from Aurentia: the connection AND its synced repositories and repo↔project links are deleted (cascade). Issues and PRs on GitHub are untouched. `list_github_repos`, `create_github_issue` and `link_repo_to_project` stop working until they reconnect from the app. Do not pass `agencyId` on Aurentia.',
+			routeSpec: {"method":"DELETE","path":"/api/integrations/github/disconnect","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'disconnectGmail',
+			name: 'Disconnect Gmail',
+			action: 'Disconnect Gmail: revokes the Google token, removes the mailbox connection AND purges the cached email content Aurentia held (Google Limited Use)',
+			description: 'Disconnect Gmail: revokes the Google token, removes the mailbox connection AND purges the cached email content Aurentia held (Google Limited Use). Every Gmail tool stops working until the person reconnects from the app. The emails themselves stay in Gmail.',
+			routeSpec: {"method":"DELETE","path":"/api/integrations/gmail/disconnect","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'disconnectGoogleCalendar',
+			name: 'Disconnect Google Calendar',
+			action: 'Disconnect Google Calendar: revokes the Google token, removes the calendar connection and purges the synced events and the free/busy mirror — the person\'s agenda in Aurentia and their booking availability lose Google\'s events immediately',
+			description: 'Disconnect Google Calendar: revokes the Google token, removes the calendar connection and purges the synced events and the free/busy mirror — the person\'s agenda in Aurentia and their booking availability lose Google\'s events immediately. Google\'s own calendar is untouched.',
+			routeSpec: {"method":"DELETE","path":"/api/integrations/google-calendar/disconnect","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
 			value: 'disconnectIntegration',
 			name: 'Disconnect Integration',
 			action: 'Disconnect / revoke a previously-connected integration',
@@ -106,6 +399,53 @@ export const integrationsResource: GeneratedResource = {
 					description: 'The connection ID for this operation',
 					default: '',
 				}
+			],
+		},
+		{
+			value: 'disconnectMicrosoftOutlook',
+			name: 'Disconnect Microsoft Outlook',
+			action: 'Disconnect Microsoft Outlook: revokes the Microsoft token and purges BOTH connections the OAuth created — the Outlook calendar (synced events) and the Outlook mailbox (cached emails)',
+			description: 'Disconnect Microsoft Outlook: revokes the Microsoft token and purges BOTH connections the OAuth created — the Outlook calendar (synced events) and the Outlook mailbox (cached emails). Prefer this over anything else for Outlook; the Microsoft calendar-only link has its own `disconnect_microsoft_calendar`.',
+			routeSpec: {"method":"DELETE","path":"/api/integrations/microsoft-outlook/disconnect","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'disconnectTelegramBot',
+			name: 'Disconnect Telegram Bot',
+			action: 'Disconnect one of the person\'s OWN Telegram bots from Aurentia (the bots they registered with a BotFather token to receive their inbox/notifications) — the bot stops relaying immediately',
+			description: 'Disconnect one of the person\'s OWN Telegram bots from Aurentia (the bots they registered with a BotFather token to receive their inbox/notifications) — the bot stops relaying immediately. `botId` from `list_telegram_bots`. Not the same thing as the Aurentia community Telegram link (`link_telegram`). Reconnecting means pasting the bot token again in the app.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/integrations/telegram-bots/{botId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Bot ID',
+					name: 'botId',
+					type: 'string',
+					required: true,
+					description: 'Bot ID, from list_telegram_bots',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'disconnectVercel',
+			name: 'Disconnect Vercel',
+			action: 'Soft-revoke the Vercel connection used to deploy the person\'s websites',
+			description: 'Soft-revoke the Vercel connection used to deploy the person\'s websites. Sites already deployed keep running on THEIR Vercel account — only future re-deploys from Aurentia stop until they reconnect. Do not pass `agencyId` on Aurentia.',
+			routeSpec: {"method":"DELETE","path":"/api/integrations/vercel/disconnect","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'disconnectZoom',
+			name: 'Disconnect Zoom',
+			action: 'Disconnect Zoom from the account',
+			description: 'Disconnect Zoom from the account. Scheduled Zoom meetings stay scheduled on Zoom; the Zoom tools (`list_zoom_meetings`, `create_zoom_meeting`…) stop working until they reconnect from the app.',
+			routeSpec: {"method":"DELETE","path":"/api/integrations/zoom/disconnect","queryParams":[]},
+			properties: [
+
 			],
 		},
 		{
@@ -149,6 +489,23 @@ export const integrationsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getZoomMeeting',
+			name: 'Get Zoom Meeting',
+			action: 'One Zoom meeting by numeric ID (topic, start, duration, join URL)',
+			description: 'One Zoom meeting by numeric ID (topic, start, duration, join URL). Read it before updating or cancelling.',
+			routeSpec: {"method":"GET","path":"/api/integrations/zoom/meetings/{meetingId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Meeting ID',
+					name: 'meetingId',
+					type: 'string',
+					required: true,
+					description: 'The meeting ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'listConnectedIntegrations',
 			name: 'List Connected Integrations',
 			action: 'List the user\'s connected third-party integrations (HubSpot, Notion, Pipedrive…) available to import from',
@@ -164,6 +521,99 @@ export const integrationsResource: GeneratedResource = {
 			action: 'List GitHub repos accessible to the connected user (max 100, sorted by updated)',
 			description: 'List GitHub repos accessible to the connected user (max 100, sorted by updated)',
 			routeSpec: {"method":"GET","path":"/api/integrations/github/repos","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'listGmailLabels',
+			name: 'List Gmail Labels',
+			action: 'All Gmail labels (system and user) with their IDs — needed by `modify_gmail_message_labels`',
+			description: 'All Gmail labels (system and user) with their IDs — needed by `modify_gmail_message_labels`. 403 while the Gmail inbox feature is off.',
+			routeSpec: {"method":"GET","path":"/api/integrations/gmail/labels","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'listGmailMessages',
+			name: 'List Gmail Messages',
+			action: 'Search the person\'s Gmail (`q` uses Gmail search syntax: `from:`, `is:unread`, `newer_than:7d`…) — returns message IDs for `mark_gmail_message_read`, `modify_gmail_message_labels` and `inReplyTo` on `send_gmail_message`',
+			description: 'Search the person\'s Gmail (`q` uses Gmail search syntax: `from:`, `is:unread`, `newer_than:7d`…) — returns message IDs for `mark_gmail_message_read`, `modify_gmail_message_labels` and `inReplyTo` on `send_gmail_message`. 403 while the Gmail inbox feature is off.',
+			routeSpec: {"method":"GET","path":"/api/integrations/gmail/messages","queryParams":["q","maxResults","pageToken"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Max Results',
+							name: 'maxResults',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Page Token',
+							name: 'pageToken',
+							type: 'string',
+							typeOptions: { password: true },
+							default: '',
+						},
+						{
+							displayName: 'Q',
+							name: 'q',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'listGoogleCalendarEvents',
+			name: 'List Google Calendar Events',
+			action: 'Events straight from Google Calendar over `timeMin`..`timeMax` (ISO 8601), with GOOGLE\'s `eventId` — the ID `update_google_calendar_event` / `delete_google_calendar_event` take',
+			description: 'Events straight from Google Calendar over `timeMin`..`timeMax` (ISO 8601), with GOOGLE\'s `eventId` — the ID `update_google_calendar_event` / `delete_google_calendar_event` take. For the merged Aurentia agenda use `list_calendar_events`.',
+			routeSpec: {"method":"GET","path":"/api/integrations/google-calendar/events","queryParams":["calendarId","timeMin","timeMax"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Calendar ID',
+							name: 'calendarId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Time Max',
+							name: 'timeMax',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Time Min',
+							name: 'timeMin',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'listGoogleCalendars',
+			name: 'List Google Calendars',
+			action: 'The person\'s Google calendars with their `calendarId` — only needed when an event must go somewhere other than `primary`',
+			description: 'The person\'s Google calendars with their `calendarId` — only needed when an event must go somewhere other than `primary`',
+			routeSpec: {"method":"GET","path":"/api/integrations/google-calendar/calendars","queryParams":[]},
 			properties: [
 
 			],
@@ -275,6 +725,167 @@ export const integrationsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'listTelegramBots',
+			name: 'List Telegram Bots',
+			action: 'The person\'s own connected Telegram bots with their `botId` — needed by `disconnect_telegram_bot`',
+			description: 'The person\'s own connected Telegram bots with their `botId` — needed by `disconnect_telegram_bot`',
+			routeSpec: {"method":"GET","path":"/api/aurentia/integrations/telegram-bots","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'listZoomMeetings',
+			name: 'List Zoom Meetings',
+			action: 'The person\'s Zoom meetings (`type`: upcoming (default), scheduled, live) with their numeric `meetingId` and join URL — what `update_zoom_meeting` / `delete_zoom_meeting` need',
+			description: 'The person\'s Zoom meetings (`type`: upcoming (default), scheduled, live) with their numeric `meetingId` and join URL — what `update_zoom_meeting` / `delete_zoom_meeting` need',
+			routeSpec: {"method":"GET","path":"/api/integrations/zoom/meetings","queryParams":["type"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Type',
+							name: 'type',
+							type: 'options',
+							default: 'live',
+							options: [
+								{ name: 'Live', value: 'live' },
+								{ name: 'Scheduled', value: 'scheduled' },
+								{ name: 'Upcoming', value: 'upcoming' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'markGmailMessageRead',
+			name: 'Mark Gmail Message Read',
+			action: 'Mark one Gmail message as read (in Gmail too)',
+			description: 'Mark one Gmail message as read (in Gmail too). `messageId` from `list_gmail_messages`. No body. 403 while the Gmail inbox feature is off.',
+			routeSpec: {"method":"PATCH","path":"/api/integrations/gmail/messages/{messageId}/read","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Message ID',
+					name: 'messageId',
+					type: 'string',
+					required: true,
+					description: 'The message ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'modifyGmailMessageLabels',
+			name: 'Modify Gmail Message Labels',
+			action: 'Add and/or remove labels on ONE Gmail message — reflected in Gmail',
+			description: 'Add and/or remove labels on ONE Gmail message — reflected in Gmail. `messageId` from `list_gmail_messages`, label IDs from `list_gmail_labels` (system labels like `INBOX`, `STARRED`, `UNREAD` work too: removing `INBOX` archives, removing `UNREAD` is the same as `mark_gmail_message_read`). At least one of the two arrays must be non-empty. 403 while the Gmail inbox feature is off.',
+			routeSpec: {"method":"POST","path":"/api/integrations/gmail/messages/{messageId}/labels","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Message ID',
+					name: 'messageId',
+					type: 'string',
+					required: true,
+					description: 'The message ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Add Label IDs',
+							name: 'addLabelIds',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Remove Label IDs',
+							name: 'removeLabelIds',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'sendGmailMessage',
+			name: 'Send Gmail Message',
+			action: 'SEND an email from the person\'s own Gmail address, now, to real recipients — irreversible',
+			description: 'SEND an email from the person\'s own Gmail address, now, to real recipients — irreversible. Only on an explicit instruction to send, after they have seen `to`, `subject` and the full `body`; when in doubt, `create_gmail_draft`. `inReplyTo` (the Gmail message ID you answer) threads the reply. Not the CRM template mailer (`send_email` on `/crm/email-templates/send` logs on the contact card; this one does not). Works even while the Gmail inbox feature is off (send scope only).',
+			routeSpec: {"method":"POST","path":"/api/integrations/gmail/messages/send","queryParams":[]},
+			properties: [
+				{
+					displayName: 'To',
+					name: 'to',
+					type: 'string',
+					required: true,
+					description: 'Comma-separated recipients',
+					default: '',
+				},
+				{
+					displayName: 'Subject',
+					name: 'subject',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Body',
+					name: 'body',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Bcc',
+							name: 'bcc',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Cc',
+							name: 'cc',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'In Reply To',
+							name: 'inReplyTo',
+							type: 'string',
+							description: 'Gmail message ID being answered (threads the reply)',
+							default: '',
+						},
+						{
+							displayName: 'Reply To',
+							name: 'replyTo',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'syncIntegration',
 			name: 'Sync Integration',
 			action: 'Sync a connected integration (HubSpot, Pipedrive…) into the CRM: pulls contacts and mirrors them locally (idempotent — no duplicates)',
@@ -308,6 +919,174 @@ export const integrationsResource: GeneratedResource = {
 							name: 'projectId',
 							type: 'string',
 							description: 'Destination project ID (from list_projects). Falls back to the saved target project.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateGoogleCalendarEvent',
+			name: 'Update Google Calendar Event',
+			action: 'Patch an event in the person\'s Google Calendar — send only the fields you change (`summary`, `start`, `end`, `description`, `location`)',
+			description: 'Patch an event in the person\'s Google Calendar — send only the fields you change (`summary`, `start`, `end`, `description`, `location`). `eventId` is GOOGLE\'s event ID from `list_google_calendar_events`, not an Aurentia calendar row ID. `calendarId` defaults to `primary`. Moving an event notifies its attendees on Google\'s side.',
+			routeSpec: {"method":"PATCH","path":"/api/integrations/google-calendar/events/{eventId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Event ID',
+					name: 'eventId',
+					type: 'string',
+					required: true,
+					description: 'Google event ID',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Calendar ID',
+							name: 'calendarId',
+							type: 'string',
+							description: 'Default \'primary\'',
+							default: '',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'End',
+							name: 'end',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Location',
+							name: 'location',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Start',
+							name: 'start',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Summary',
+							name: 'summary',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateIntegrationSyncSettings',
+			name: 'Update Integration Sync Settings',
+			action: 'Change how a connected CRM integration (HubSpot, Pipedrive… `toolkit` from `list_integrations`) syncs into Aurentia, WITHOUT running a sync: `target_project_id` (where contacts land; null = unset), `sync_instructions` (natural-language filter used by every sync, e.g',
+			description: 'Change how a connected CRM integration (HubSpot, Pipedrive… `toolkit` from `list_integrations`) syncs into Aurentia, WITHOUT running a sync: `target_project_id` (where contacts land; null = unset), `sync_instructions` (natural-language filter used by every sync, e.g. "only leads created this month"; null clears), `auto_sync_enabled` (daily cron on/off). Send only the keys you change — a key that is present is applied, even as null. Returns the full sync state. To pull now, call `sync_integration`.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/integrations/{toolkit}/sync","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Toolkit',
+					name: 'toolkit',
+					type: 'string',
+					required: true,
+					description: 'Toolkit slug, e.g. hubspot, pipedrive',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Auto Sync Enabled',
+							name: 'auto_sync_enabled',
+							type: 'boolean',
+							description: 'Whether daily automatic sync',
+							default: false,
+						},
+						{
+							displayName: 'Sync Instructions',
+							name: 'sync_instructions',
+							type: 'string',
+							description: 'Standing natural-language instructions, or null to clear',
+							default: '',
+						},
+						{
+							displayName: 'Target Project ID',
+							name: 'target_project_id',
+							type: 'string',
+							description: 'Destination project uuid, or null to unset',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateZoomMeeting',
+			name: 'Update Zoom Meeting',
+			action: 'Change a scheduled Zoom meeting (`topic`, `startTime`, `duration`, `timezone`, `agenda`) — send only what changes',
+			description: 'Change a scheduled Zoom meeting (`topic`, `startTime`, `duration`, `timezone`, `agenda`) — send only what changes. `meetingId` is Zoom\'s numeric ID, from `list_zoom_meetings`. Returns the updated meeting. Participants who already have the link are not re-notified by Aurentia.',
+			routeSpec: {"method":"PATCH","path":"/api/integrations/zoom/meetings/{meetingId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Meeting ID',
+					name: 'meetingId',
+					type: 'string',
+					required: true,
+					description: 'Zoom numeric meeting ID',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Agenda',
+							name: 'agenda',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Duration',
+							name: 'duration',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Start Time',
+							name: 'startTime',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Timezone',
+							name: 'timezone',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Topic',
+							name: 'topic',
+							type: 'string',
 							default: '',
 						},
 					],

@@ -6,6 +6,59 @@ export const meetingsResource: GeneratedResource = {
 	displayName: 'Meetings',
 	operations: [
 		{
+			value: 'acceptMeetingActionItems',
+			name: 'Accept Meeting Action Items',
+			action: 'Validate or reject the tasks PROPOSED by a meeting\'s AI report: every accepted ID becomes a real kanban card, every rejected ID is discarded',
+			description: 'Validate or reject the tasks PROPOSED by a meeting\'s AI report: every accepted ID becomes a real kanban card, every rejected ID is discarded. This is the product\'s human validation step — only call it with IDs the person explicitly approved one by one (read them with `list_meeting_action_items`), never « accept everything » on your own initiative. `accepted_ids` / `rejected_ids` are proposal IDs (the route re-checks they belong to this meeting). `board_id` is the target board (otherwise the meeting\'s or the project\'s). `overrides` fixes, per ID, a `title`, an `assignee_user_id` or a `due_date` (YYYY-MM-DD) before creation. Idempotent against a double call.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/meetings/{id}/action-items/accept","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Meeting UUID',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Accepted IDs',
+							name: 'accepted_ids',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Board ID',
+							name: 'board_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Overrides',
+							name: 'overrides',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Rejected IDs',
+							name: 'rejected_ids',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'addMeetingNote',
 			name: 'Add Meeting Note',
 			action: 'Écrit (remplace) le compte rendu texte d\'un meeting',
@@ -27,6 +80,67 @@ export const meetingsResource: GeneratedResource = {
 					required: true,
 					description: 'Compte rendu du meeting (texte). Écrase la note existante.',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'addMeetingParticipant',
+			name: 'Add Meeting Participant',
+			action: 'Add a participant to a meeting RECORD — to label them in the transcript and the report, NOT to invite them (no email is sent, no calendar event is touched)',
+			description: 'Add a participant to a meeting RECORD — to label them in the transcript and the report, NOT to invite them (no email is sent, no calendar event is touched). A participant can be an Aurentia account (`user_id`), a CRM contact (`contact_id`), an address (`email`) or just a `name` — a name alone is enough (a client, an outside guest). At least one of the four. `role`: `attendee` (default) or `organizer`. Meeting owner only (404 otherwise). Returns the participant with its `ID`, which `map_meeting_speakers` then needs.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/meetings/{id}/participants","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Meeting UUID',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Contact ID',
+							name: 'contact_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Email',
+							name: 'email',
+							type: 'string',
+							placeholder: 'name@email.com',
+							default: '',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Role',
+							name: 'role',
+							type: 'options',
+							default: 'attendee',
+							options: [
+								{ name: 'Attendee', value: 'attendee' },
+								{ name: 'Organizer', value: 'organizer' },
+							],
+						},
+						{
+							displayName: 'User ID',
+							name: 'user_id',
+							type: 'string',
+							default: '',
+						},
+					],
 				}
 			],
 		},
@@ -131,6 +245,86 @@ export const meetingsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createMeetingTask',
+			name: 'Create Meeting Task',
+			action: 'Create a kanban card attached to a meeting directly, without going through the AI proposals',
+			description: 'Create a kanban card attached to a meeting directly, without going through the AI proposals. `title` is required and has no minimum length; `board_id` is optional (otherwise the meeting\'s or the project\'s default board); `due_date` is YYYY-MM-DD. Call it on « add a task “chase the quote” to this meeting ». Meeting owner only. The card shows in the meeting\'s Tasks tab and in the board.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/meetings/{id}/tasks","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Meeting UUID',
+					default: '',
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Board ID',
+							name: 'board_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Due Date',
+							name: 'due_date',
+							type: 'string',
+							description: 'YYYY-MM-DD',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'deleteMeeting',
+			name: 'Delete Meeting',
+			action: 'Delete a meeting (soft delete: the report, the transcript and the proposed tasks stay in the database, and `restore_meeting` brings it back)',
+			description: 'Delete a meeting (soft delete: the report, the transcript and the proposed tasks stay in the database, and `restore_meeting` brings it back). Tasks already ACCEPTED into a kanban board are NOT deleted. The calendar event created with the meeting is NOT removed by this route. Owner only (404 otherwise — someone the meeting was shared with cannot delete it). Only call it on a meeting the person named, and offer `restore_meeting` in case of a mistake.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/meetings/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Meeting UUID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'generateMeetingSummary',
+			name: 'Generate Meeting Summary',
+			action: 'Generate (or regenerate) the AI report of a meeting from its transcript or its notes, plus the list of PROPOSED tasks (awaiting validation)',
+			description: 'Generate (or regenerate) the AI report of a meeting from its transcript or its notes, plus the list of PROPOSED tasks (awaiting validation). Costs 6 credits, debited before the call and refunded if the generation fails; it refuses BEFORE debiting when there is nothing to summarize (no transcript and no notes). Regenerating OVERWRITES the previous report: ask for confirmation when a report already exists (`get_meeting`). Can take up to 45 s. The proposed tasks enter no board until `accept_meeting_action_items` is called.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/meetings/{id}/summarize","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Meeting UUID',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'getMeeting',
 			name: 'Get Meeting',
 			action: 'Détail d\'un meeting par ID : titre, dates, statut, participants, compte rendu et compteurs de tâches',
@@ -143,6 +337,23 @@ export const meetingsResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getMeetingShareStatus',
+			name: 'Get Meeting Share Status',
+			action: 'Read the state of a meeting\'s PUBLIC link: `isPublished`, `isRevoked` and `sharedAt`',
+			description: 'Read the state of a meeting\'s PUBLIC link: `isPublished`, `isRevoked` and `sharedAt`. Read it BEFORE `publish_meeting_public_link` — that call rotates the token and kills a link the person may already have shared — and before `revoke_meeting_public_link`, to tell them whether there is anything to cut. The token itself is never returned here: only the publish call shows it, once.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/meetings/{id}/share","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Meeting UUID',
 					default: '',
 				}
 			],
@@ -214,7 +425,7 @@ export const meetingsResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -255,6 +466,31 @@ export const meetingsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'mapMeetingSpeakers',
+			name: 'Map Meeting Speakers',
+			action: 'Map the anonymous speakers of a transcript (« Locuteur 0 », « Locuteur 1 »…) to the participants of the meeting',
+			description: 'Map the anonymous speakers of a transcript (« Locuteur 0 », « Locuteur 1 »…) to the participants of the meeting. `mapping` is a list of `{ speaker_index, participant_id }` (50 max); `participant_id: null` unmaps. The `participant_id` values come from `get_meeting` (add the missing people first with `add_meeting_participant`). Call it when the person says « speaker 1 is Marie ». Owner only. An already generated report is NOT regenerated: offer `generate_meeting_summary` afterwards if the names matter.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/meetings/{id}/speakers","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Meeting UUID',
+					default: '',
+				},
+				{
+					displayName: 'Mapping',
+					name: 'mapping',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				}
+			],
+		},
+		{
 			value: 'prepareMeeting',
 			name: 'Prepare Meeting',
 			action: 'Génère (ou régénère) un brief de préparation IA pour un meeting À VENIR rattaché à un contact/deal/projet, et le retourne (contexte, objectifs, ordre du jour, questions à poser, points de vigilance)',
@@ -267,6 +503,82 @@ export const meetingsResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The meeting ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'publishMeetingPublicLink',
+			name: 'Publish Meeting Public Link',
+			action: 'Publish a meeting\'s report and transcript on a PUBLIC page reachable by a secret link, and return the URL',
+			description: 'Publish a meeting\'s report and transcript on a PUBLIC page reachable by a secret link, and return the URL. ANYONE holding the link can read it — no sign-in required: only call this on an explicit request, and remind the person the transcript can contain third parties\' words. Every call ROTATES the token: the previous link stops working and the new one is returned ONLY ONCE — pass it to the person immediately. It sends no email. For a nominative share (one person, inside their own workspace), use `share_meeting`. To cut the access: `revoke_meeting_public_link`. Read `get_meeting_share_status` first to know whether a link is already live.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/meetings/{id}/share","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Meeting UUID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'removeMeetingParticipant',
+			name: 'Remove Meeting Participant',
+			action: 'Remove a participant from a meeting record',
+			description: 'Remove a participant from a meeting record. `participantId` is the `ID` of the PARTICIPANT ROW returned by `get_meeting`, not the person\'s UUID, and it travels as a QUERY parameter. The transcript speakers that were mapped to them become anonymous again. Nothing is sent to anyone. Owner only.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/meetings/{id}/participants","queryParams":["participantId"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Meeting UUID',
+					default: '',
+				},
+				{
+					displayName: 'Participant ID',
+					name: 'participantId',
+					type: 'string',
+					required: true,
+					description: 'UUID of the participant ROW',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'restoreMeeting',
+			name: 'Restore Meeting',
+			action: 'Undo the deletion of a meeting (sets `deleted_at` back to null)',
+			description: 'Undo the deletion of a meeting (sets `deleted_at` back to null). Only works on a deleted meeting that belongs to the person (404 otherwise). Call it on « put back the meeting you deleted ».',
+			routeSpec: {"method":"POST","path":"/api/aurentia/meetings/{id}/restore","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the deleted meeting',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'revokeMeetingPublicLink',
+			name: 'Revoke Meeting Public Link',
+			action: 'Cut a meeting\'s public access: the shared page answers 404 immediately, including for the link emailed at the end of the transcription',
+			description: 'Cut a meeting\'s public access: the shared page answers 404 immediately, including for the link emailed at the end of the transcription. It does NOT affect nominative shares (`revoke_meeting_share` for those). Call it on « disable the meeting\'s public link ». Owner only. Publishing again afterwards creates a brand new link.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/meetings/{id}/share/revoke","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Meeting UUID',
 					default: '',
 				}
 			],
@@ -293,6 +605,81 @@ export const meetingsResource: GeneratedResource = {
 					required: true,
 					description: 'The share ID for this operation',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'scheduleMeetingWith',
+			name: 'Schedule Meeting With',
+			action: 'Books a meeting WITH someone in one call: mints the video link, creates the slot, invites the participants and attaches the meeting to the CRM contact and deal',
+			description: 'Books a meeting WITH someone in one call: mints the video link, creates the slot, invites the participants and attaches the meeting to the CRM contact and deal. WHAT NOTIFIES THE GUESTS IS AN EMAIL SENT BY AURENTIA, not a Google or Outlook invitation: the slot is LOCAL to Aurentia, so never promise it will appear in their company calendar. THAT EMAIL CANNOT BE RECALLED — it leaves as soon as the meeting is created, which is why this asks for approval; only pass `participants` when the person really wants those people invited. `contact_id` attaches the meeting to a CRM contact; without it, the first participant email that matches one of the person\'s contacts is used. `video` defaults to true and needs a connected Google calendar — if there is none, the meeting is still created, WITHOUT a link, and the answer says so (`video_skipped_reason`): pass the information on rather than retrying. `ends_at` defaults to one hour after `start_at`. Counts against the plan\'s meeting quota. For a plain slot in one\'s own calendar, with no guests and no minutes, use `create_calendar_event`; for a meeting record with no invitations, `create_meeting`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/meetings/schedule-with","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					description: '1-300 chars',
+					default: '',
+				},
+				{
+					displayName: 'Start At',
+					name: 'start_at',
+					type: 'string',
+					required: true,
+					description: 'ISO 8601 WITH offset, e.g. 2026-09-10T14:00:00+02:00',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Contact ID',
+							name: 'contact_id',
+							type: 'string',
+							description: 'CRM contact uuid — from list_contacts',
+							default: '',
+						},
+						{
+							displayName: 'Deal ID',
+							name: 'deal_id',
+							type: 'string',
+							description: 'Attaches the meeting to a CRM deal',
+							default: '',
+						},
+						{
+							displayName: 'Ends At',
+							name: 'ends_at',
+							type: 'string',
+							description: 'ISO 8601 with offset, after start_at. Default: +1 h.',
+							default: '',
+						},
+						{
+							displayName: 'Participants',
+							name: 'participants',
+							type: 'json',
+							description: 'Guests. EACH ONE RECEIVES AN EMAIL FROM AURENTIA, immediately and irreversibly. (provide a JSON array)',
+							default: '[]',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'project_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Video',
+							name: 'video',
+							type: 'boolean',
+							description: 'Whether mint a video link and put it on the meeting. Default true.',
+							default: false,
+						},
+					],
 				}
 			],
 		},

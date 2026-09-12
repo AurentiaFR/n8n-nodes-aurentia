@@ -14,10 +14,10 @@ export const brandIdentityResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'projectId',
+					name: 'project_id',
 					type: 'string',
 					required: true,
-					description: 'Project ID (uuid)',
+					description: 'Project ID (uuid). Snake_case exigé : `createBrandKitSchema` ne connaît que `project_id`, et la route rejette sur son absence.',
 					default: '',
 				},
 				{
@@ -99,6 +99,23 @@ export const brandIdentityResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'deleteBrandKit',
+			name: 'Delete Brand Kit',
+			action: 'PERMANENTLY delete a project\'s BRAND KIT (visual identity: colours, fonts, logo assets, tone, values) — the object `get_brand_identity` returns, by its `ID`',
+			description: 'PERMANENTLY delete a project\'s BRAND KIT (visual identity: colours, fonts, logo assets, tone, values) — the object `get_brand_identity` returns, by its `ID`. Hard delete, no trash, no undo: every asset the kit carries stops resolving in the site builder, quotes, emails, social visuals and studios. Only on an explicit request (« supprime mon kit de marque, je repars de zéro »), and after telling the person what depends on it. If they only want to change colours or the logo, use `update_brand_identity` / `upload_brand_asset` instead. The kit must belong to a project they can access (404 otherwise); a kit not attached to a project is refused.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/brand-identity","queryParams":["brand_kit_id:brandKitId"]},
+			properties: [
+				{
+					displayName: 'Brand Kit ID',
+					name: 'brand_kit_id',
+					type: 'string',
+					required: true,
+					description: 'ID of the brand kit (get_brand_identity)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'generateBrandIdentity',
 			name: 'Generate Brand Identity',
 			action: 'Generate the visual identity with AI (palette, typography, logos, moodboard)',
@@ -110,23 +127,77 @@ export const brandIdentityResource: GeneratedResource = {
 					name: 'project_id',
 					type: 'string',
 					required: true,
+					description: 'Project UUID. Enough on its own: the server resolves that project\'s brand kit itself.',
 					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Brand Kit ID',
+							name: 'brand_kit_id',
+							type: 'string',
+							description: 'OPTIONAL. ID of the brand kit to fill, from get_brand_identity. Only send it when the project holds several kits and the person named one — leave it out and the kit attached to the project is used.',
+							default: '',
+						},
+					],
 				}
 			],
 		},
 		{
 			value: 'generateBrandSuggestions',
 			name: 'Generate Brand Suggestions',
-			action: 'GENERATES AI visual identity suggestions for the project',
-			description: 'GENERATES AI visual identity suggestions for the project. Billed on every call.',
+			action: 'GENERATES AI visual identity suggestions for a brand kit — a palette, a typography pairing, or an image prompt',
+			description: 'GENERATES AI visual identity suggestions for a brand kit — a palette, a typography pairing, or an image prompt. Read the kit first with get_brand_identity: this route works on a KIT, not on a project, and it dispatches on `type`, so both fields are required. It only SUGGESTS — nothing is saved until update_brand_identity. Billed on every call.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/brand-identity/suggestions","queryParams":[]},
 			properties: [
 				{
-					displayName: 'Project ID',
-					name: 'project_id',
+					displayName: 'Brand Kit ID',
+					name: 'brand_kit_id',
 					type: 'string',
 					required: true,
+					description: 'ID of the brand kit to work from, as returned by get_brand_identity. Do not invent it and do not pass a project ID here — a kit ID is what the route reads the brief from.',
 					default: '',
+				},
+				{
+					displayName: 'Type',
+					name: 'type',
+					type: 'options',
+					required: true,
+					description: 'What to suggest: \'palette\' (colour sets), \'typography\' (font pairings, informed by the kit colours), \'prompt\' (an image-generation prompt for an asset — then set asset_type). Any other value is refused with « Type de suggestion inconnu ».',
+					default: 'palette',
+					options: [
+						{ name: 'Palette', value: 'palette' },
+						{ name: 'Prompt', value: 'prompt' },
+						{ name: 'Typography', value: 'typography' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Asset Type',
+							name: 'asset_type',
+							type: 'string',
+							description: 'Which asset the prompt is for. Only read when type is \'prompt\' (logo, mascot, moodboard, inspiration…).',
+							default: '',
+						},
+						{
+							displayName: 'Context',
+							name: 'context',
+							type: 'string',
+							description: 'What the person is after in their own words ("plus sobre", "on vise le luxe"), max 500 characters',
+							default: '',
+						},
+					],
 				}
 			],
 		},
@@ -142,6 +213,31 @@ export const brandIdentityResource: GeneratedResource = {
 					name: 'project_id',
 					type: 'string',
 					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'renameBrandAsset',
+			name: 'Rename Brand Asset',
+			action: 'Renomme un asset du kit de marque (logo, variante, moodboard généré par `generate_brand_identity`)',
+			description: 'Renomme un asset du kit de marque (logo, variante, moodboard généré par `generate_brand_identity`). Le nom est ce que l\'utilisateur lit dans le kit ET ce qui devient invocable dans un prompt de génération (`@logo-1`). 48 caractères maximum, non vide. Ne confonds pas avec `update_brand_asset` (méthode PUT) : celui-là SÉLECTIONNE l\'asset comme version retenue, il ne renomme rien — ses champs `name`/`value` sont ignorés par la route. L\'asset doit appartenir à un projet dont l\'utilisateur est membre.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/brand-identity/assets/{asset_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Asset ID',
+					name: 'asset_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de l\'asset (get_brand_identity)',
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: 'Nouveau nom, ≤ 48 caractères',
 					default: '',
 				}
 			],

@@ -46,6 +46,88 @@ export const ideasResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'convertIdea',
+			name: 'Convert Idea',
+			action: 'Turn an OPEN idea into something real: a task (kanban card), a decision in the journal, a note, or a whole new project',
+			description: 'Turn an OPEN idea into something real: a task (kanban card), a decision in the journal, a note, or a whole new project. The target is created from the idea\'s text, then the idea is stamped `converted` with a pointer to what was created — this is one-way: an idea converts ONCE (a converted or dropped idea answers 409) and there is no un-convert. Returns `{ idea, createdId }`; `createdId` is the ID of the new object, open it with the matching reader. `project` is the heavy case (a new project with its own dashboard, modules and credits budget): confirm with the person before choosing it. Get the ID from `list_ideas`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/ideas/{id}/convert","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Idea ID (status must be open)',
+					default: '',
+				},
+				{
+					displayName: 'Target',
+					name: 'target',
+					type: 'options',
+					required: true,
+					description: 'What to create from the idea',
+					default: 'decision',
+					options: [
+						{ name: 'Decision', value: 'decision' },
+						{ name: 'Note', value: 'note' },
+						{ name: 'Project', value: 'project' },
+						{ name: 'Task', value: 'task' },
+					],
+				}
+			],
+		},
+		{
+			value: 'createIdeaLabel',
+			name: 'Create Idea Label',
+			action: 'Create a personal label for the idea notebook, attached to one universe of the app (`universeId` is the universe\'s ID as listed in the navigation: `projet`, `modules`, `previsionnel`, `plan`, `veille`, `marque`, `crm`, `prospection`…)',
+			description: 'Create a personal label for the idea notebook, attached to one universe of the app (`universeId` is the universe\'s ID as listed in the navigation: `projet`, `modules`, `previsionnel`, `plan`, `veille`, `marque`, `crm`, `prospection`…). Labels are per person and unique by name (case-insensitive): read `list_idea_labels` first and reuse an existing one — system labels are there too — rather than creating a near-duplicate; a duplicate name is refused with a 409. The returned ID is what `capture_idea` takes as `labelId`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/ideas/labels","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Universe ID',
+					name: 'universeId',
+					type: 'string',
+					required: true,
+					description: 'Navigation universe ID (projet, modules, previsionnel, plan, veille, marque, crm, prospection…)',
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteIdea',
+			name: 'Delete Idea',
+			action: 'Delete an idea, definitively — hard delete, no bin',
+			description: 'Delete an idea, definitively — hard delete, no bin. Prefer `update_idea` with `status: \'dropped\'` whenever the person just wants it out of sight: that keeps the text. Call this only when they explicitly want it GONE, and quote the idea\'s text back to them first. An idea that was already converted (task/decision/note/project created from it) can be deleted too — the created object is NOT deleted with it.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/ideas/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Idea ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listIdeaLabels',
+			name: 'List Idea Labels',
+			action: 'List the labels available for the idea notebook: the system labels plus the person\'s own, excluding archived ones',
+			description: 'List the labels available for the idea notebook: the system labels plus the person\'s own, excluding archived ones. Each has an ID (what `capture_idea` and `list_ideas` take as `labelId`), a name and its universe. It is the only source of that ID. Read it before `create_idea_label` to reuse instead of duplicating.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/ideas/labels","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
 			value: 'listIdeas',
 			name: 'List Ideas',
 			action: 'Liste les IDées business de l\'utilisateur, triées de la plus récente à la plus ancienne',
@@ -80,6 +162,71 @@ export const ideasResource: GeneratedResource = {
 							default: 'converted',
 							options: [
 								{ name: 'Converted', value: 'converted' },
+								{ name: 'Dropped', value: 'dropped' },
+								{ name: 'Open', value: 'open' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateIdea',
+			name: 'Update Idea',
+			action: 'Patch a captured idea: rewrite its text, move it to a project, relabel it, drop it, set or clear its reminder',
+			description: 'Patch a captured idea: rewrite its text, move it to a project, relabel it, drop it, set or clear its reminder. Send ONLY the keys you change — a key that is absent is left alone, a key sent as `null` is cleared (`projectId`, `labelId`, `remindAt`). `status` accepts `open` or `dropped` ONLY: `converted` cannot be set here, it is the result of `convert_idea`. Use `dropped` when the person wants the idea out of the way without losing it — it is the reversible alternative to `delete_idea`. Moving to a project you do not have access to is refused (403). Get the ID from `list_ideas`.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/ideas/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Idea ID (from list_ideas)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Body',
+							name: 'body',
+							type: 'string',
+							description: 'New text of the idea (non-empty)',
+							default: '',
+						},
+						{
+							displayName: 'Label ID',
+							name: 'labelId',
+							type: 'string',
+							description: 'Label ID. null removes the label.',
+							default: '',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'Project to file the idea under. null detaches it.',
+							default: '',
+						},
+						{
+							displayName: 'Remind At',
+							name: 'remindAt',
+							type: 'string',
+							description: 'ISO date-time of the reminder. null clears it.',
+							default: '',
+						},
+						{
+							displayName: 'Status',
+							name: 'status',
+							type: 'options',
+							description: 'Dropped = shelved, reversible',
+							default: 'dropped',
+							options: [
 								{ name: 'Dropped', value: 'dropped' },
 								{ name: 'Open', value: 'open' },
 							],

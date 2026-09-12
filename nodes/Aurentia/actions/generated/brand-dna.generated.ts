@@ -6,6 +6,229 @@ export const brandDnaResource: GeneratedResource = {
 	displayName: 'Brand DNA',
 	operations: [
 		{
+			value: 'bulkUpdateGeneratedImages',
+			name: 'Bulk Update Generated Images',
+			action: 'Batch action on GENERATED IMAGES of the brand library (IDs from `list_generated_images`), up to 200 at once',
+			description: 'Batch action on GENERATED IMAGES of the brand library (IDs from `list_generated_images`), up to 200 at once. `action`: `favorite` / `unfavorite` toggle the star; `move` files them into a folder (`folderId` from `list_generated_images_folders`, or `null` to take them out of any folder); `delete` REMOVES them from the library — a soft delete with NO restore path exposed anywhere, so treat it as final, do it only on an explicit request, and name what will go first. Because one call can delete, EVERY call is approval-gated: for a plain favorite or move, say so in the approval message. A malformed ID fails the whole batch (400) — nothing partial.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/brand-dna/images/bulk","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Image IDs',
+					name: 'imageIds',
+					type: 'json',
+					required: true,
+					description: '1-200 image UUIDs. (provide a JSON array).',
+					default: '[]',
+				},
+				{
+					displayName: 'Action',
+					name: 'action',
+					type: 'options',
+					required: true,
+					default: 'delete',
+					options: [
+						{ name: 'Delete', value: 'delete' },
+						{ name: 'Favorite', value: 'favorite' },
+						{ name: 'Move', value: 'move' },
+						{ name: 'Unfavorite', value: 'unfavorite' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Folder ID',
+							name: 'folderId',
+							type: 'string',
+							description: 'Move only: destination folder UUID. Omit or null to take the images out of any folder.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'closeGeneratedImageFolder',
+			name: 'Close Generated Image Folder',
+			action: 'Ferme un dossier de la galerie d\'images générées',
+			description: 'Ferme un dossier de la galerie d\'images générées. AUCUNE image n\'est supprimée : celles qu\'il contenait retournent à la racine de la galerie, en une seule transaction. Ranger n\'est pas jeter — dis-le à l\'utilisateur s\'il craint de perdre ses visuels. Appelle-le pour « supprime le dossier X », « je n\'ai plus besoin de ce dossier ». Pour supprimer des images, c\'est un autre geste.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/brand-dna/images/folders/{folder_id}","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Folder ID',
+					name: 'folder_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du dossier à fermer',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet — obligatoire',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'closeImageStudioSession',
+			name: 'Close Image Studio Session',
+			action: 'Ferme un fil du studio d\'images (une conversation de génération/retouche)',
+			description: 'Ferme un fil du studio d\'images (une conversation de génération/retouche). C\'est une fermeture douce : le fil disparaît de la liste des sessions, les images qu\'il a produites restent dans la galerie (`list_generated_images`). Appelle-le pour « ferme cette session », « nettoie mes anciens fils du studio ». `project_id` doit être le projet DU fil : la route recoupe les deux et refuse un fil d\'un autre projet même si l\'utilisateur est membre des deux.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/brand-dna/images/studio/sessions/{session_id}","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Session ID',
+					name: 'session_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du fil du studio',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet du fil — recoupé côté serveur',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'createGeneratedImagesFolder',
+			name: 'Create Generated Images Folder',
+			action: 'Create a FOLDER in the project\'s generated-images library, so images can be filed with `bulk_update_generated_images` (`action: "move"`)',
+			description: 'Create a FOLDER in the project\'s generated-images library, so images can be filed with `bulk_update_generated_images` (`action: "move"`). `name` is trimmed and cut at 60 chars; an empty name is refused. Read `list_generated_images_folders` first so you never create a duplicate of a folder that already exists. Returns the folder with its ID.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/brand-dna/images/folders","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: '1-60 chars',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteBrandElement',
+			name: 'Delete Brand Element',
+			action: 'Retire DÉFINITIVEMENT un Élément de marque de la bibliothèque : la ligne ET son fichier dans le stockage sont supprimés, il n\'y a pas de corbeille',
+			description: 'Retire DÉFINITIVEMENT un Élément de marque de la bibliothèque : la ligne ET son fichier dans le stockage sont supprimés, il n\'y a pas de corbeille. Les images du studio nées de cet élément ne sont pas touchées, mais `@nom` ne résoudra plus. Appelle-le seulement quand l\'utilisateur a nommé l\'élément et confirmé ; pour un élément promu depuis une image générée (`promote_image_to_brand_element`), rappelle-lui que l\'image d\'origine reste dans la galerie. `project_id` est obligatoire : sans lui la route refuse (400), avec un mauvais projet elle rend introuvable (404).',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/brand-dna/elements/{element_id}","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Element ID',
+					name: 'element_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de l\'Élément à supprimer',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet propriétaire — obligatoire',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'downloadPressKitPdf',
+			name: 'Download Press Kit PDF',
+			action: 'Render the SAVED press kit as an A4 PDF (attachment)',
+			description: 'Render the SAVED press kit as an A4 PDF (attachment). FREE, no credit: the generation was already billed, downloading the same deliverable again is not re-charged. Fails with 404 if no press kit was generated yet — call `get_press_kit` first. Requires the `view` permission on the brand.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/brand-dna/press-kit/pdf","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'generateBrandDna',
+			name: 'Generate Brand DNA',
+			action: 'Have the CMO PROPOSE and WRITE a brand DNA from what the project already knows (vision, target, offer, sector) — the « start from scratch » path when `get_brand_dna` comes back mostly empty',
+			description: 'Have the CMO PROPOSE and WRITE a brand DNA from what the project already knows (vision, target, offer, sector) — the « start from scratch » path when `get_brand_dna` comes back mostly empty. FILL-EMPTY only: it never overwrites a field the person already filled, so it is safe on a partly written DNA. Free, no credits. `notes` is optional free text — what they tell you about their brand, in their words (≤4000 chars); pass it whenever they gave you anything. `only` restricts the write to some fields among `name`, `description`, `mission`, `values`, `differentiators`, `tone`, `toneDescription`, `vocabularyDo`, `vocabularyDont`, `signatureMessage`, `beliefs`, `refusals` — an unknown field is REFUSED, not ignored. Returns the DNA, the list of fields actually filled, and `generated: false` when the project had no usable facts (then ask them about their brand instead of retrying). To correct a field afterwards, use `update_brand_dna`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/brand-dna/generate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Notes',
+							name: 'notes',
+							type: 'string',
+							description: 'Free text about the brand, ≤4000 chars',
+							default: '',
+						},
+						{
+							displayName: 'Only',
+							name: 'only',
+							type: 'json',
+							description: 'Restrict the write to these fields. (provide a JSON array).',
+							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'generatePressKit',
+			name: 'Generate Press Kit',
+			action: 'Generate a PRESS KIT (dossier de presse) in markdown from the project\'s brand DNA and brand kit — boilerplate, story, key facts, quotes, contact',
+			description: 'Generate a PRESS KIT (dossier de presse) in markdown from the project\'s brand DNA and brand kit — boilerplate, story, key facts, quotes, contact. COSTS 150 CREDITS per call (PRESS_KIT_CREDITS, priced 2026-09-06), refunded if the model produces nothing. The markdown IS STORED on the brand and survives a reload: ALWAYS call `get_press_kit` first and reuse what comes back — regenerating costs the full 150 credits again and produces a different text. Only generate when there is none, or when the person explicitly asks for a new one. Make sure `get_brand_dna` is reasonably filled first: an empty DNA gives a generic kit for the same price. Requires the `generate` permission on the project\'s brand.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/brand-dna/press-kit","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'getBrandDna',
 			name: 'Get Brand DNA',
 			action: 'The project\'s Brand DNA (Univers Marque): identity (name, mission, values, differentiators), voice (tone, vocabulary do/don\'t, signature message, personas), market (sector, niche, target audiences, customer problems, proof points)',
@@ -18,6 +241,46 @@ export const brandDnaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'getPressKit',
+			name: 'Get Press Kit',
+			action: 'The PRESS KIT already generated and SAVED on the project\'s brand (markdown + generation date), or `{ pressKit: null }` if none was ever produced',
+			description: 'The PRESS KIT already generated and SAVED on the project\'s brand (markdown + generation date), or `{ pressKit: null }` if none was ever produced. FREE, no credit: read this BEFORE `generate_press_kit`, which bills 150 credits for a brand-new text. Requires the `view` permission on the project\'s brand.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/brand-dna/press-kit","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'importSiteImages',
+			name: 'Import Site Images',
+			action: 'Import into the project\'s brand kit the site images the person picked — the second half of `scan_site_images`: the scan lists the candidates, this stores the chosen ones as brand assets usable in on-brand image generation',
+			description: 'Import into the project\'s brand kit the site images the person picked — the second half of `scan_site_images`: the scan lists the candidates, this stores the chosen ones as brand assets usable in on-brand image generation. `picks` is up to 15 `{ URL, primary? }`; `primary: true` marks an image as one of the (max 3) reference visuals that default image generation leans on — past 3 the flag is silently dropped, not refused. Each URL is downloaded and validated server-side, best-effort per image: the response lists `imported`, `failed` (with reasons) and `primaries`. Prefer URLs that came from `scan_site_images`; any public image URL works, but a site\'s own visuals are what this is for. To change the primary flag afterwards, use `set_brand_asset_primary`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/brand-dna/site-images/import","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Picks',
+					name: 'picks',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
 				}
 			],
 		},
@@ -74,7 +337,7 @@ export const brandDnaResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -85,6 +348,184 @@ export const brandDnaResource: GeneratedResource = {
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'listGeneratedImagesFolders',
+			name: 'List Generated Images Folders',
+			action: 'Liste les dossiers de la galerie d\'images générées du projet (ID, nom)',
+			description: 'Liste les dossiers de la galerie d\'images générées du projet (ID, nom). Nécessaire pour ranger des images avec `bulk_update_generated_images` (`action: "move"`), pour renommer ou fermer un dossier (`rename_generated_image_folder`, `close_generated_image_folder`), et pour ne pas créer un doublon d\'un dossier existant.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/brand-dna/images/folders","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet — obligatoire (400 sinon)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listImageStudioSessions',
+			name: 'List Image Studio Sessions',
+			action: 'Liste les fils ouverts du studio d\'images du projet (ID, titre, date)',
+			description: 'Liste les fils ouverts du studio d\'images du projet (ID, titre, date). C\'est le seul endroit qui rend le `session_id` dont `close_image_studio_session` a besoin. Les images produites par un fil restent dans `list_generated_images` même après sa fermeture.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/brand-dna/images/studio/sessions","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet — obligatoire',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'promoteImageToBrandElement',
+			name: 'Promote Image To Brand Element',
+			action: 'Promeut une image générée de la galerie en Élément de marque nommé : elle gagne un nom et devient invocable en `@nom` dans toute génération d\'image, et apparaît dans `list_brand_elements`',
+			description: 'Promeut une image générée de la galerie en Élément de marque nommé : elle gagne un nom et devient invocable en `@nom` dans toute génération d\'image, et apparaît dans `list_brand_elements`. Appelle-le après une génération réussie quand l\'utilisateur dit « garde celle-là comme logo », « ajoute cette photo à ma bibliothèque de marque ». `name` est OBLIGATOIRE et non vide (« Donne un nom à cet élément ») — demande-le s\'il ne l\'a pas dit, ne l\'invente pas. Le fichier est COPIÉ vers la bibliothèque de marque, pas déplacé : l\'Élément survit à la suppression de l\'image d\'origine. `category` : même liste fermée que `update_brand_element`, `autre` si tu ne sais pas. `image_id` vient de `list_generated_images`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/brand-dna/images/{image_id}/element","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Image ID',
+					name: 'image_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de l\'image générée (list_generated_images)',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet — obligatoire',
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: 'Nom de l\'Élément, invocable en @nom — obligatoire, non vide',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Category',
+							name: 'category',
+							type: 'options',
+							default: 'autre',
+							options: [
+								{ name: 'Autre', value: 'autre' },
+								{ name: 'Document', value: 'document' },
+								{ name: 'Lieu', value: 'lieu' },
+								{ name: 'Logo', value: 'logo' },
+								{ name: 'Personnage', value: 'personnage' },
+								{ name: 'Photo', value: 'photo' },
+								{ name: 'Picto', value: 'picto' },
+								{ name: 'Produit', value: 'produit' },
+							],
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'renameGeneratedImageFolder',
+			name: 'Rename Generated Image Folder',
+			action: 'Renomme un dossier de la galerie d\'images générées du projet',
+			description: 'Renomme un dossier de la galerie d\'images générées du projet. Appelle-le quand l\'utilisateur dit « renomme le dossier Moodboard en Inspirations ». `name` est tronqué à 60 caractères ; un nom déjà porté par un autre dossier vivant du projet est refusé en conflit (409, « Un dossier porte déjà ce nom ») — propose un autre nom au lieu de réessayer. Ne déplace aucune image. `folder_id` vient de `list_generated_images_folders` ; ne le devine pas.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/brand-dna/images/folders/{folder_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Folder ID',
+					name: 'folder_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du dossier',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet — obligatoire',
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: 'Nouveau nom (≤ 60 caractères, unique dans le projet)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'scanSiteImages',
+			name: 'Scan Site Images',
+			action: 'LIST the image candidates found on the project\'s own website (og:image, hero, `&lt;img&gt;`, CSS backgrounds — icons under 32px are dropped) so the person can choose which ones join their brand kit via `import_site_images`',
+			description: 'LIST the image candidates found on the project\'s own website (og:image, hero, `&lt;img&gt;`, CSS backgrounds — icons under 32px are dropped) so the person can choose which ones join their brand kit via `import_site_images`. READ-ONLY and free: it writes nothing. The site URL is the one stored in the brand DNA (`sourceUrl`), NEVER one you pass — an empty `candidates` list means the project has no site on file (set it in the DNA first, or ask), not that the site has no images. Each candidate carries `URL`, `kind` (`og` | `hero` | `img` | `background`) and `preselected` (what the screen would tick by default): show them, let the person pick, then import.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/brand-dna/site-images/scan","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'setBrandAssetPrimary',
+			name: 'Set Brand Asset Primary',
+			action: 'Mark or unmark a brand asset as PRIMARY — one of the at most THREE reference visuals (plus the logo) that on-brand image generation uses by default',
+			description: 'Mark or unmark a brand asset as PRIMARY — one of the at most THREE reference visuals (plus the logo) that on-brand image generation uses by default. `assetId` comes from `list_brand_elements` or the brand kit. Setting a fourth primary is refused with a 409 (« 3 maximum »): unset one first, never retry blindly. Use it on « use this photo as a reference for my visuals » (true) or « stop using that one » (false). Cheap and reversible. `update_brand_asset` renames an asset and does NOT touch this flag.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/brand-dna/site-images/primary","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Asset ID',
+					name: 'assetId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Is Primary',
+					name: 'isPrimary',
+					type: 'boolean',
+					required: true,
+					description: 'Whether to enable is primary',
+					default: false,
 				}
 			],
 		},
@@ -281,6 +722,42 @@ export const brandDnaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'syncBrandDnaFromSite',
+			name: 'Sync Brand DNA From Site',
+			action: '« Grab as much as possible from the site »: fills the EMPTY fields of the brand DNA and brand kit from what Aurentia already scanned of the project\'s website — text facts (deterministic, no credits), then, if the DNA has a site URL, colours + logo + favicon, fonts, and the brand VOICE (one model call, only when the voice is empty, never again)',
+			description: '« Grab as much as possible from the site »: fills the EMPTY fields of the brand DNA and brand kit from what Aurentia already scanned of the project\'s website — text facts (deterministic, no credits), then, if the DNA has a site URL, colours + logo + favicon, fonts, and the brand VOICE (one model call, only when the voice is empty, never again). FILL-EMPTY throughout: nothing the person wrote is overwritten, so it is safe to call repeatedly. `mode: "text"` skips the visual and font steps — use it when a brand harvest is going to do the visuals better, or when they only want the text. Best-effort: an unreachable site does not fail the call, it just fills less. Returns the DNA plus what was filled (`filled` count, `visuals`, `toneFilled`, `fontsFilled`) — tell the person what actually changed rather than assuming everything did.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/brand-dna/sync","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Mode',
+							name: 'mode',
+							type: 'options',
+							description: 'Text = DNA text + voice only, no colours/logo/fonts. Default full.',
+							default: 'full',
+							options: [
+								{ name: 'Full', value: 'full' },
+								{ name: 'Text', value: 'text' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'updateBrandDna',
 			name: 'Update Brand DNA',
 			action: 'Propose Brand DNA additions for the project',
@@ -301,6 +778,77 @@ export const brandDnaResource: GeneratedResource = {
 					required: true,
 					description: 'Partial Brand DNA fields to fill (empty fields only) (provide a JSON object)',
 					default: '{}',
+				}
+			],
+		},
+		{
+			value: 'updateBrandElement',
+			name: 'Update Brand Element',
+			action: 'Renomme, recatégorise, redécrit ou épingle un Élément de marque de la bibliothèque (ceux que rend `list_brand_elements`)',
+			description: 'Renomme, recatégorise, redécrit ou épingle un Élément de marque de la bibliothèque (ceux que rend `list_brand_elements`). Appelle-le quand l\'utilisateur dit « renomme ce logo », « c\'est un picto, pas une photo », « mets cette photo en référence par défaut ». `name` devient le nom invocable en `@nom` dans les prompts de génération : le serveur le nettoie et le rend unique dans le projet (un doublon reçoit un suffixe, pas une erreur). `category` est fermée : `logo` | `picto` | `photo` | `personnage` | `lieu` | `produit` | `document` | `autre` — n\'invente pas de catégorie, la route refuse (« Catégorie inconnue »). `description` : `null` efface. `isPrimary: true` fait partir l\'élément AUTOMATIQUEMENT dans chaque génération d\'image du projet ; le résolveur n\'en sert que TROIS au plus — un quatrième est refusé, ne force pas, propose de désépingler un autre d\'abord. Ne passe que les champs à changer. `projectId` est obligatoire : c\'est lui qui porte la garde d\'appartenance.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/brand-dna/elements/{element_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Element ID',
+					name: 'element_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de l\'Élément (list_brand_elements)',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet propriétaire — obligatoire, porte la permission',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Category',
+							name: 'category',
+							type: 'options',
+							default: 'autre',
+							options: [
+								{ name: 'Autre', value: 'autre' },
+								{ name: 'Document', value: 'document' },
+								{ name: 'Lieu', value: 'lieu' },
+								{ name: 'Logo', value: 'logo' },
+								{ name: 'Personnage', value: 'personnage' },
+								{ name: 'Photo', value: 'photo' },
+								{ name: 'Picto', value: 'picto' },
+								{ name: 'Produit', value: 'produit' },
+							],
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							description: 'Null efface',
+							default: '',
+						},
+						{
+							displayName: 'Is Primary',
+							name: 'isPrimary',
+							type: 'boolean',
+							description: 'Whether référence automatique de toute génération d\'image — 3 maximum par projet',
+							default: false,
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							description: 'Nouveau nom, invocable en @nom ; rendu unique côté serveur',
+							default: '',
+						},
+					],
 				}
 			],
 		}

@@ -6,6 +6,23 @@ export const collaboratorsResource: GeneratedResource = {
 	displayName: 'Collaborators',
 	operations: [
 		{
+			value: 'acceptProjectInvitation',
+			name: 'Accept Project Invitation',
+			action: 'ACCEPT an invitation the person RECEIVED to join someone else\'s project as a collaborator',
+			description: 'ACCEPT an invitation the person RECEIVED to join someone else\'s project as a collaborator. Get the `invitationId` from `list_my_pending_invitations` (it shows who invites, to which project, with which role). The invitation must be addressed to the email of their own account — one sent to another address is refused (403), and there is no way around it. Only pending, non-expired invitations can be accepted. Returns `{ projectId, role, ownerUserId }`: the project immediately appears among their projects. Accepting is the PERSON\'s decision, not yours: do it when they ask, never to « tidy up » a list of pending invitations. To refuse one, use `decline_project_invitation`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/collaborators/accept","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Invitation ID',
+					name: 'invitationId',
+					type: 'string',
+					required: true,
+					description: 'UUID from list_my_pending_invitations',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'cancelInvitation',
 			name: 'Cancel Invitation',
 			action: 'Cancel a pending invitation',
@@ -109,6 +126,130 @@ export const collaboratorsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'requestCreditSponsorship',
+			name: 'Request Credit Sponsorship',
+			action: 'Ask the OWNER of a project the caller collaborates on to sponsor their AI credits (the owner\'s wallet pays for the caller\'s actions on that project)',
+			description: 'Ask the OWNER of a project the caller collaborates on to sponsor their AI credits (the owner\'s wallet pays for the caller\'s actions on that project). Sends the owner an email + a push notification and logs the request — one call is one email, do not retry. `ID` is the caller\'s OWN collaborator row on `project_id` (from `list_collaborators` on a project of `list_my_shared_projects`): asking on someone else\'s behalf is refused (403). Optional `reason` (≤ 500 chars) is quoted in the email. The owner then flips sponsorship from their side (`toggle_collaborator_sponsorship`).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/collaborators/{id}/request-sponsorship","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The caller\'s own collaborator row ID on that project',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project uuid the collaboration belongs to',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Reason',
+							name: 'reason',
+							type: 'string',
+							description: 'Why (≤ 500 chars), quoted to the owner',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'resendCollaboratorInvitation',
+			name: 'Resend Collaborator Invitation',
+			action: 'Re-send a project invitation email: regenerates the token, extends the expiry by 7 days and emails the invitee again',
+			description: 'Re-send a project invitation email: regenerates the token, extends the expiry by 7 days and emails the invitee again. Works on `pending` (a reminder) and `expired` (a revival) invitations — get `invitationId` from `list_collaborators` (its `invitations` array). One call = one email; do not loop. Returns the new `expiresAt`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/collaborators/invitations/{invitationId}/resend","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Invitation ID',
+					name: 'invitationId',
+					type: 'string',
+					required: true,
+					description: 'Invitation ID, from list_collaborators.invitations',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'setCollaboratorFunction',
+			name: 'Set Collaborator Function',
+			action: 'Label a collaborator\'s business function on a project — a preset (`associe`, `salarie`, `freelance`, `investisseur`, `mentor`, `stagiaire`) or any free label up to 60 chars; `null` clears it',
+			description: 'Label a collaborator\'s business function on a project — a preset (`associe`, `salarie`, `freelance`, `investisseur`, `mentor`, `stagiaire`) or any free label up to 60 chars; `null` clears it. Presets carry a default set of hidden sections (an `investisseur` does not see the action plan, modules or CRM) applied by the UI when chosen — this route only stores the label; use `set_collaborator_hidden_sections` to actually mask sections. Owner or admin only. `ID` from `list_collaborators`.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/collaborators/{id}/function","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Collaborator row ID, from list_collaborators',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project the collaborator belongs to (required — resolves the caller\'s role)',
+					default: '',
+				},
+				{
+					displayName: 'Function',
+					name: 'function',
+					type: 'string',
+					required: true,
+					description: 'Function label (1-60 chars) or null to clear',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'setCollaboratorHiddenSections',
+			name: 'Set Collaborator Hidden Sections',
+			action: 'Hide whole sections of the project from ONE collaborator',
+			description: 'Hide whole sections of the project from ONE collaborator. `hidden_sections` is the FULL list of masked keys among `vue-ensemble`, `modules`, `catalogue`, `previsionnel`, `assistant-ia`, `plan-action`, `crm` — an empty array shows everything again; unknown keys are silently filtered. This hides navigation, it is not a permission: pair it with `update_collaborator_permissions` when the data itself must be protected. Owner or admin only.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/collaborators/{id}/sections","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Collaborator row ID',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				},
+				{
+					displayName: 'Hidden Sections',
+					name: 'hidden_sections',
+					type: 'json',
+					required: true,
+					description: 'Full replacement of the hidden section keys. (provide a JSON array).',
+					default: '[]',
+				}
+			],
+		},
+		{
 			value: 'toggleCollaboratorSponsorship',
 			name: 'Toggle Collaborator Sponsorship',
 			action: 'Owner-only — enable/disable credit sponsorship for a collaborator on a project',
@@ -151,6 +292,54 @@ export const collaboratorsResource: GeneratedResource = {
 							type: 'number',
 							description: 'Optional daily cap (credits)',
 							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateCollaboratorPermissions',
+			name: 'Update Collaborator Permissions',
+			action: 'Set a collaborator\'s fine-grained permission grid and/or custom role on a project',
+			description: 'Set a collaborator\'s fine-grained permission grid and/or custom role on a project. `permissions` is `{ [resource]: { [action]: boolean } }` — actions among `view`, `edit`, `create`, `delete`, `generate`, `publish`, `manage_members`, `comment`; unknown resources/actions are silently DROPPED, so read `list_collaborators` back after the call. `customRoleId` (from `list_custom_roles`) or `null` to detach. Send only the keys you change. Refused on the owner, and an admin cannot change another admin. Owner or admin only.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/collaborators/{id}/permissions","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Collaborator row ID',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project ID (required)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Custom Role ID',
+							name: 'customRoleId',
+							type: 'string',
+							description: 'Custom role ID, or null to detach',
+							default: '',
+						},
+						{
+							displayName: 'Permissions',
+							name: 'permissions',
+							type: 'json',
+							description: 'Map resource -> { action: boolean }. Unknown keys dropped server-side. (provide a JSON object)',
+							default: '{}',
 						},
 					],
 				}

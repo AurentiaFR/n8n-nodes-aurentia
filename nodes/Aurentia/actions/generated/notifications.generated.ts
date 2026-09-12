@@ -6,6 +6,16 @@ export const notificationsResource: GeneratedResource = {
 	displayName: 'Notifications',
 	operations: [
 		{
+			value: 'deleteReadNotifications',
+			name: 'Delete Read Notifications',
+			action: 'Permanently delete every notification the person has ALREADY READ — unread ones are kept',
+			description: 'Permanently delete every notification the person has ALREADY READ — unread ones are kept. No undo. Use it when they ask to clean up their notification centre; to only silence the badge, `mark_all_user_notifications_read` is the non-destructive gesture. Returns `{ deleted }`, the number removed.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/notifications/read","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
 			value: 'getUserUnreadNotificationCount',
 			name: 'Get User Unread Notification Count',
 			action: 'Number of unread notifications across all categories',
@@ -34,7 +44,7 @@ export const notificationsResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{

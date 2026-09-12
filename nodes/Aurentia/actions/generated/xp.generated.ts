@@ -24,7 +24,7 @@ export const xpResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -51,6 +51,23 @@ export const xpResource: GeneratedResource = {
 			routeSpec: {"method":"GET","path":"/api/xp/me","queryParams":[]},
 			properties: [
 
+			],
+		},
+		{
+			value: 'setXpFrame',
+			name: 'Set Xp Frame',
+			action: 'Choose the cosmetic avatar frame shown on the person\'s community profile — `frameKey` must be a frame they have UNLOCKED (see `get_xp_status`, `rewards`); `null` removes the frame',
+			description: 'Choose the cosmetic avatar frame shown on the person\'s community profile — `frameKey` must be a frame they have UNLOCKED (see `get_xp_status`, `rewards`); `null` removes the frame. A locked frame is refused. Purely cosmetic, no cost.',
+			routeSpec: {"method":"POST","path":"/api/xp/frame","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Frame Key',
+					name: 'frameKey',
+					type: 'string',
+					required: true,
+					description: 'Unlocked frame key, or null for none',
+					default: '',
+				}
 			],
 		}
 	],

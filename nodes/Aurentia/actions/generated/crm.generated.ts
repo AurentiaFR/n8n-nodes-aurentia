@@ -39,7 +39,7 @@ export const crmResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Contact ID',
-					name: 'contact_id',
+					name: 'contactId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -71,7 +71,7 @@ export const crmResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Contact ID',
-					name: 'contact_id',
+					name: 'contactId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -83,12 +83,6 @@ export const crmResource: GeneratedResource = {
 					placeholder: 'Add Field',
 					default: {},
 					options: [
-						{
-							displayName: 'Context',
-							name: 'context',
-							type: 'string',
-							default: '',
-						},
 						{
 							displayName: 'Tone',
 							name: 'tone',
@@ -132,7 +126,7 @@ export const crmResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Contact ID',
-					name: 'contact_id',
+					name: 'contactId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -162,7 +156,7 @@ export const crmResource: GeneratedResource = {
 					options: [
 						{
 							displayName: 'Project ID',
-							name: 'project_id',
+							name: 'projectId',
 							type: 'string',
 							default: '',
 						},
@@ -201,6 +195,62 @@ export const crmResource: GeneratedResource = {
 					required: true,
 					description: 'The contact ID for this operation',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'applyChecklistTemplate',
+			name: 'Apply Checklist Template',
+			action: 'Stamp a checklist template onto a CRM contact',
+			description: 'Stamp a checklist template onto a CRM contact. A `task` template creates one CRM task per item on the contact (inside `mission_id` if you give one); a `mission` template creates a NEW mission on the contact (linked to `deal_id` if given) plus its tasks. Returns the created rows (201). Call it when the person says « lance la checklist d\'onboarding sur ce client », « applique le modèle X à Y ». The template must belong to `projectId` (404 otherwise). Applying twice creates the tasks twice — check the contact\'s tasks first. Get the template ID from `list_checklist_templates`, or from `create_checklist_template` in the same conversation.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/checklist-templates/{id}/apply","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Checklist template ID',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project owning both the template and the contact',
+					default: '',
+				},
+				{
+					displayName: 'Contact ID',
+					name: 'contactId',
+					type: 'string',
+					required: true,
+					description: 'CRM contact receiving the tasks / mission',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Deal ID',
+							name: 'deal_id',
+							type: 'string',
+							description: 'Mission templates only: link the created mission to this deal',
+							default: '',
+						},
+						{
+							displayName: 'Mission ID',
+							name: 'mission_id',
+							type: 'string',
+							description: 'Task templates only: attach the created tasks to this existing mission',
+							default: '',
+						},
+					],
 				}
 			],
 		},
@@ -334,15 +384,24 @@ export const crmResource: GeneratedResource = {
 		{
 			value: 'createCallLog',
 			name: 'Create Call Log',
-			action: 'Create a call log entry',
-			description: 'Create a call log entry',
+			action: 'Log ONE call made inside a cold-call SESSION',
+			description: 'Log ONE call made inside a cold-call SESSION. A call log always hangs off a session: create or pick one first (create_call_session / list_call_sessions) — there is no way to log a stray call without it. To simply note something on a contact outside a calling campaign, use the contact activity/notes tools instead.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/crm/call-logs","queryParams":[]},
 			properties: [
+				{
+					displayName: 'Session ID',
+					name: 'session_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the cold-call session this call belongs to (list_call_sessions, or the session just created with create_call_session). Required — the route has no fallback session.',
+					default: '',
+				},
 				{
 					displayName: 'Contact ID',
 					name: 'contact_id',
 					type: 'string',
 					required: true,
+					description: 'UUID of the CRM contact who was called (list_contacts)',
 					default: '',
 				},
 				{
@@ -353,21 +412,45 @@ export const crmResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Duration',
-							name: 'duration',
+							displayName: 'Callback Date',
+							name: 'callback_date',
+							type: 'string',
+							description: 'When to call back, ISO 8601. Fill it whenever outcome is callback — that is what puts the reminder in the pipeline.',
+							default: '',
+						},
+						{
+							displayName: 'Duration Seconds',
+							name: 'duration_seconds',
 							type: 'number',
+							description: 'Call length in SECONDS (not minutes). Omit it when the person did not say.',
 							default: 0,
 						},
 						{
 							displayName: 'Notes',
 							name: 'notes',
 							type: 'string',
+							description: 'What was said, in the words of the person reporting the call (max 2000)',
 							default: '',
 						},
 						{
 							displayName: 'Outcome',
 							name: 'outcome',
+							type: 'options',
+							description: 'How the call ended. \'rdv\' = a meeting was booked, \'callback\' = call back later (then fill callback_date), \'no_answer\' = nobody picked up. Use the closed list — a free-text outcome is rejected.',
+							default: 'callback',
+							options: [
+								{ name: 'Callback', value: 'callback' },
+								{ name: 'No Answer', value: 'no_answer' },
+								{ name: 'Not Interested', value: 'not_interested' },
+								{ name: 'Other', value: 'other' },
+								{ name: 'Rdv', value: 'rdv' },
+							],
+						},
+						{
+							displayName: 'Personalized Script',
+							name: 'personalized_script',
 							type: 'string',
+							description: 'The script actually used for this call, when it was tailored to the contact (see personalize_call_script)',
 							default: '',
 						},
 					],
@@ -428,7 +511,7 @@ export const crmResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -540,14 +623,14 @@ export const crmResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
 				},
 				{
 					displayName: 'Contact ID',
-					name: 'contact_id',
+					name: 'contactId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -599,7 +682,7 @@ export const crmResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -725,7 +808,7 @@ export const crmResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -876,7 +959,7 @@ export const crmResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -986,7 +1069,7 @@ export const crmResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -1079,6 +1162,40 @@ export const crmResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'deleteChecklistTemplate',
+			name: 'Delete Checklist Template',
+			action: 'Delete a CRM checklist template, definitively — no bin',
+			description: 'Delete a CRM checklist template, definitively — no bin. Tasks and missions that were created from it stay exactly as they are (a template is only a mould). Name the template to the person before calling this: nothing on screen shows them a template is about to vanish. If they want to stop using it without losing it, leave it alone — there is no \'disable\' on templates.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/crm/checklist-templates/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Checklist template ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteCrmMission',
+			name: 'Delete CRM Mission',
+			action: 'Soft-delete a client mission: it disappears from the contact and from lists, its tasks go with it out of sight',
+			description: 'Soft-delete a client mission: it disappears from the contact and from lists, its tasks go with it out of sight. Use it for a mission created by mistake; for a mission that ended, set `status` to `completed` or `cancelled` with `update_crm_mission` so the history stays. Ask before deleting a mission you did not create in this conversation.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/crm/missions/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Mission ID',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'deleteCrmNote',
 			name: 'Delete CRM Note',
 			action: 'Delete a CRM note',
@@ -1147,10 +1264,44 @@ export const crmResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'deleteLeadCategory',
+			name: 'Delete Lead Category',
+			action: 'Delete a qualification category of a pipeline section',
+			description: 'Delete a qualification category of a pipeline section. Contacts that carried it keep everything else and simply lose the label (the link is set to null, nothing else is deleted). No undo. Tell the person which category and how it is used before calling.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/crm/lead-categories/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Lead category ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deletePipeline',
+			name: 'Delete Pipeline',
+			action: 'Delete a CUSTOM pipeline section and everything that only exists for it: its stages and its qualification categories',
+			description: 'Delete a CUSTOM pipeline section and everything that only exists for it: its stages and its qualification categories. Built-in sections (client/partenaire/fournisseur/reseau) are refused — hide them with `update_pipeline` `{is_enabled:false}` instead. Refused with 409 while any deal still sits on one of its stages: move or close those deals first. Contacts of the section are kept and re-homed, not deleted. No undo. Name the section and what it contains to the person before calling.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/crm/pipelines/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Pipeline section ID',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'generateCallScript',
 			name: 'Generate Call Script',
-			action: 'Generate a call script with AI',
-			description: 'Generate a call script with AI',
+			action: 'Write a cold-call script with AI',
+			description: 'Write a cold-call script with AI. The script is filed under a pair (target × OBJECTIVE), so the objective is not decoration: both its stable key and its human label are required, and they are what the generated script is built around. Billed.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/crm/call-scripts/generate","queryParams":[]},
 			properties: [
 				{
@@ -1158,6 +1309,23 @@ export const crmResource: GeneratedResource = {
 					name: 'project_id',
 					type: 'string',
 					required: true,
+					description: 'Project UUID (injected from the session when you have one)',
+					default: '',
+				},
+				{
+					displayName: 'Objective Key',
+					name: 'objective_key',
+					type: 'string',
+					required: true,
+					description: 'Stable machine key of the call objective, lowercase with underscores (prise_rdv, qualification, relance, decouverte). It is the filing key — reuse the exact same key when regenerating a script for the same objective, otherwise a duplicate script appears alongside the old one.',
+					default: '',
+				},
+				{
+					displayName: 'Objective Label',
+					name: 'objective_label',
+					type: 'string',
+					required: true,
+					description: 'The same objective written for a human, in the language of the user ("Prendre un rendez-vous", "Qualifier le besoin"). Max 200 characters. This is what goes into the prompt and what the person sees on the script.',
 					default: '',
 				},
 				{
@@ -1168,9 +1336,31 @@ export const crmResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Context',
-							name: 'context',
+							displayName: 'Contact IDs',
+							name: 'contact_ids',
+							type: 'json',
+							description: 'CRM contact UUIDs used only to CHARACTERISE the target in the prompt — not the list to call. Capped at 50; the service samples ~20. Send a handful of representative contacts, not the whole base. (provide a JSON array)',
+							default: '[]',
+						},
+						{
+							displayName: 'Current Content',
+							name: 'current_content',
 							type: 'string',
+							description: 'The existing script, when the person asks for a rewrite rather than a fresh one',
+							default: '',
+						},
+						{
+							displayName: 'Instructions',
+							name: 'instructions',
+							type: 'string',
+							description: 'Extra steering from the person ("insiste sur le prix", "reste très court"), max 1000 characters',
+							default: '',
+						},
+						{
+							displayName: 'Target Label',
+							name: 'target_label',
+							type: 'string',
+							description: 'Human name of the audience the script speaks to ("dirigeants de PME industrielles"), max 200',
 							default: '',
 						},
 					],
@@ -1232,8 +1422,8 @@ export const crmResource: GeneratedResource = {
 		{
 			value: 'generateEmailTemplate',
 			name: 'Generate Email Template',
-			action: 'Generate an email template with AI',
-			description: 'Generate an email template with AI',
+			action: 'Write a follow-up email for ONE CRM contact with AI, typically right after a call',
+			description: 'Write a follow-up email for ONE CRM contact with AI, typically right after a call. The contact is required — the model reads that contact to write it, so there is no generic mode here; for a generic marketing email use the site-web email tools. Billed. Returns the draft: sending it is a separate, explicit step.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/crm/email-templates/generate","queryParams":[]},
 			properties: [
 				{
@@ -1241,6 +1431,15 @@ export const crmResource: GeneratedResource = {
 					name: 'project_id',
 					type: 'string',
 					required: true,
+					description: 'Project UUID (injected from the session when you have one)',
+					default: '',
+				},
+				{
+					displayName: 'Contact ID',
+					name: 'contact_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the CRM contact the email is written to (list_contacts). Required: it is what the email is personalized from.',
 					default: '',
 				},
 				{
@@ -1251,15 +1450,31 @@ export const crmResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Context',
-							name: 'context',
+							displayName: 'Call Notes',
+							name: 'call_notes',
 							type: 'string',
+							description: 'What was said during the call, so the email can refer to it concretely instead of staying generic',
 							default: '',
+						},
+						{
+							displayName: 'Call Outcome',
+							name: 'call_outcome',
+							type: 'options',
+							description: 'How the call that triggers this email ended. It changes the whole angle of the message — a follow-up after a booked meeting reads nothing like one after a refusal.',
+							default: 'callback',
+							options: [
+								{ name: 'Callback', value: 'callback' },
+								{ name: 'No Answer', value: 'no_answer' },
+								{ name: 'Not Interested', value: 'not_interested' },
+								{ name: 'Other', value: 'other' },
+								{ name: 'Rdv', value: 'rdv' },
+							],
 						},
 						{
 							displayName: 'Tone',
 							name: 'tone',
 							type: 'string',
+							description: 'Tone to write in (professionnel, amical, direct…), max 50 characters. Omit it to follow the brand tone.',
 							default: '',
 						},
 					],
@@ -1424,6 +1639,43 @@ export const crmResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'listChecklistTemplates',
+			name: 'List Checklist Templates',
+			action: 'List the reusable CRM checklist templates of a project (ID, kind, name, items)',
+			description: 'List the reusable CRM checklist templates of a project (ID, kind, name, items). `kind` filters: `task` templates stamp a list of tasks onto a contact, `mission` templates create a mission plus its tasks. This is the ONLY tool that returns the template ID that `apply_checklist_template`, `update_checklist_template` and `delete_checklist_template` all require — never guess one. Read it before `update_checklist_template` too: `items` there is a FULL replacement, so you need the current list to send it back.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/crm/checklist-templates","queryParams":["projectId","kind"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project owning the templates (required)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Kind',
+							name: 'kind',
+							type: 'options',
+							description: 'Optional filter',
+							default: 'mission',
+							options: [
+								{ name: 'Mission', value: 'mission' },
+								{ name: 'Task', value: 'task' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'listContactActivityEvents',
 			name: 'List Contact Activity Events',
 			action: 'List recent activity events on a CRM contact (auto follow-ups, collaborator actions, webhook events, manual notes)',
@@ -1456,7 +1708,7 @@ export const crmResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -1481,6 +1733,31 @@ export const crmResource: GeneratedResource = {
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'listCrmMissions',
+			name: 'List CRM Missions',
+			action: 'List the client missions attached to ONE CRM contact (ID, title, status, dates, price, linked deal)',
+			description: 'List the client missions attached to ONE CRM contact (ID, title, status, dates, price, linked deal). Both `projectId` and `contactId` are required — this route reads a contact\'s missions, it does not list a whole project\'s. It is the only tool that returns the mission ID needed by `update_crm_mission`, `delete_crm_mission` and by the `mission_id` of `apply_checklist_template`.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/crm/missions","queryParams":["projectId","contactId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project the contact belongs to (required)',
+					default: '',
+				},
+				{
+					displayName: 'Contact ID',
+					name: 'contactId',
+					type: 'string',
+					required: true,
+					description: 'CRM contact whose missions you want (required)',
+					default: '',
 				}
 			],
 		},
@@ -1587,7 +1864,7 @@ export const crmResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -1616,6 +1893,31 @@ export const crmResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'listDealItems',
+			name: 'List Deal Items',
+			action: 'List the product lines of a deal (name, quantity, unit price in CENTIMES, linked catalogue product, delivery flag)',
+			description: 'List the product lines of a deal (name, quantity, unit price in CENTIMES, linked catalogue product, delivery flag). MANDATORY before `set_deal_items`, which is a FULL REPLACEMENT: without this read you cannot send the existing lines back, and the ones you omit are deleted. `projectId` is required — it carries the permission.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/crm/deals/{id}/items","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Deal ID',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project the deal belongs to (required)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'listEmailTemplates',
 			name: 'List Email Templates',
 			action: 'CRM email templates',
@@ -1627,6 +1929,56 @@ export const crmResource: GeneratedResource = {
 					name: 'project_id',
 					type: 'string',
 					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listLeadCategories',
+			name: 'List Lead Categories',
+			action: 'List the qualification categories of a project\'s CRM pipeline sections — the labels a contact carries (« Chaud », « Tiède », « À rappeler »), with their ID, label, colour, order and the pipeline section they belong to',
+			description: 'List the qualification categories of a project\'s CRM pipeline sections — the labels a contact carries (« Chaud », « Tiède », « À rappeler »), with their ID, label, colour, order and the pipeline section they belong to. Filter with `pipelineSlug` to see only one section\'s labels. This is the only tool that returns the category ID required by `update_lead_category` and `delete_lead_category`.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/crm/lead-categories","queryParams":["projectId","pipelineSlug"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project owning the categories (required)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Pipeline Slug',
+							name: 'pipelineSlug',
+							type: 'string',
+							description: 'Optional: restrict to one pipeline section (client, partenaire…)',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'listPipelines',
+			name: 'List Pipelines',
+			action: 'List the CRM pipeline SECTIONS of a project — client, partenaire, fournisseur, réseau and any custom one — with their ID, slug, label, colour, icon, order, whether they carry deals, whether they are enabled, and whether they are built-in',
+			description: 'List the CRM pipeline SECTIONS of a project — client, partenaire, fournisseur, réseau and any custom one — with their ID, slug, label, colour, icon, order, whether they carry deals, whether they are enabled, and whether they are built-in. These are the sections themselves, not their columns: the stages of a section are `get_pipeline_stages`. It is the only tool that returns the section ID required by `update_pipeline` and `delete_pipeline`.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/crm/pipelines","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project owning the sections (required)',
 					default: '',
 				}
 			],
@@ -1666,17 +2018,51 @@ export const crmResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'markDealWon',
+			name: 'Mark Deal Won',
+			action: '« C\'est signé » — moves the deal to the WON stage of the client pipeline, WHICH THE SERVER RESOLVES ITSELF',
+			description: '« C\'est signé » — moves the deal to the WON stage of the client pipeline, WHICH THE SERVER RESOLVES ITSELF. Do not look the stage up, do not guess its name: picking the wrong one raises NO error at all and silently skips everything below. Winning a deal then fires, right after the response: a revenue line in Finance marked NOT CASHED IN (`is_paid: false`), the contact promoted to client, the client\'s revenue aggregate recomputed, a delivery mission if a line of the deal requires one, and an onboarding task. Those writes land JUST AFTER the reply — do not read them back in the same turn, they are not there yet. Pass `value` when the person announces an amount different from the one on the deal, in EUROS (the CRM counts in euros, NOT in cents, unlike every Finance tool): it is written BEFORE the stage flips, so it is that amount that goes to Finance. Re-winning a deal duplicates nothing (every step is idempotent). WON IS NOT CASHED IN: this records a receivable, not a payment — for money actually received, that is `record_invoice_payment`. Nothing here leaves the account: no email, no publication, nobody is notified. To move a deal from stage to stage, or to reopen it, keep using `update_deal`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/crm/deals/{deal_id}/won","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Deal ID',
+					name: 'deal_id',
+					type: 'string',
+					required: true,
+					description: 'Crm_deals.ID (uuid) — from list_deals',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Value',
+							name: 'value',
+							type: 'number',
+							description: 'Amount actually signed, in EUROS (the CRM counts in euros, not cents). Written BEFORE the stage flips: this is the amount that becomes revenue.',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'personalizeCallScript',
 			name: 'Personalize Call Script',
-			action: 'Personalize a script for a contact',
-			description: 'Personalize a script for a contact',
+			action: 'Tailor an existing call script to ONE contact',
+			description: 'Tailor an existing call script to ONE contact. It works on the script TEXT, not on a script ID: read the script first (list_call_scripts / get_call_script) and paste it into base_script. Returns the personalized version; storing or using it is a separate step (create_call_log.personalized_script). Billed.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/crm/call-scripts/personalize","queryParams":[]},
 			properties: [
 				{
-					displayName: 'Script ID',
-					name: 'script_id',
+					displayName: 'Project ID',
+					name: 'project_id',
 					type: 'string',
 					required: true,
+					description: 'Project UUID (injected from the session when you have one)',
 					default: '',
 				},
 				{
@@ -1684,6 +2070,15 @@ export const crmResource: GeneratedResource = {
 					name: 'contact_id',
 					type: 'string',
 					required: true,
+					description: 'UUID of the CRM contact the script is being tailored for — the model reads that contact to weave in its company, sector and history',
+					default: '',
+				},
+				{
+					displayName: 'Base Script',
+					name: 'base_script',
+					type: 'string',
+					required: true,
+					description: 'The full text of the script to personalize, up to 20 000 characters. An ID, a title or a summary here gives an empty result — paste the script itself.',
 					default: '',
 				}
 			],
@@ -1879,6 +2274,39 @@ export const crmResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'setDealItems',
+			name: 'Set Deal Items',
+			action: 'Set the product lines of a deal (what is being sold, quantity, unit price)',
+			description: 'Set the product lines of a deal (what is being sold, quantity, unit price). This is a FULL REPLACEMENT, never a merge: read the current lines with `list_deal_items` and send them ALL back, or the ones you leave out are deleted. `unit_price` is in CENTIMES, integer (12345 = 123,45 €); `quantity` is an integer ≥ 1. When the list is non-empty the deal `value` is overwritten with the sum of the lines (in euros) — so do not also pass a different `value` to `update_deal`; when the list is EMPTY the lines are removed but the deal value is left untouched. On a deal already WON, changing the lines also recomputes the client\'s aggregated revenue. `product_id` links a line to a catalogue product (« combien j\'ai vendu de X ? »).',
+			routeSpec: {"method":"PUT","path":"/api/aurentia/crm/deals/{id}/items","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Deal ID',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project the deal belongs to (required — resolves the permission)',
+					default: '',
+				},
+				{
+					displayName: 'Items',
+					name: 'items',
+					type: 'json',
+					required: true,
+					description: 'FULL replacement of the lines. (provide a JSON array).',
+					default: '[]',
+				}
+			],
+		},
+		{
 			value: 'startCallSession',
 			name: 'Start Call Session',
 			action: 'Start a call session',
@@ -2056,9 +2484,63 @@ export const crmResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Notes',
-							name: 'notes',
+							displayName: 'Base Script',
+							name: 'base_script',
 							type: 'string',
+							description: 'Opening script read on every call of the session',
+							default: '',
+						},
+						{
+							displayName: 'Goal',
+							name: 'goal',
+							type: 'string',
+							description: 'What this calling session is trying to achieve',
+							default: '',
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateChecklistTemplate',
+			name: 'Update Checklist Template',
+			action: 'Rename a reusable CRM checklist template or rewrite its items',
+			description: 'Rename a reusable CRM checklist template or rewrite its items. `items` is a FULL REPLACEMENT, never a merge, and its shape depends on the template `kind`, which cannot change here: for a `task` template send an array of `{title}`; for a `mission` template send `{title?, tasks:[{title}]}`. Read the template first (`list_checklist_templates`) and send every item back, or the ones you leave out disappear. Omit `items` entirely to change only the name. Checklists already applied to contacts are NOT touched: they were copied at apply time. The project is resolved from the template — no `project_id` to send.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/crm/checklist-templates/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Checklist template ID (from list_checklist_templates)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Items',
+							name: 'items',
+							type: 'json',
+							description: 'FULL replacement. kind=\'task\': array of {title}. kind=\'mission\': {title?, tasks:[{title}]}. Max 100 titles. (provide a JSON object)',
+							default: '{}',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							description: 'New name, 1-120 chars',
 							default: '',
 						},
 					],
@@ -2082,7 +2564,7 @@ export const crmResource: GeneratedResource = {
 				},
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -2110,6 +2592,89 @@ export const crmResource: GeneratedResource = {
 								{ name: 'Paused', value: 'paused' },
 								{ name: 'Terminated', value: 'terminated' },
 							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateCrmMission',
+			name: 'Update CRM Mission',
+			action: 'Update a client mission (a scoped piece of work sold to a contact): title, description, status, dates, price, or the contact / deal it hangs on',
+			description: 'Update a client mission (a scoped piece of work sold to a contact): title, description, status, dates, price, or the contact / deal it hangs on. Send only what changes; `null` clears a nullable field. `status` moves the mission through draft → active → paused → completed → cancelled — use `completed` when the work is delivered, `cancelled` when it will never be; `delete_crm_mission` is for mistakes, not for closing. `price` is the same plain number used by `create_crm_mission`. The project is resolved from the mission.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/crm/missions/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Mission ID (from list_crm_missions)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Contact ID',
+							name: 'contact_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Deal ID',
+							name: 'deal_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'End Date',
+							name: 'end_date',
+							type: 'string',
+							description: 'YYYY-MM-DD',
+							default: '',
+						},
+						{
+							displayName: 'Price',
+							name: 'price',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Start Date',
+							name: 'start_date',
+							type: 'string',
+							description: 'YYYY-MM-DD',
+							default: '',
+						},
+						{
+							displayName: 'Status',
+							name: 'status',
+							type: 'options',
+							default: 'active',
+							options: [
+								{ name: 'Active', value: 'active' },
+								{ name: 'Cancelled', value: 'cancelled' },
+								{ name: 'Completed', value: 'completed' },
+								{ name: 'Draft', value: 'draft' },
+								{ name: 'Paused', value: 'paused' },
+							],
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							default: '',
 						},
 					],
 				}
@@ -2259,6 +2824,126 @@ export const crmResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'updateLeadCategory',
+			name: 'Update Lead Category',
+			action: 'Rename, recolour or reorder a qualification category of a CRM pipeline section (the labels like « Chaud », « Tiède » a contact carries)',
+			description: 'Rename, recolour or reorder a qualification category of a CRM pipeline section (the labels like « Chaud », « Tiède » a contact carries). Send only the fields you change. The pipeline section a category belongs to cannot move. Get the ID from `list_lead_categories`. The project is resolved from the category — no `project_id` to send.',
+			routeSpec: {"method":"PUT","path":"/api/aurentia/crm/lead-categories/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Lead category ID',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							description: 'Hex colour #rrggbb',
+							default: '',
+						},
+						{
+							displayName: 'Label',
+							name: 'label',
+							type: 'string',
+							description: '1-60 chars',
+							default: '',
+						},
+						{
+							displayName: 'Sort Order',
+							name: 'sort_order',
+							type: 'number',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updatePipeline',
+			name: 'Update Pipeline',
+			action: 'Edit a CRM pipeline section (client, partenaire, fournisseur, réseau, or a custom one): label, colour, icon, order, whether it carries deals, and which fields its cards show',
+			description: 'Edit a CRM pipeline section (client, partenaire, fournisseur, réseau, or a custom one): label, colour, icon, order, whether it carries deals, and which fields its cards show. ONE route, TWO shapes, and the server picks by the body: send `{is_enabled}` ALONE to switch the section on or off (this is how the built-in sections are hidden — they cannot be deleted); send the other fields WITHOUT `is_enabled` to edit. If you mix `is_enabled` with other fields the toggle is silently dropped. `card_fields` is a full replacement list; `null` resets it to the default. Get the ID from `list_pipelines`. The project is resolved from the section.',
+			routeSpec: {"method":"PUT","path":"/api/aurentia/crm/pipelines/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Pipeline section ID',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Card Fields',
+							name: 'card_fields',
+							type: 'json',
+							description: 'Full replacement of the fields shown on cards (max 20). null = default. (provide a JSON array)',
+							default: '[]',
+						},
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							description: '#rrggbb',
+							default: '',
+						},
+						{
+							displayName: 'Has Deals',
+							name: 'has_deals',
+							type: 'boolean',
+							description: 'Whether contacts of this section carry deals',
+							default: false,
+						},
+						{
+							displayName: 'Icon',
+							name: 'icon',
+							type: 'string',
+							description: 'Icon name from the catalog, or a single emoji. null clears it.',
+							default: '',
+						},
+						{
+							displayName: 'Is Enabled',
+							name: 'is_enabled',
+							type: 'boolean',
+							description: 'Whether send ALONE to toggle the section. Do not combine with other fields.',
+							default: false,
+						},
+						{
+							displayName: 'Label',
+							name: 'label',
+							type: 'string',
+							description: '1-60 chars',
+							default: '',
+						},
+						{
+							displayName: 'Sort Order',
+							name: 'sort_order',
+							type: 'number',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'upsertCustomFieldValues',
 			name: 'Upsert Custom Field Values',
 			action: 'Update custom field values',
@@ -2275,6 +2960,38 @@ export const crmResource: GeneratedResource = {
 				{
 					displayName: 'Values',
 					name: 'values',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'upsertPipelineStages',
+			name: 'Upsert Pipeline Stages',
+			action: 'Add, rename, recolour, reorder or remove STAGES of ONE CRM pipeline',
+			description: 'Add, rename, recolour, reorder or remove STAGES of ONE CRM pipeline. `pipelineType` is the pipeline slug (`client`, `partenaire`, `fournisseur`, or a custom section — see `get_pipeline_stages`). This is an UPSERT, not a replacement: send ONLY the stages you touch. An entry WITHOUT `ID` is created; WITH `ID` it is updated; WITH `ID` AND `_delete: true` it is removed — stages you leave out are untouched. `display_order` is the position (0-based integer); `color` is a 6-digit hex; `is_terminal` marks an end stage, and a terminal stage should carry `terminal_status` (`won` | `lost` | `active` | `inactive` | `converted`) so reports know what reaching it means. Deleting a stage that still holds contacts is a real move for those contacts: read `get_pipeline_stages` and `list_contacts` for that stage first, and get a yes — that is why a payload containing a deletion asks for approval. Names are 1-50 chars. Requires the CRM `edit` permission on the project.',
+			routeSpec: {"method":"PUT","path":"/api/aurentia/crm/pipeline/stages","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Pipeline Type',
+					name: 'pipelineType',
+					type: 'string',
+					required: true,
+					description: 'Pipeline slug (get_pipeline_stages)',
+					default: '',
+				},
+				{
+					displayName: 'Stages',
+					name: 'stages',
 					type: 'json',
 					required: true,
 					description: 'Provide a JSON array',

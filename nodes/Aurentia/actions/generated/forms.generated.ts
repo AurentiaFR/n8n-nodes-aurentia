@@ -82,6 +82,37 @@ export const formsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createFormFolder',
+			name: 'Create Form Folder',
+			action: 'Crée un dossier de rangement pour les formulaires (dossiers personnels ; `list_forms` filtre par `folder_id`)',
+			description: 'Crée un dossier de rangement pour les formulaires (dossiers personnels ; `list_forms` filtre par `folder_id`). `name` obligatoire, `color` optionnelle (chaîne libre, telle que l\'écran la stocke). Ne range aucun formulaire : pour en déplacer un, `update_form` avec `folder_id`. Relis `list_form_folders` d\'abord pour ne pas créer un doublon. Rend le dossier créé, ID compris.',
+			routeSpec: {"method":"POST","path":"/api/forms/folders","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createFormFromTemplate',
 			name: 'Create Form From Template',
 			action: 'Create a new draft form from a specific template — copies its fields, logic, theme and settings (IDs regenerated)',
@@ -94,6 +125,65 @@ export const formsResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'Template UUID (from list_form_templates)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'createFormPromoPostDraft',
+			name: 'Create Form Promo Post Draft',
+			action: 'Compose un post promotionnel EN BROUILLON pour un formulaire : texte proposé par l\'IA à partir du titre et de la description du formulaire + UN lien tracké par plateforme choisie (attribution des réponses par réseau), et relie le post au formulaire',
+			description: 'Compose un post promotionnel EN BROUILLON pour un formulaire : texte proposé par l\'IA à partir du titre et de la description du formulaire + UN lien tracké par plateforme choisie (attribution des réponses par réseau), et relie le post au formulaire. Ne PUBLIE JAMAIS : le brouillon suit ensuite le circuit normal (relecture, soumission, publication — `submit_post` / `publish_post`). COÛTE le tarif d\'une génération de post social (`social_post_generation`), remboursé si la génération échoue. `platforms` : au moins une (linkedin, instagram, facebook, twitter…) — chaque plateforme reçoit son propre lien court, ne mets pas « toutes » par défaut, demande où il publie. Aucune image n\'est générée (le `visual_prompt` rendu est une suggestion). Le formulaire doit être publié pour que le lien mène quelque part : vérifie `status` avec `get_form`.',
+			routeSpec: {"method":"POST","path":"/api/forms/{form_id}/publish-social","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Form ID',
+					name: 'form_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du formulaire',
+					default: '',
+				},
+				{
+					displayName: 'Platforms',
+					name: 'platforms',
+					type: 'json',
+					required: true,
+					description: 'Plateformes cibles (enum plateforme du validateur social-media). (provide a JSON array).',
+					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'deleteForm',
+			name: 'Delete Form',
+			action: 'Supprime un formulaire (suppression douce : la ligne est marquée supprimée, les réponses restent en base mais le formulaire disparaît des listes et sa page publique `/f/&lt;slug&gt;` cesse de répondre immédiatement)',
+			description: 'Supprime un formulaire (suppression douce : la ligne est marquée supprimée, les réponses restent en base mais le formulaire disparaît des listes et sa page publique `/f/&lt;slug&gt;` cesse de répondre immédiatement). Pour arrêter de recevoir des réponses sans le faire disparaître, préfère `close_form`. Uniquement sur un formulaire nommé (titre relu dans `list_forms`) et confirmé — un formulaire avec des réponses est le travail de quelqu\'un.',
+			routeSpec: {"method":"DELETE","path":"/api/forms/{form_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Form ID',
+					name: 'form_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du formulaire',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'duplicateForm',
+			name: 'Duplicate Form',
+			action: 'Duplique un formulaire en brouillon : questions, logique, scoring, écrans, thème sont copiés avec de NOUVEAUX identifiants (les règles et scores sont remappés), le titre reçoit « (copie) » et un slug unique est généré',
+			description: 'Duplique un formulaire en brouillon : questions, logique, scoring, écrans, thème sont copiés avec de NOUVEAUX identifiants (les règles et scores sont remappés), le titre reçoit « (copie) » et un slug unique est généré. Les réponses ne sont pas copiées. Appelle-le pour « fais-moi une variante de ce formulaire », puis `update_form` sur la copie. La copie reste dans le même périmètre que l\'original (personnel ou projet). Rend le nouveau formulaire, ID compris.',
+			routeSpec: {"method":"POST","path":"/api/forms/{form_id}/duplicate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Form ID',
+					name: 'form_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du formulaire à dupliquer',
 					default: '',
 				}
 			],
@@ -159,7 +249,7 @@ export const formsResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -285,7 +375,7 @@ export const formsResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -314,6 +404,16 @@ export const formsResource: GeneratedResource = {
 						},
 					],
 				}
+			],
+		},
+		{
+			value: 'listFormFolders',
+			name: 'List Form Folders',
+			action: 'Liste les dossiers de rangement des formulaires de la personne (ID, nom, couleur, position)',
+			description: 'Liste les dossiers de rangement des formulaires de la personne (ID, nom, couleur, position). Lis-le avant `create_form_folder` pour ne pas créer un doublon, et pour donner à `update_form` le `folder_id` dans lequel classer un formulaire.',
+			routeSpec: {"method":"GET","path":"/api/forms/folders","queryParams":[]},
+			properties: [
+
 			],
 		},
 		{
@@ -408,6 +508,145 @@ export const formsResource: GeneratedResource = {
 					required: true,
 					description: 'Form UUID',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'testFormWebhook',
+			name: 'Test Form Webhook',
+			action: 'Envoie un payload d\'EXEMPLE signé (événement `form.test`, réponse factice) à une URL de webhook, avec la même signature HMAC `X-Aurentia-Signature` que le webhook réel du formulaire — c\'est le bouton « Tester » des réglages',
+			description: 'Envoie un payload d\'EXEMPLE signé (événement `form.test`, réponse factice) à une URL de webhook, avec la même signature HMAC `X-Aurentia-Signature` que le webhook réel du formulaire — c\'est le bouton « Tester » des réglages. Appelle-le quand l\'utilisateur branche Zapier/Make/n8n/son serveur et veut vérifier que ça reçoit. Rend `{ ok, status }` : `ok: true` = le récepteur a répondu 2xx ; sinon la route répond 502 et l\'appel apparaît en erreur — ce n\'est PAS une panne d\'Aurentia, c\'est le récepteur qui ne répond pas 2xx (timeout 5 s, redirections non suivies) : dis-le tel quel, sans détail interne (la route n\'en rend aucun). URLs internes/privées refusées (garde SSRF). 90 appels/minute maximum. Ne modifie pas le webhook du formulaire : pour l\'enregistrer, `update_form` avec `settings`.',
+			routeSpec: {"method":"POST","path":"/api/forms/webhook-test","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Form ID',
+					name: 'formId',
+					type: 'string',
+					required: true,
+					description: 'UUID du formulaire dont la signature est utilisée',
+					default: '',
+				},
+				{
+					displayName: 'Webhook URL',
+					name: 'webhookUrl',
+					type: 'string',
+					required: true,
+					description: 'URL http(s) publique à tester',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'updateForm',
+			name: 'Update Form',
+			action: 'Modifie un formulaire (créé par `create_form`, structure lue par `get_form`) : titre, description, questions, logique conditionnelle, scoring, thème, écrans d\'accueil et de fin, réglages, intégrations, dossier, slug',
+			description: 'Modifie un formulaire (créé par `create_form`, structure lue par `get_form`) : titre, description, questions, logique conditionnelle, scoring, thème, écrans d\'accueil et de fin, réglages, intégrations, dossier, slug. Envoie seulement les blocs à changer ; `fields` REMPLACE la liste entière des questions — relis-la avec `get_form` et renvoie-la complète, avec les `ID` existants (les réponses déjà reçues sont rattachées à ces IDs ; changer un ID orpheline ses réponses). `logic_rules` est normalisé sur les IDs canoniques des choix à l\'écriture : envoie `fields` dans le même appel. `settings.redirectUrl` doit être http(s) — tout autre schéma est refusé. `slug` change l\'adresse publique `/f/&lt;slug&gt;` (conflit si pris) : sur un formulaire actif, l\'ancienne adresse ne répond plus, préviens. Un formulaire ACTIF est modifié en direct : les répondants voient le changement immédiatement. Ne change pas le statut : `publish_form` / `close_form`.',
+			routeSpec: {"method":"PATCH","path":"/api/forms/{form_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Form ID',
+					name: 'form_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du formulaire',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Embed Allowed',
+							name: 'embed_allowed',
+							type: 'boolean',
+							description: 'Whether to enable embed allowed',
+							default: false,
+						},
+						{
+							displayName: 'Fields',
+							name: 'fields',
+							type: 'json',
+							description: 'Liste complète des questions, IDs conservés. (provide a JSON array).',
+							default: '[]',
+						},
+						{
+							displayName: 'Folder ID',
+							name: 'folder_id',
+							type: 'string',
+							description: 'UUID d\'un dossier (list_form_folders) ; null = hors dossier',
+							default: '',
+						},
+						{
+							displayName: 'Integrations',
+							name: 'integrations',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Logic Rules',
+							name: 'logic_rules',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Scoring Config',
+							name: 'scoring_config',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Settings',
+							name: 'settings',
+							type: 'json',
+							description: 'RedirectUrl en http(s) uniquement. (provide a JSON object).',
+							default: '{}',
+						},
+						{
+							displayName: 'Slug',
+							name: 'slug',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Thank You Screens',
+							name: 'thank_you_screens',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Theme',
+							name: 'theme',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Welcome Screen',
+							name: 'welcome_screen',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+					],
 				}
 			],
 		}

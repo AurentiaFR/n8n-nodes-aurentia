@@ -6,6 +6,118 @@ export const studiosResource: GeneratedResource = {
 	displayName: 'Studios',
 	operations: [
 		{
+			value: 'addStudioAsset',
+			name: 'Add Studio Asset',
+			action: 'Keep a media in the person\'s studio library so it can be reused as a source later: a `source_video`, a `character_image`, or a generation `result`',
+			description: 'Keep a media in the person\'s studio library so it can be reused as a source later: a `source_video`, a `character_image`, or a generation `result`. `storagePath` is the path inside Aurentia\'s media storage — for a finished generation take it from the output URL returned by `studio_get_generation` (the part after `/social-media/`) and pass the `jobId` too; for a `result` this is the normal way to say « garde cette vidéo dans ma bibliothèque ». Do not pass foreign URLs or paths you have not seen in a tool result. Idempotent: the same path is returned, not duplicated. `name` is a label for the library. List with `list_studio_assets`, remove with `delete_studio_asset`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/studios/assets","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Kind',
+					name: 'kind',
+					type: 'options',
+					required: true,
+					default: 'character_image',
+					options: [
+						{ name: 'Character Image', value: 'character_image' },
+						{ name: 'Result', value: 'result' },
+						{ name: 'Source Video', value: 'source_video' },
+					],
+				},
+				{
+					displayName: 'Storage Path',
+					name: 'storagePath',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Job ID',
+							name: 'jobId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'cinemaAnimateImage',
+			name: 'Cinema Animate Image',
+			action: 'Animate a still image into a short video (image-to-video) — typically an image produced by `cinema_generate_image`',
+			description: 'Animate a still image into a short video (image-to-video) — typically an image produced by `cinema_generate_image`. COSTS VIDEO CREDITS (×5 provider cost, prorated on duration: 3, 5, 8 or 10 s) — state it before calling. `imageUrl` must be an Aurentia storage URL (a studio or brand-image result), never an external picture. `prompt` optionally describes the motion (« slow dolly in, leaves moving »). `modelId` picks an i2v model from the studio registry (\'kling-i2v-standard\' fast, \'kling-i2v-master\' quality); omitted = the first available. `aspectRatio` and `durationSeconds` are clamped to what the model supports. Returns a `jobId`: poll `studio_get_generation` for the output URL, then `handoff_studio_asset` / `publish_studio_asset_to_social` / `add_studio_asset`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/studios/cinema/animate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Image URL',
+					name: 'imageUrl',
+					type: 'string',
+					required: true,
+					description: 'Aurentia storage URL of the image to animate',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Aspect Ratio',
+							name: 'aspectRatio',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Duration Seconds',
+							name: 'durationSeconds',
+							type: 'options',
+							default: '10',
+							options: [
+								{ name: '10', value: '10' },
+								{ name: '3', value: '3' },
+								{ name: '5', value: '5' },
+								{ name: '8', value: '8' },
+							],
+						},
+						{
+							displayName: 'Model ID',
+							name: 'modelId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Prompt',
+							name: 'prompt',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'cinemaGenerateImage',
 			name: 'Cinema Generate Image',
 			action: 'PRD-STUDIO — Génère une image CINÉMATIQUE : le prompt est augmenté côté serveur avec les réglages caméra (caméra / objectif / focale / ouverture) pour un rendu de tournage',
@@ -86,6 +198,523 @@ export const studiosResource: GeneratedResource = {
 							name: 'resolution',
 							type: 'string',
 							description: 'Résolution de sortie (selon modèle)',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createMarketingAdPost',
+			name: 'Create Marketing Ad Post',
+			action: 'Turn a finished Marketing Studio ad into a social post DRAFT: a \'reel\' post is created in the project\'s calendar with the video URL and your `caption`, targeting `platforms` (instagram, tiktok, youtube, facebook, linkedin)',
+			description: 'Turn a finished Marketing Studio ad into a social post DRAFT: a \'reel\' post is created in the project\'s calendar with the video URL and your `caption`, targeting `platforms` (instagram, tiktok, youtube, facebook, linkedin). Nothing is published: use `publish_post` or `schedule_post` on the returned `postId`. `videoUrl` is the output URL of the ad from `studio_get_generation` (job from `studio_generate_marketing_ad`). `scheduledAt` (ISO) only stores the intended date. To publish a studio media IMMEDIATELY instead, use `publish_studio_asset_to_social`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/studios/marketing/publish","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Video URL',
+					name: 'videoUrl',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Platforms',
+					name: 'platforms',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Caption',
+							name: 'caption',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Scheduled At',
+							name: 'scheduledAt',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createStudioAvatarFromImage',
+			name: 'Create Studio Avatar From Image',
+			action: 'Register an image already in Aurentia\'s storage as an AVATAR for the Marketing Studio (the presenter of UGC ads made with `studio_generate_marketing_ad`)',
+			description: 'Register an image already in Aurentia\'s storage as an AVATAR for the Marketing Studio (the presenter of UGC ads made with `studio_generate_marketing_ad`). `storagePath` is the storage path of that image (from a studio result, a brand image, or `generate_studio_avatar`) and must be under the person\'s own prefix — the server refuses anyone else\'s path. `name` labels it. If the image shows a REAL PERSON, set `isRealPerson: true` AND `consentConfirmed: true` only after the person confirmed they hold the rights to that likeness (image rights + AI Act art. 50) — the server refuses a real person without consent, and you must never tick consent on someone\'s behalf. Preset avatars need nothing: they are already listed by `studio_list_avatars`. To CREATE a new synthetic avatar with AI use `generate_studio_avatar` instead.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/studios/marketing/avatars","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Storage Path',
+					name: 'storagePath',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Consent Confirmed',
+							name: 'consentConfirmed',
+							type: 'boolean',
+							description: 'Whether to enable consent confirmed',
+							default: false,
+						},
+						{
+							displayName: 'Is Real Person',
+							name: 'isRealPerson',
+							type: 'boolean',
+							description: 'Whether to enable is real person',
+							default: false,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'deleteStudioAsset',
+			name: 'Delete Studio Asset',
+			action: 'Remove a media from the studio library',
+			description: 'Remove a media from the studio library. The library row is deleted and, when no other library entry points to the same file, THE FILE ITSELF is deleted from storage — no trash, no undo. Use `list_studio_assets` to get the ID and confirm with the person which one. If the media is also used in a post or the Drive, those keep their own copy; only the studio library entry (and its orphaned file) goes.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/studios/assets","queryParams":["id"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Studio asset ID (list_studio_assets)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteStudioAvatar',
+			name: 'Delete Studio Avatar',
+			action: 'Remove one of the person\'s OWN avatars from the Marketing Studio (soft delete: it disappears from `studio_list_avatars`; no tool restores it)',
+			description: 'Remove one of the person\'s OWN avatars from the Marketing Studio (soft delete: it disappears from `studio_list_avatars`; no tool restores it). Preset avatars provided by Aurentia cannot be deleted (400). Ads already generated with that avatar are untouched. Get the ID from `studio_list_avatars` and confirm which one.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/studios/marketing/avatars","queryParams":["id"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'generateStudioAvatar',
+			name: 'Generate Studio Avatar',
+			action: 'Create a NEW synthetic presenter (avatar) for Marketing Studio ads with AI',
+			description: 'Create a NEW synthetic presenter (avatar) for Marketing Studio ads with AI. COSTS IMAGE CREDITS (returned as `creditsCharged`) — tell the person first. `name` labels the avatar; `selections` is a map of casting choices the studio understands (e.g. gender, age range, style, setting — string or list of strings per key); `customPrompt` adds free-text direction; `referenceImageUrls` (up to 4 Aurentia storage URLs) steer the look WITHOUT copying a real person — a synthetic avatar must not reproduce someone\'s likeness; for a real person use `create_studio_avatar_from_image` with consent. `aspectRatio` \'2:3\' (default portrait), \'1:1\', \'9:16\', \'16:9\'. The avatar is saved and listed by `studio_list_avatars`; use its image URL as `avatarImageUrl` in `studio_generate_marketing_ad`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/studios/marketing/character","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Aspect Ratio',
+							name: 'aspectRatio',
+							type: 'options',
+							default: '1:1',
+							options: [
+								{ name: '1:1', value: '1:1' },
+								{ name: '16:9', value: '16:9' },
+								{ name: '2:3', value: '2:3' },
+								{ name: '9:16', value: '9:16' },
+							],
+						},
+						{
+							displayName: 'Custom Prompt',
+							name: 'customPrompt',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Reference Image URLs',
+							name: 'referenceImageUrls',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Selections',
+							name: 'selections',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'handoffStudioAsset',
+			name: 'Handoff Studio Asset',
+			action: 'Send a studio media (image, video, audio or clip) somewhere useful: to a CRM contact/deal timeline (`crm_timeline` + `contactId` or `dealId`), into a note (`note` + `noteId`), onto a task card (`task` + `cardId`), onto a whiteboard (`whiteboard` + `whiteboardId`), as the banner of a calendar event (`calendar_banner` + `eventId`), or SHARED TO THE PROJECT\'S DISCORD (`discord` — this posts publicly in the community channel, confirm first)',
+			description: 'Send a studio media (image, video, audio or clip) somewhere useful: to a CRM contact/deal timeline (`crm_timeline` + `contactId` or `dealId`), into a note (`note` + `noteId`), onto a task card (`task` + `cardId`), onto a whiteboard (`whiteboard` + `whiteboardId`), as the banner of a calendar event (`calendar_banner` + `eventId`), or SHARED TO THE PROJECT\'S DISCORD (`discord` — this posts publicly in the community channel, confirm first). Identify the media by `imageId` (a brand/studio image) OR `jobId` (a generation from `studio_get_generation`); `kind` says what it is; `prompt` is an optional caption. Target IDs come from the matching list tools (`list_notes`, `get_board`, `list_whiteboards`, calendar…). The media itself is copied/linked, never moved.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/studios/handoff","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Target',
+					name: 'target',
+					type: 'options',
+					required: true,
+					default: 'calendar_banner',
+					options: [
+						{ name: 'Calendar Banner', value: 'calendar_banner' },
+						{ name: 'CRM Timeline', value: 'crm_timeline' },
+						{ name: 'Discord', value: 'discord' },
+						{ name: 'Note', value: 'note' },
+						{ name: 'Task', value: 'task' },
+						{ name: 'Whiteboard', value: 'whiteboard' },
+					],
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Kind',
+					name: 'kind',
+					type: 'options',
+					required: true,
+					default: 'audio',
+					options: [
+						{ name: 'Audio', value: 'audio' },
+						{ name: 'Clip', value: 'clip' },
+						{ name: 'Image', value: 'image' },
+						{ name: 'Video', value: 'video' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Card ID',
+							name: 'cardId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Contact ID',
+							name: 'contactId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Deal ID',
+							name: 'dealId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Event ID',
+							name: 'eventId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Image ID',
+							name: 'imageId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Job ID',
+							name: 'jobId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Note ID',
+							name: 'noteId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Prompt',
+							name: 'prompt',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Whiteboard ID',
+							name: 'whiteboardId',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'listStudioAssets',
+			name: 'List Studio Assets',
+			action: 'List the person\'s studio library: source videos, character images and kept results, with ID, kind, name, storage path and linked job',
+			description: 'List the person\'s studio library: source videos, character images and kept results, with ID, kind, name, storage path and linked job. Filter with `kind` (\'source_video\' | \'character_image\' | \'result\'). The IDs feed `delete_studio_asset`; the paths/URLs feed `video_studio_generate` and `cinema_animate_image` as references.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/studios/assets","queryParams":["kind"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Kind',
+							name: 'kind',
+							type: 'options',
+							default: 'character_image',
+							options: [
+								{ name: 'Character Image', value: 'character_image' },
+								{ name: 'Result', value: 'result' },
+								{ name: 'Source Video', value: 'source_video' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'publishStudioAssetToSocial',
+			name: 'Publish Studio Asset To Social',
+			action: 'PUBLISH a studio media on the person\'s social networks RIGHT NOW: the server creates an approved post carrying the media and `caption`, then publishes it to every platform in `platforms` (instagram, tiktok, youtube, facebook, linkedin)',
+			description: 'PUBLISH a studio media on the person\'s social networks RIGHT NOW: the server creates an approved post carrying the media and `caption`, then publishes it to every platform in `platforms` (instagram, tiktok, youtube, facebook, linkedin). This goes live immediately and cannot be recalled by a tool — read the caption back to the person and get an explicit yes. Identify the media by `imageId` (brand/studio image) or `jobId` (a completed generation); `kind` \'image\' publishes a post, \'video\'/\'clip\' a reel. Every targeted platform needs a connected account (`NO_CONNECTED_ACCOUNT` otherwise — nothing is published then). For a draft to review later, use `create_marketing_ad_post` or `create_post` instead.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/studios/publish","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Kind',
+					name: 'kind',
+					type: 'options',
+					required: true,
+					default: 'clip',
+					options: [
+						{ name: 'Clip', value: 'clip' },
+						{ name: 'Image', value: 'image' },
+						{ name: 'Video', value: 'video' },
+					],
+				},
+				{
+					displayName: 'Platforms',
+					name: 'platforms',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Caption',
+							name: 'caption',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Image ID',
+							name: 'imageId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Job ID',
+							name: 'jobId',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'saveBodySwapToDrive',
+			name: 'Save Body Swap To Drive',
+			action: 'File a finished Body Swap video (motion-control generation from `studio_generate_video`, operation \'motion_control\') into the person\'s Drive under « Généré par Aurentia / Body Swap »',
+			description: 'File a finished Body Swap video (motion-control generation from `studio_generate_video`, operation \'motion_control\') into the person\'s Drive under « Généré par Aurentia / Body Swap ». `videoUrl` is the output URL from `studio_get_generation`, `jobId` its ID, `name` the file name (\'bodyswap.mp4\' by default). `projectId` files it in the project\'s Drive. Only studio output URLs are accepted — the server refuses any other origin. Returns `fileId`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/studios/body-swap/save-to-drive","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Video URL',
+					name: 'videoUrl',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Job ID',
+							name: 'jobId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'saveMotionGraphicToDrive',
+			name: 'Save Motion Graphic To Drive',
+			action: 'File a finished Vibe Motion video (motion graphic from `studio_generate_motion_graphic` / `studio_edit_motion_graphic`) into the person\'s Drive under « Généré par Aurentia / Vibe Motion »',
+			description: 'File a finished Vibe Motion video (motion graphic from `studio_generate_motion_graphic` / `studio_edit_motion_graphic`) into the person\'s Drive under « Généré par Aurentia / Vibe Motion ». `videoUrl` is the output URL shown by `studio_get_motion_generation` when the generation is completed, `jobId` its ID, `name` the file name (\'vibe-motion.mp4\' default). `projectId` targets the project\'s Drive. Only studio output URLs are accepted. Returns `fileId`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/studios/vibe-motion/save-to-drive","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Video URL',
+					name: 'videoUrl',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Job ID',
+							name: 'jobId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'saveStudioAudioToDrive',
+			name: 'Save Studio Audio To Drive',
+			action: 'File a generated audio (music, sound effect, voice-over from `studio_generate_audio`) into the person\'s Drive, under « Généré par Aurentia / Audio »',
+			description: 'File a generated audio (music, sound effect, voice-over from `studio_generate_audio`) into the person\'s Drive, under « Généré par Aurentia / Audio ». Pass the output URL from `studio_get_generation` as `audioUrl` and its `jobId` so the file keeps its link to the generation; `name` becomes the file name (\'audio.mp3\' by default; end it with .wav for a WAV output). Pass `projectId` to file it in the project\'s Drive rather than the personal one. Only use URLs that came from a studio result: the server refuses any URL that is not one of the person\'s own generated media. Returns `fileId` (then `get_drive_file`, `share_drive_file`).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/studios/audio/save-to-drive","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Audio URL',
+					name: 'audioUrl',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Job ID',
+							name: 'jobId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'Project Drive scope (travels in the query string)',
 							default: '',
 						},
 					],
@@ -397,6 +1026,107 @@ export const studiosResource: GeneratedResource = {
 			routeSpec: {"method":"GET","path":"/api/aurentia/studios/marketing/avatars","queryParams":[]},
 			properties: [
 
+			],
+		},
+		{
+			value: 'videoStudioGenerate',
+			name: 'Video Studio Generate',
+			action: 'Generate a video from the Video Studio with a NAMED model of the registry and the project\'s brand kit applied',
+			description: 'Generate a video from the Video Studio with a NAMED model of the registry and the project\'s brand kit applied. COSTS VIDEO CREDITS (×5 provider cost, prorated on duration) — say so first. Pick `modelId` by intent: \'kling-t2v-standard\' / \'kling-t2v-master\' (text-to-video), \'kling-i2v-standard\' / \'kling-i2v-master\' (animate `referenceImageUrls[0]`), \'xai-v2v-edit\' / \'runway-v2v\' (restyle `referenceVideoUrls[0]`), \'seedance-2-extend-fast\' / \'seedance-2-extend\' (prolong a previous generation: pass its `sourceRequestId`, prompt ignored). `prompt` may @mention Aurentia entities (a product, the brand): the server injects their images and context. `applyBrandKit` (default true) adds the brand palette/style to the prompt and references; set false for a deliberately off-brand clip. `durationSeconds` is rounded down to 3/5/8/10. All URLs must be Aurentia storage URLs. Returns a `jobId` — poll `studio_get_generation`. For body swap or lip-sync use `studio_generate_video` (operations \'motion_control\' / \'lipsync\'); for a quick social clip without model choice, `generate_social_video`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/studios/video/generate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Model ID',
+					name: 'modelId',
+					type: 'options',
+					required: true,
+					default: 'kling-i2v-master',
+					options: [
+						{ name: 'Kling I2v Master', value: 'kling-i2v-master' },
+						{ name: 'Kling I2v Standard', value: 'kling-i2v-standard' },
+						{ name: 'Kling T2v Master', value: 'kling-t2v-master' },
+						{ name: 'Kling T2v Standard', value: 'kling-t2v-standard' },
+						{ name: 'Runway V2v', value: 'runway-v2v' },
+						{ name: 'Seedance 2 Extend', value: 'seedance-2-extend' },
+						{ name: 'Seedance 2 Extend Fast', value: 'seedance-2-extend-fast' },
+						{ name: 'Xai V2v Edit', value: 'xai-v2v-edit' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Apply Brand Kit',
+							name: 'applyBrandKit',
+							type: 'boolean',
+							description: 'Whether to enable apply brand kit',
+							default: false,
+						},
+						{
+							displayName: 'Aspect Ratio',
+							name: 'aspectRatio',
+							type: 'options',
+							default: '1:1',
+							options: [
+								{ name: '1:1', value: '1:1' },
+								{ name: '16:9', value: '16:9' },
+								{ name: '2:3', value: '2:3' },
+								{ name: '21:9', value: '21:9' },
+								{ name: '3:2', value: '3:2' },
+								{ name: '4:3', value: '4:3' },
+								{ name: '9:16', value: '9:16' },
+							],
+						},
+						{
+							displayName: 'Duration Seconds',
+							name: 'durationSeconds',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Prompt',
+							name: 'prompt',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Reference Image URLs',
+							name: 'referenceImageUrls',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Reference Video URLs',
+							name: 'referenceVideoUrls',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Resolution',
+							name: 'resolution',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Source Request ID',
+							name: 'sourceRequestId',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
 			],
 		}
 	],

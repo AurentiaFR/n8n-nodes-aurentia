@@ -8,8 +8,8 @@ export const durableWorkflowsResource: GeneratedResource = {
 		{
 			value: 'cancelDurableWorkflow',
 			name: 'Cancel Durable Workflow',
-			action: 'Cancel a running durable workflow',
-			description: 'Cancel a running durable workflow',
+			action: 'Stop a running durable workflow FOR GOOD — a brief sequence, a dunning ladder, an activation drip',
+			description: 'Stop a running durable workflow FOR GOOD — a brief sequence, a dunning ladder, an activation drip. The run is cancelled at the provider AND the row flips to `cancelled`, so nothing further fires. WHAT HAS ALREADY HAPPENED IS NOT UNDONE: an email that left, credits that were spent, a quote that was created stay exactly as they are — say that before calling, never after. No effect on a workflow that already finished, failed or was cancelled: the call is a silent no-op, not an error, so do not read a second `cancelled: true` as a second stop. THERE IS NO REVERSIBLE PAUSE, and do not look for one: the « pause » route only hides interface follow-ups — the run keeps going and the scheduled emails still leave. Cancelling is the only thing that actually stops a sequence. To relaunch a workflow that FAILED, that is `restart_durable_workflow` (which is gated, and rightly so). `ID` comes from `list_durable_workflows`.',
 			routeSpec: {"method":"POST","path":"/api/durable-workflows/{id}/cancel","queryParams":[]},
 			properties: [
 				{
@@ -17,7 +17,7 @@ export const durableWorkflowsResource: GeneratedResource = {
 					name: 'id',
 					type: 'string',
 					required: true,
-					description: 'Durable_workflows.ID (uuid)',
+					description: 'Durable_workflows.ID (uuid) — list_durable_workflows',
 					default: '',
 				},
 				{
@@ -31,6 +31,7 @@ export const durableWorkflowsResource: GeneratedResource = {
 							displayName: 'Reason',
 							name: 'reason',
 							type: 'string',
+							description: 'Why, in plain words. Kept on the row (`cancel_reason`) and it is the only trace of the decision: write what the person told you, not « cancelled by agent ».',
 							default: '',
 						},
 					],
@@ -79,7 +80,7 @@ export const durableWorkflowsResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -101,6 +102,53 @@ export const durableWorkflowsResource: GeneratedResource = {
 								{ name: 'Running', value: 'running' },
 							],
 						},
+					],
+				}
+			],
+		},
+		{
+			value: 'restartDurableWorkflow',
+			name: 'Restart Durable Workflow',
+			action: 'Restart a durable workflow that FAILED (a run the backend lost: cut deploy, broken bundle) with a new run and the same input',
+			description: 'Restart a durable workflow that FAILED (a run the backend lost: cut deploy, broken bundle) with a new run and the same input. Only on a `failed` workflow — not on a `paused` one (this is not resume) and not on a `running` one. Steps are idempotent: what already happened (emails sent, credits charged) does not happen twice; what REMAINED to do runs, and that includes sends to the client. Say it before calling, and only call on request. Owner or active member of the owning agency. Return the new status.',
+			routeSpec: {"method":"POST","path":"/api/durable-workflows/{id}/restart","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Durable_workflows.ID (uuid)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'skipDurableWorkflowStep',
+			name: 'Skip Durable Workflow Step',
+			action: 'Mark a step of a brief workflow (SOW, signature, invoice) to be SKIPPED when the workflow reaches it — for « I already did it by hand »',
+			description: 'Mark a step of a brief workflow (SOW, signature, invoice) to be SKIPPED when the workflow reaches it — for « I already did it by hand ». It does NOT advance the workflow: the step is skipped at the moment it comes up, so this diverts a run that is still in flight. No way back once marked. Only four steps are allowed: `generate_sow`, `create_signature`, `generate_invoice`, `send_invoice` — anything else is a 400. Never skip `send_invoice` unless the person confirmed the invoice actually went out another way.',
+			routeSpec: {"method":"POST","path":"/api/durable-workflows/{id}/skip-step","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Step',
+					name: 'step',
+					type: 'options',
+					required: true,
+					default: 'create_signature',
+					options: [
+						{ name: 'Create Signature', value: 'create_signature' },
+						{ name: 'Generate Invoice', value: 'generate_invoice' },
+						{ name: 'Generate Sow', value: 'generate_sow' },
+						{ name: 'Send Invoice', value: 'send_invoice' },
 					],
 				}
 			],

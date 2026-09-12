@@ -6,6 +6,122 @@ export const basesResource: GeneratedResource = {
 	displayName: 'Bases',
 	operations: [
 		{
+			value: 'changeBaseFieldType',
+			name: 'Change Base Field Type',
+			action: 'REALLY convert a column to another type, rewriting every cell (Airtable-style)',
+			description: 'REALLY convert a column to another type, rewriting every cell (Airtable-style). Values that cannot be converted are EMPTIED, silently and irreversibly — so call preview_base_field_type_change first and get the user\'s go-ahead on the loss. Supported: any input type → text or long_text; text → number/currency/percent/duration/rating, date/datetime, select/multi_select (choices minted from the distinct values), checkbox; select ↔ multi_select ↔ tags; number-like ↔ number-like; date ↔ datetime; number-like → checkbox. NEVER: to or from a computed type (link, lookup, rollup, formula, ai, created_*/modified_*, autonumber — create those with create_base_field), to or from password, the primary field to a computed type, any field of a synchronized table. Same type = no-op. The column is locked during the rewrite: a second call answers 409 "Conversion déjà en cours".',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/fields/{field_id}/type","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Field ID',
+					name: 'field_id',
+					type: 'string',
+					required: true,
+					description: 'The field ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Type',
+					name: 'type',
+					type: 'options',
+					required: true,
+					description: 'Target type — only input types can be targets (canCoerce)',
+					default: 'attachment',
+					options: [
+						{ name: 'Attachment', value: 'attachment' },
+						{ name: 'Barcode', value: 'barcode' },
+						{ name: 'Checkbox', value: 'checkbox' },
+						{ name: 'Currency', value: 'currency' },
+						{ name: 'Date', value: 'date' },
+						{ name: 'Datetime', value: 'datetime' },
+						{ name: 'Duration', value: 'duration' },
+						{ name: 'Email', value: 'email' },
+						{ name: 'Long Text', value: 'long_text' },
+						{ name: 'Multi Select', value: 'multi_select' },
+						{ name: 'Number', value: 'number' },
+						{ name: 'Password', value: 'password' },
+						{ name: 'Percent', value: 'percent' },
+						{ name: 'Phone', value: 'phone' },
+						{ name: 'Rating', value: 'rating' },
+						{ name: 'Select', value: 'select' },
+						{ name: 'Tags', value: 'tags' },
+						{ name: 'Text', value: 'text' },
+						{ name: 'URL', value: 'url' },
+						{ name: 'User', value: 'user' },
+					],
+				}
+			],
+		},
+		{
+			value: 'clearBaseTableRecords',
+			name: 'Clear Base Table Records',
+			action: '"Effacer les données" — send EVERY live row of a table to the trash in one batch, keeping fields and views intact',
+			description: '"Effacer les données" — send EVERY live row of a table to the trash in one batch, keeping fields and views intact. Use it when the user wants an empty table with the same structure ("vide ma table de test", after a duplicate_base_table). It is a mass gesture: confirm the row count with the user (list_base_records) before calling. Rows are recoverable: they land in the trash as one batch the user can restore from /bases, or that you can restore with restore_base_records if you kept their IDs — so read the IDs first if an undo from your side is plausible. Rows already in the trash are untouched.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/tables/{table_id}/clear","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Table ID',
+					name: 'table_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the table to empty',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'createBase',
+			name: 'Create Base',
+			action: 'Create a new BASE (an Airtable-like database, /bases) with one starter table (« Table 1 ») so records can be added right away with `create_base_records`',
+			description: 'Create a new BASE (an Airtable-like database, /bases) with one starter table (« Table 1 ») so records can be added right away with `create_base_records`. That starter table arrives with FOUR starter columns — « Nom » (primary, text), « Notes », « À signer », « Statut » — and a Grid view, not a lone Name field: rename or delete what you do not want, or create the table you actually need with `create_base_table` and its `fields`, which replaces the starters in one call. `name` is required (1-120). `workspace_id` picks the sidebar folder it lives in (IDs from `list_bases`); omit it and the base lands in the person\'s root workspace, created on demand. `icon`, `color` and `description` are cosmetic. Read `list_bases` first — do not create a second base for something they already have. This is NOT the legacy « workspace database » (`create_database`, an older, different object). Nothing is definitive: a base can be renamed (`update_base`) or sent to the 30-day trash (`delete_base`).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: '1-120 chars',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							default: '',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							description: '≤2000 chars',
+							default: '',
+						},
+						{
+							displayName: 'Icon',
+							name: 'icon',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Workspace ID',
+							name: 'workspace_id',
+							type: 'string',
+							description: 'UUID of the target workspace (list_bases). Defaults to the root workspace.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createBaseField',
 			name: 'Create Base Field',
 			action: 'Add a field to a base table',
@@ -49,6 +165,31 @@ export const basesResource: GeneratedResource = {
 							default: '{}',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'createBaseNote',
+			name: 'Create Base Note',
+			action: 'Create the NOTE TAB of a base — the rich-text page shown next to its tables where the user documents the base itself (conventions, how to fill it, decisions)',
+			description: 'Create the NOTE TAB of a base — the rich-text page shown next to its tables where the user documents the base itself (conventions, how to fill it, decisions). One note per base: if the base already has one, the route answers 409 and you must use get_base_note / update_base_note instead — call get_base_note first, it returns null only when the tab does not exist. This call creates an EMPTY page with a name; write its content afterwards with update_base_note (note_id is in the response). Not for the note of a single row: that is update_base_record_note.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/{base_id}/note","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Base ID',
+					name: 'base_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the base',
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: 'Tab name, 1-120 chars (e.g. « Mode d\'emploi »)',
+					default: '',
 				}
 			],
 		},
@@ -125,6 +266,108 @@ export const basesResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createBaseSyncTable',
+			name: 'Create Base Sync Table',
+			action: 'Add a SYNCHRONIZED table to a base: a tab whose rows ARE the records of an app module (CRM contacts, CRM deals, or social publications) of one project, read live and written back on mapped fields',
+			description: 'Add a SYNCHRONIZED table to a base: a tab whose rows ARE the records of an app module (CRM contacts, CRM deals, or social publications) of one project, read live and written back on mapped fields. Use it when the user wants to see or work their contacts/deals/posts inside a base ("mets mes contacts CRM dans ma base"), never to copy them. Its schema is generated from the module — you cannot add, duplicate, retype or reorder its fields, nor create/duplicate/import rows in it: every such call answers 400 "Table synchronisée". Edit the data through the module tools, or through update_base_record with table_id set. Providers: crm.contacts, crm.deals, social.publications. project_id is REQUIRED and the user must have access to that project.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/{base_id}/tables/sync","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Base ID',
+					name: 'base_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the base',
+					default: '',
+				},
+				{
+					displayName: 'Provider',
+					name: 'provider',
+					type: 'options',
+					required: true,
+					description: 'App domain to mirror',
+					default: 'crm.contacts',
+					options: [
+						{ name: 'Crm.contacts', value: 'crm.contacts' },
+						{ name: 'Crm.deals', value: 'crm.deals' },
+						{ name: 'Social.publications', value: 'social.publications' },
+					],
+				},
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the project whose module data is mirrored',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							description: 'Optional tab name; defaults to the provider key',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createBaseTable',
+			name: 'Create Base Table',
+			action: 'Add a TABLE (a tab) to a base — WITH THE COLUMNS ASKED FOR, in one call',
+			description: 'Add a TABLE (a tab) to a base — WITH THE COLUMNS ASKED FOR, in one call. This is the whole of « fais-moi une table pour suivre mes fournisseurs, avec le nom, le SIRET et la date du dernier devis »: pass `fields` and you have neither to create the columns one by one nor to clean up starter columns you never wanted. The FIRST entry of `fields` is the PRIMARY column — the one that identifies a row — so put the name/label first. WITHOUT `fields`, the table arrives with four starter columns to rename or delete — « Nom » (primary, text), « Notes » (long_text), « À signer » (checkbox), « Statut » (select: À faire / En cours / Terminé) — plus a Grid view and three empty rows. COMPUTED columns (link, lookup, rollup, formula, ai, created_time, modified_time, created_by, modified_by, autonumber) are REFUSED in `fields` and the refusal names them: they need a target that does not exist yet at creation time, so create the table first and add them with `create_base_field`. Nothing half-built survives a failure: if the columns or the view cannot be created, the table row is deleted outright. Returns the table with its fields and views, so you have the field IDs without another call — you will need them for `import_base_records`. Base in trash → 404.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/{base_id}/tables","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Base ID',
+					name: 'base_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the base',
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: 'Table name, 1-120 chars',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							description: 'Optional, max 2000 chars',
+							default: '',
+						},
+						{
+							displayName: 'Fields',
+							name: 'fields',
+							type: 'json',
+							description: 'The columns you want. Given, they REPLACE the four starter columns entirely — the first one is the primary column. Omitted, you get the four starters to clean up. (provide a JSON array)',
+							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createBaseView',
 			name: 'Create Base View',
 			action: 'Create a view on a base table (grid, kanban, gallery, calendar, timeline, form)',
@@ -180,6 +423,216 @@ export const basesResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createBaseWorkspace',
+			name: 'Create Base Workspace',
+			action: 'Create a Bases WORKSPACE — the folder that groups bases in the /bases sidebar',
+			description: 'Create a Bases WORKSPACE — the folder that groups bases in the /bases sidebar. `name` is required (1-120). `project_id` attaches the workspace to a project so it shows up in that project\'s Bases view; omit it for a personal workspace. Nothing else is accepted (the body is strict). Use it before `create_base` when the person wants a new grouping (« un espace Prospection avec ses trois bases »); otherwise just create the base in the root workspace. Attaching to a project requires EDIT rights on it. The creator can always write into the workspace afterwards, whatever their role on the project.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/workspaces","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: '1-120 chars',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Project ID',
+							name: 'project_id',
+							type: 'string',
+							description: 'UUID of the project to attach the workspace to',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'deleteBase',
+			name: 'Delete Base',
+			action: 'Move a whole base to the trash — its tables, fields, records, views and base note go with it, stamped as one batch',
+			description: 'Move a whole base to the trash — its tables, fields, records, views and base note go with it, stamped as one batch. Use it for "supprime ma base Fournisseurs". It is recoverable: restore_base brings back the base and everything its batch stamped, for 30 days before definitive purge. Not to be confused with delete_base_workspace (permanent, whole folder) or delete_base_table (one tab). A base already in the trash is refused with 409 — restore it first if the user wants to act on it. Public share links of its views stop resolving while it is trashed.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/bases/{base_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Base ID',
+					name: 'base_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the base (list_bases / get_base)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteBaseField',
+			name: 'Delete Base Field',
+			action: 'Remove a column from a table',
+			description: 'Remove a column from a table. The values it held on every row disappear from the grid at once — but it is a SOFT delete: cells, links and view references are kept and restore_base_field undoes it for 30 days. A link column takes its mirror column on the linked table with it (same batch, restored together). The PRIMARY field (the row label) cannot be deleted (409): make another field primary first with set_base_primary_field. A field in the middle of a type conversion is refused (409). Do not use it to "clean" a column: to empty values, update rows; to change the type, change_base_field_type.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/bases/fields/{field_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Field ID',
+					name: 'field_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the field to remove',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteBaseNote',
+			name: 'Delete Base Note',
+			action: 'Send the note tab of a base to the trash',
+			description: 'Send the note tab of a base to the trash. The page content is kept and restore_base_note brings it back for 30 days — but while it is trashed the base has no note and get_base_note returns null. Use it only when the user asks to remove the documentation tab; to just hide it, use update_base_note_meta with is_hidden. Already trashed → 409.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/bases/notes/{note_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Note ID',
+					name: 'note_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the base note',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteBaseRecord',
+			name: 'Delete Base Record',
+			action: 'Send ONE row of a base table to the trash, by ID',
+			description: 'Send ONE row of a base table to the trash, by ID. Use it for "supprime cette ligne / ce prospect perdu" once you have the ID from list_base_records — it targets an ID, never a filter, so list first and show the user what will go. For several rows call it once per ID (the batch route needs a body on a DELETE, which the npm MCP client cannot send). Each call is its own batch: restore_base_records with that ID undoes it, for 30 days. Also the way to roll back an import, ID by ID (createdIds from import_base_records). Returns { deleted } — 0 when the ID was already trashed or unknown.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/bases/records/{record_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Record ID',
+					name: 'record_id',
+					type: 'string',
+					required: true,
+					description: 'Record ID to trash (list_base_records)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteBaseRecordComment',
+			name: 'Delete Base Record Comment',
+			action: 'Permanently delete a comment on a base record',
+			description: 'Permanently delete a comment on a base record. Author-only (403 otherwise) — never delete another collaborator\'s message. No trash. To close a discussion without erasing it, prefer update_base_record_comment with resolved true.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/bases/records/{record_id}/comments/{comment_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Record ID',
+					name: 'record_id',
+					type: 'string',
+					required: true,
+					description: 'The record ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Comment ID',
+					name: 'comment_id',
+					type: 'string',
+					required: true,
+					description: 'The comment ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteBaseTable',
+			name: 'Delete Base Table',
+			action: 'Move a table (tab) and all its rows, fields and views to the trash',
+			description: 'Move a table (tab) and all its rows, fields and views to the trash. Recoverable with restore_base_table for 30 days. The LAST live table of a base cannot be deleted (409) — a base always keeps one tab; delete the base instead if that is what the user means. Fields of OTHER tables that link to this one keep pointing at a trashed table until it is restored or purged. Already trashed → 409.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/bases/tables/{table_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Table ID',
+					name: 'table_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the table',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteBaseWorkspace',
+			name: 'Delete Base Workspace',
+			action: 'PERMANENTLY delete a Bases workspace and EVERYTHING inside it — every base, table, field, record, view and share link — by database cascade',
+			description: 'PERMANENTLY delete a Bases workspace and EVERYTHING inside it — every base, table, field, record, view and share link — by database cascade. There is NO trash for this gesture: unlike delete_base (recoverable 30 days), a deleted workspace cannot be restored by anyone. Only use it when the user explicitly asks to remove a whole workspace; if they want to get rid of one base, use delete_base instead. Before calling, read list_bases and tell the user which bases will disappear. The root workspace cannot be deleted (400).',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/bases/workspaces/{workspace_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Workspace ID',
+					name: 'workspace_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the workspace to delete (list_bases). Never the root workspace.',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'duplicateBase',
+			name: 'Duplicate Base',
+			action: 'Clone an entire base in the same workspace: tables, fields (links, lookups, rollups and view configs re-pointed to the copies, never to the original), live records and views',
+			description: 'Clone an entire base in the same workspace: tables, fields (links, lookups, rollups and view configs re-pointed to the copies, never to the original), live records and views. The copy is named "&lt;name&gt; (copie)" (then "(copie 2)"…). Use it when the user wants to start from a model ("duplique ma base CRM pour le projet B") — never to back up before a risky change, the trash already covers that. What is NOT copied, by design: trashed items, public share links (a link is a secret), and the records of a synchronized table (they come back from their source). Returns the new base — pass its ID to get_base to read the cloned schema before writing into it. A trashed base cannot be duplicated (409).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/{base_id}/duplicate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Base ID',
+					name: 'base_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the base to clone',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'duplicateBaseField',
+			name: 'Duplicate Base Field',
+			action: 'Copy a column next to itself, same type and options, with a unique derived name',
+			description: 'Copy a column next to itself, same type and options, with a unique derived name. withValues (default true) also copies each row\'s value — set it false for an empty twin ("ajoute une colonne Statut 2 comme Statut"). Values of computed and password fields are never copied whatever the flag. A LINK column cannot be duplicated (its relation is shared with the other table — create a new link field with create_base_field instead); synchronized tables refuse (400). Returns the new field.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/fields/{field_id}/duplicate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Field ID',
+					name: 'field_id',
+					type: 'string',
+					required: true,
+					description: 'The field ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'With Values',
+							name: 'withValues',
+							type: 'boolean',
+							description: 'Whether copy row values too (default true)',
+							default: false,
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'duplicateBaseRecord',
 			name: 'Duplicate Base Record',
 			action: 'Duplicate a record of a base table: copies its cell values, attachments and links, and places the copy right below the source',
@@ -192,6 +645,23 @@ export const basesResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The record ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'duplicateBaseTable',
+			name: 'Duplicate Base Table',
+			action: 'Clone a table inside its own base — fields, views and live rows — as "&lt;name&gt; (copie)"',
+			description: 'Clone a table inside its own base — fields, views and live rows — as "&lt;name&gt; (copie)". Use it to start a new tab from an existing one ("copie ma table Q1 pour faire Q2"); if the user only wants the structure, follow with clear_base_table_records on the copy. Trashed rows are not copied; a synchronized table is recreated with its sync config but no rows. Returns the new table: read it with get_base before writing, the copied field IDs are new.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/tables/{table_id}/duplicate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Table ID',
+					name: 'table_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the table to clone',
 					default: '',
 				}
 			],
@@ -211,6 +681,16 @@ export const basesResource: GeneratedResource = {
 					description: 'The view ID for this operation',
 					default: '',
 				}
+			],
+		},
+		{
+			value: 'emptyBasesTrash',
+			name: 'Empty Bases Trash',
+			action: 'PERMANENTLY purge the person\'s whole Bases trash — every trashed base, table, batch of records and base note, across all their workspaces, in one shot',
+			description: 'PERMANENTLY purge the person\'s whole Bases trash — every trashed base, table, batch of records and base note, across all their workspaces, in one shot. There is no undo after this: the 30-day trash IS the undo, and this empties it. Only call it when they explicitly ask to empty the trash; never to « clean up » on your own initiative, and never as a way to delete one item (`delete_base` / `delete_base_table` / `delete_base_record` go TO the trash). Read `list_bases_trash` first and tell them what is about to disappear, by name and by count. No body. Returns the counts actually purged.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/bases/trash","queryParams":[]},
+			properties: [
+
 			],
 		},
 		{
@@ -244,6 +724,75 @@ export const basesResource: GeneratedResource = {
 					required: true,
 					description: 'The record ID for this operation',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'importBaseRecords',
+			name: 'Import Base Records',
+			action: 'Bulk import rows into a table WITH UPSERT: the tool to use when the user hands you a list (CSV, spreadsheet, export) that may overlap with rows already in the table',
+			description: 'Bulk import rows into a table WITH UPSERT: the tool to use when the user hands you a list (CSV, spreadsheet, export) that may overlap with rows already in the table. Without matchFieldId it is a pure insert (like create_base_records but up to 50 000 rows). With matchFieldId — the ID of the column that identifies a row (email, SIRET, name…) — every incoming row whose value on that column matches an existing row UPDATES it instead of duplicating it. Always run once with dryRun true first and tell the user "N created, M updated" before the real run. Rows are objects keyed by FIELD ID (get_base) — UNLESS you pass `columns_by_name: true`, and you usually should: then the keys are the COLUMN HEADERS the person pasted, matched to the table\'s columns server-side, case- and accent-insensitive. A header with no matching column MAKES THE IMPORT FAIL BY NAMING IT — never a column silently dropped — unless `create_missing_columns: true`, which creates it with a type deduced from the values (all numeric → number, all ISO dates → date, otherwise text). In a dry run NOTHING is created, not even a column: the missing ones come back in `missingColumns` so you can tell the person what the real run will add. `match_field_name` is the same idea for the upsert key when you work by names. Values must respect the field type; computed fields (link/lookup/rollup/formula/ai/created_*/modified_*/autonumber) are not writable. matchFieldId cannot be a computed, password or attachment field. Synchronized tables refuse imports (400) — write through the source module. Returns { created, updated, createdIds } — createdIds lists ONLY inserted rows, the right set to delete_base_record (one ID per call) if the user wants to roll the import back.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/tables/{table_id}/records/import","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Table ID',
+					name: 'table_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the target table',
+					default: '',
+				},
+				{
+					displayName: 'Records',
+					name: 'records',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Columns By Name',
+							name: 'columns_by_name',
+							type: 'boolean',
+							description: 'Whether true = the keys of `records` are COLUMN NAMES (the headers of the pasted table), not field IDs. Matching is case- and accent-insensitive.',
+							default: false,
+						},
+						{
+							displayName: 'Create Missing Columns',
+							name: 'create_missing_columns',
+							type: 'boolean',
+							description: 'Whether with columns_by_name: create the columns that do not exist yet, deducing their type from the values. Without it, an unknown header makes the import fail by naming it, rather than losing the column in silence. Refused if columns_by_name is not true.',
+							default: false,
+						},
+						{
+							displayName: 'Dry Run',
+							name: 'dryRun',
+							type: 'boolean',
+							description: 'Whether true = counters only, nothing written (no column either). Do it first, always.',
+							default: false,
+						},
+						{
+							displayName: 'Match Field ID',
+							name: 'matchFieldId',
+							type: 'string',
+							description: 'Field ID used as the upsert key. Omit/null for a pure insert.',
+							default: '',
+						},
+						{
+							displayName: 'Match Field Name',
+							name: 'match_field_name',
+							type: 'string',
+							description: 'Upsert key given by COLUMN NAME instead of matchFieldId — the alternative when you work by names. Ignored if matchFieldId is set.',
+							default: '',
+						},
+					],
 				}
 			],
 		},
@@ -303,6 +852,49 @@ export const basesResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'listBasesTrash',
+			name: 'List Bases Trash',
+			action: 'Show what sits in the person\'s Bases trash (30-day retention): `bases`, `tables` and `notes` (each with its name, its base and the deletion date) plus `records`, grouped by deletion BATCH (`batch_id`, the table and base names, `deleted_at`, `count`)',
+			description: 'Show what sits in the person\'s Bases trash (30-day retention): `bases`, `tables` and `notes` (each with its name, its base and the deletion date) plus `records`, grouped by deletion BATCH (`batch_id`, the table and base names, `deleted_at`, `count`). The trash exposes batches, not row IDs: pass a `batch_id` to `restore_base_trash_batch`, a base or table ID to `restore_base` / `restore_base_table`. Always read it before `empty_bases_trash`.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/bases/trash","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'mergeBaseFieldChoice',
+			name: 'Merge Base Field Choice',
+			action: 'Re-point every cell of a select / multi_select column from one choice to another (MERGE, e.g',
+			description: 'Re-point every cell of a select / multi_select column from one choice to another (MERGE, e.g. "Prospect" and "prospect" → one), or to nothing (toChoiceId null = the rows lose that value). Also rewrites the view filters and color rules that referenced the old choice, so no view silently matches nothing afterwards. Irreversible once done. It does NOT remove the old choice from the column\'s list: after merging, call update_base_field with options.choices set to the remaining choices to delete the orphan label. Choice IDs are required here (not labels) — read them on the field\'s options.choices via get_base. Tags fields are not supported (400), nor synchronized tables.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/fields/{field_id}/repoint-choice","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Field ID',
+					name: 'field_id',
+					type: 'string',
+					required: true,
+					description: 'The field ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'From Choice ID',
+					name: 'fromChoiceId',
+					type: 'string',
+					required: true,
+					description: 'ID of the choice to merge away (1-64 chars)',
+					default: '',
+				},
+				{
+					displayName: 'To Choice ID',
+					name: 'toChoiceId',
+					type: 'string',
+					required: true,
+					description: 'ID of the surviving choice, or null to clear the value on those rows',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'moveBaseRecord',
 			name: 'Move Base Record',
 			action: 'Move a record in the table manual order: place it right after afterId, OR right before beforeId (one or the other, never both)',
@@ -337,6 +929,265 @@ export const basesResource: GeneratedResource = {
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'previewBaseFieldTypeChange',
+			name: 'Preview Base Field Type Change',
+			action: 'Dry-run of a column type conversion — writes NOTHING, returns exactly what change_base_field_type would lose: { total, lost, sample (up to 5 values that would be emptied), newChoices (labels a text→select conversion would mint) }',
+			description: 'Dry-run of a column type conversion — writes NOTHING, returns exactly what change_base_field_type would lose: { total, lost, sample (up to 5 values that would be emptied), newChoices (labels a text→select conversion would mint) }. ALWAYS call it before change_base_field_type and tell the user "3 of 120 values would be emptied: …" so they decide. The allowed conversions are the same as the real call (see change_base_field_type); an impossible one answers 400 here too, which is the cheap way to find out. POST because it carries a body, but it is a read.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/fields/{field_id}/coerce-preview","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Field ID',
+					name: 'field_id',
+					type: 'string',
+					required: true,
+					description: 'The field ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Type',
+					name: 'type',
+					type: 'options',
+					required: true,
+					description: 'Target type. Computed and password types are always refused.',
+					default: 'ai',
+					options: [
+						{ name: 'AI', value: 'ai' },
+						{ name: 'Attachment', value: 'attachment' },
+						{ name: 'Autonumber', value: 'autonumber' },
+						{ name: 'Barcode', value: 'barcode' },
+						{ name: 'Checkbox', value: 'checkbox' },
+						{ name: 'Created By', value: 'created_by' },
+						{ name: 'Created Time', value: 'created_time' },
+						{ name: 'Currency', value: 'currency' },
+						{ name: 'Date', value: 'date' },
+						{ name: 'Datetime', value: 'datetime' },
+						{ name: 'Duration', value: 'duration' },
+						{ name: 'Email', value: 'email' },
+						{ name: 'Formula', value: 'formula' },
+						{ name: 'Link', value: 'link' },
+						{ name: 'Long Text', value: 'long_text' },
+						{ name: 'Lookup', value: 'lookup' },
+						{ name: 'Modified By', value: 'modified_by' },
+						{ name: 'Modified Time', value: 'modified_time' },
+						{ name: 'Multi Select', value: 'multi_select' },
+						{ name: 'Number', value: 'number' },
+						{ name: 'Password', value: 'password' },
+						{ name: 'Percent', value: 'percent' },
+						{ name: 'Phone', value: 'phone' },
+						{ name: 'Rating', value: 'rating' },
+						{ name: 'Rollup', value: 'rollup' },
+						{ name: 'Select', value: 'select' },
+						{ name: 'Tags', value: 'tags' },
+						{ name: 'Text', value: 'text' },
+						{ name: 'URL', value: 'url' },
+						{ name: 'User', value: 'user' },
+					],
+				}
+			],
+		},
+		{
+			value: 'restoreBase',
+			name: 'Restore Base',
+			action: 'Bring a trashed base back, with every table, record and note that was trashed in the same gesture (same batch)',
+			description: 'Bring a trashed base back, with every table, record and note that was trashed in the same gesture (same batch). This is the undo of delete_base — call it when the user says "remets ma base" or regrets a deletion. It needs the base ID: list_bases does not list trashed bases, so take the ID from the delete_base call you (or the user) made, or from the trash the user reads on /bases. Restoring a base does NOT revive rows or tables that had been trashed earlier and separately — those need restore_base_table / restore_base_records.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/{base_id}/restore","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Base ID',
+					name: 'base_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the trashed base',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'restoreBaseField',
+			name: 'Restore Base Field',
+			action: 'Undo delete_base_field: the column comes back with all its values, and its link mirror if it had one',
+			description: 'Undo delete_base_field: the column comes back with all its values, and its link mirror if it had one. Idempotent on a live field. Fails when a live field has meanwhile taken the same key (unique index) — rename the newer one or tell the user.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/fields/{field_id}/restore","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Field ID',
+					name: 'field_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the trashed field',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'restoreBaseNote',
+			name: 'Restore Base Note',
+			action: 'Restore a trashed base note (undo of delete_base_note)',
+			description: 'Restore a trashed base note (undo of delete_base_note). Idempotent on a live note. Refused with 409 when the base has meanwhile received ANOTHER note (one note per base): in that case ask the user which one to keep — delete the live one first, or give up the restore. Also refused while the parent base itself is trashed: restore_base first.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/notes/{note_id}/restore","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Note ID',
+					name: 'note_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the trashed base note',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'restoreBaseRecords',
+			name: 'Restore Base Records',
+			action: 'Restore specific trashed rows by ID — the undo of delete_base_record or clear_base_table_records when you know the IDs',
+			description: 'Restore specific trashed rows by ID — the undo of delete_base_record or clear_base_table_records when you know the IDs. Only those IDs come back, the rest of the trash is untouched. Refused with 409 while the rows\' TABLE is itself trashed (restore_base_table first). Returns the number restored; IDs that are not trashed or unknown are simply not counted. base_id is part of the path but the rows are located by their own IDs.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/{base_id}/records/restore","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Base ID',
+					name: 'base_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the base the rows belong to',
+					default: '',
+				},
+				{
+					displayName: 'Record IDs',
+					name: 'recordIds',
+					type: 'json',
+					required: true,
+					description: 'Trashed record IDs to restore. (provide a JSON array).',
+					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'restoreBaseTable',
+			name: 'Restore Base Table',
+			action: 'Bring a trashed table back with the rows and views trashed in the same gesture',
+			description: 'Bring a trashed table back with the rows and views trashed in the same gesture. Undo of delete_base_table. Refused with 409 while the PARENT BASE is itself in the trash — call restore_base first, which already restores this table if both went together.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/tables/{table_id}/restore","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Table ID',
+					name: 'table_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the trashed table',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'restoreBaseTrashBatch',
+			name: 'Restore Base Trash Batch',
+			action: 'Restore from the Bases trash an ENTIRE BATCH of records — one batch = one deletion gesture (the 40 rows someone deleted together come back together)',
+			description: 'Restore from the Bases trash an ENTIRE BATCH of records — one batch = one deletion gesture (the 40 rows someone deleted together come back together). Get the `batchId` from `list_bases_trash` (its `records` groups carry `batch_id`, the table and base names, the deletion date and the row count). Use it on « I deleted those contacts by mistake, bring them back ». To restore only SOME rows of a batch, use `restore_base_records` with explicit IDs instead. Returns the number of rows restored; 0 means the batch no longer exists (already restored, or purged). A batch whose table is itself in the trash is refused — restore the table first.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/trash/records/restore","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Batch ID',
+					name: 'batchId',
+					type: 'string',
+					required: true,
+					description: 'Deleted_batch_id from list_bases_trash',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'runBaseAiField',
+			name: 'Run Base AI Field',
+			action: 'Run an AI column on up to 100 rows — fills the cell of each given record with the model\'s output (generate / enrich_company / analyze_attachment / categorize / generate_image, per the field\'s aiKind)',
+			description: 'Run an AI column on up to 100 rows — fills the cell of each given record with the model\'s output (generate / enrich_company / analyze_attachment / categorize / generate_image, per the field\'s aiKind). Use it when the user wants an AI column computed or recomputed on specific rows ("relance la colonne Résumé sur les 20 nouvelles lignes"). It SPENDS CREDITS: the whole batch is charged up front (per cell, by kind), cells that fail are refunded; tell the user how many rows before calling, and never loop it over a whole table without being asked. The field must be of type ai (400). Returns { updated, failed, cost }. Rows are read with their effective values (lookups/formulas resolved); password fields are never fed to the model.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/fields/{field_id}/ai-run","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Field ID',
+					name: 'field_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of an `ai` field',
+					default: '',
+				},
+				{
+					displayName: 'Record IDs',
+					name: 'record_ids',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'setBasePrimaryField',
+			name: 'Set Base Primary Field',
+			action: 'Make a column the PRIMARY field of its table — the label used everywhere a row is named (record title, kanban card, linked-record chips, form header)',
+			description: 'Make a column the PRIMARY field of its table — the label used everywhere a row is named (record title, kanban card, linked-record chips, form header). Use it for "utilise l\'email comme identifiant des lignes". The previous primary is demoted in the same operation, its data untouched. A computed field (link/lookup/rollup/formula/ai/…) cannot be primary (400); synchronized tables follow their source (400). Idempotent.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/bases/fields/{field_id}/primary","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Field ID',
+					name: 'field_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the field to promote',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'setBaseRecordLinks',
+			name: 'Set Base Record Links',
+			action: 'Set the linked rows of a LINK column on one record — the way to write "relie ce contact à ces 3 deals"',
+			description: 'Set the linked rows of a LINK column on one record — the way to write "relie ce contact à ces 3 deals". It REPLACES the whole set: send every record ID that should remain linked, an empty array unlinks all. The mirror column on the other table is updated automatically. Rules: field must be a link (400); a link limited to a single record refuses more than one (400); every target must be a live row of the linked table (400 otherwise — read its IDs with list_base_records on options.linkedTableId). Link cells cannot be written through update_base_record: this is the only write path.',
+			routeSpec: {"method":"PUT","path":"/api/aurentia/bases/records/{record_id}/links/{field_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Record ID',
+					name: 'record_id',
+					type: 'string',
+					required: true,
+					description: 'Source row (in the field\'s table)',
+					default: '',
+				},
+				{
+					displayName: 'Field ID',
+					name: 'field_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the link field',
+					default: '',
+				},
+				{
+					displayName: 'To Record IDs',
+					name: 'to_record_ids',
+					type: 'json',
+					required: true,
+					description: 'Complete list of linked row IDs; [] clears. (provide a JSON array).',
+					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'unshareBaseView',
+			name: 'Unshare Base View',
+			action: 'Revoke the public link of a view: the /b/{token} page (or public form) stops working immediately for everyone who had it',
+			description: 'Revoke the public link of a view: the /b/{token} page (or public form) stops working immediately for everyone who had it. Use it for "arrête de partager ma vue", or before re-sharing with different settings (re-sharing from the app already does the revoke; publishing a view has no MCP tool). Idempotent when no link is active.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/bases/views/{view_id}/share","queryParams":[]},
+			properties: [
+				{
+					displayName: 'View ID',
+					name: 'view_id',
+					type: 'string',
+					required: true,
+					description: 'The view ID for this operation',
+					default: '',
 				}
 			],
 		},
@@ -397,6 +1248,60 @@ export const basesResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'updateBaseField',
+			name: 'Update Base Field',
+			action: 'Rename a column, set its description, adjust its options, or edit the choices of a select/multi_select/tags column',
+			description: 'Rename a column, set its description, adjust its options, or edit the choices of a select/multi_select/tags column. NOT for changing the TYPE (change_base_field_type) nor for reordering (UI). Read the field first with get_base. Two ways to touch choices, never both in one call: (1) choicesPatch ADDS and RENAMES only — each entry names the choice by its real ID OR its current label, gives the new label and/or a palette color (slate, brown, orange, amber, emerald, sky, indigo, violet, pink, rose; null resets); choices you do not mention stay untouched, nothing is ever removed, cells are never modified because rows store the choice ID. Prefer it every time. (2) options.choices REPLACES the whole list: any choice missing from what you send is dropped and the rows that carried it keep a dead ID — only use it to REMOVE a choice, and after merge_base_field_choice has re-pointed the cells. Other options are merged key by key (precision, currencySymbol, max for rating, limitToSingle for link, prompt/inputFieldIds for ai, expression for formula, required, default…); options.permissions (who may edit the column) is owner-only (403 otherwise). A field being converted refuses any patch (409, retry later).',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/bases/fields/{field_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Field ID',
+					name: 'field_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the field (get_base)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Choices Patch',
+							name: 'choicesPatch',
+							type: 'json',
+							description: 'Select/multi_select/tags only. Add or rename choices; never removes. (provide a JSON array)',
+							default: '[]',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							description: 'Max 2000 chars; null clears',
+							default: '',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							description: '1-120 chars',
+							default: '',
+						},
+						{
+							displayName: 'Options',
+							name: 'options',
+							type: 'json',
+							description: 'Type-specific options, merged key by key. options.choices REPLACES the list — use choicesPatch to add/rename. (provide a JSON object)',
+							default: '{}',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'updateBaseNote',
 			name: 'Update Base Note',
 			action: 'Replace the rich note attached to a BASE',
@@ -424,6 +1329,101 @@ export const basesResource: GeneratedResource = {
 							type: 'json',
 							description: 'Provide a JSON object',
 							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateBaseNoteMeta',
+			name: 'Update Base Note Meta',
+			action: 'Rename, hide/show, or restyle the note tab of a base — NOT its content (that is update_base_note, PUT on the same path)',
+			description: 'Rename, hide/show, or restyle the note tab of a base — NOT its content (that is update_base_note, PUT on the same path). Use it for "renomme l\'onglet Note en Consignes", "masque la note", "mets la page en pleine largeur / police serif / avec un sommaire". editor_settings is a PARTIAL patch merged with the existing settings: only send the keys you change. At least one of name / is_hidden / editor_settings is required, an empty patch is refused (400). A trashed note is refused (409) — restore_base_note first. Get note_id from get_base (field `note`) or get_base_note.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/bases/notes/{note_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Note ID',
+					name: 'note_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the base note (get_base → note.ID)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Editor Settings',
+							name: 'editor_settings',
+							type: 'json',
+							description: 'Partial page settings, merged server-side. (provide a JSON object).',
+							default: '{}',
+						},
+						{
+							displayName: 'Is Hidden',
+							name: 'is_hidden',
+							type: 'boolean',
+							description: 'Whether true hides the tab from the tab bar without deleting it',
+							default: false,
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							description: 'New tab name, 1-120 chars',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateBaseRecordComment',
+			name: 'Update Base Record Comment',
+			action: 'Edit a comment on a base record, or mark its thread resolved/unresolved',
+			description: 'Edit a comment on a base record, or mark its thread resolved/unresolved. Editing the TEXT is author-only (403 for anyone else): only rewrite comments the current user wrote (check user_id in list_base_record_comments). Resolving is a team action open to any collaborator with write access — "marque ce fil comme réglé" is fine on anyone\'s comment. body uses the same rich document format as create_base_record_comment (Slate array of nodes, or legacy Tiptap object) — a plain string is refused. At least one of body / resolved is required. Row in the trash → 409.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/bases/records/{record_id}/comments/{comment_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Record ID',
+					name: 'record_id',
+					type: 'string',
+					required: true,
+					description: 'The record ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Comment ID',
+					name: 'comment_id',
+					type: 'string',
+					required: true,
+					description: 'The comment ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Body',
+							name: 'body',
+							type: 'json',
+							description: 'Editor document (array of nodes or Tiptap object). (provide a JSON object).',
+							default: '',
+						},
+						{
+							displayName: 'Resolved',
+							name: 'resolved',
+							type: 'boolean',
+							description: 'Whether to enable resolved',
+							default: false,
 						},
 					],
 				}
@@ -484,6 +1484,118 @@ export const basesResource: GeneratedResource = {
 					required: true,
 					description: 'Provide a JSON array',
 					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'updateBaseTable',
+			name: 'Update Base Table',
+			action: 'Rename a table, set its description, or hide/show its tab',
+			description: 'Rename a table, set its description, or hide/show its tab. Use it for "renomme l\'onglet Leads en Prospects" or "cache la table Archive". Hiding keeps everything (data, views, links from other tables) — it only removes the tab from the bar. A trashed table is refused (409): restore_base_table first. Tab ORDER is not set here (drag-and-drop in the UI).',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/bases/tables/{table_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Table ID',
+					name: 'table_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the table (get_base)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							description: 'Max 2000 chars; null clears',
+							default: '',
+						},
+						{
+							displayName: 'Is Hidden',
+							name: 'is_hidden',
+							type: 'boolean',
+							description: 'Whether to enable is hidden',
+							default: false,
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							description: '1-120 chars',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateBaseView',
+			name: 'Update Base View',
+			action: 'Rename a view or change its configuration (filters, sorts, groupBy, hidden fields, field order, kanban stack field, calendar/timeline date field, color rules, form fields…)',
+			description: 'Rename a view or change its configuration (filters, sorts, groupBy, hidden fields, field order, kanban stack field, calendar/timeline date field, color rules, form fields…). config is merged KEY BY KEY at the top level: send only the keys you change and the rest of the view stays as is — but a key you send REPLACES its previous value entirely (sending filters replaces the whole filter list, not one rule). So read the view first with get_base and resend the complete value of the key you edit. Shapes are those of create_base_view (groupBy is an array of {fieldId, direction}). Views are shared by every collaborator of the base: changing a filter changes what the team sees. Tab order is UI-only.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/bases/views/{view_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'View ID',
+					name: 'view_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the view (get_base)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Config',
+							name: 'config',
+							type: 'json',
+							description: 'Partial view config; each key sent replaces that key. (provide a JSON object).',
+							default: '{}',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							description: '1-120 chars',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateBaseWorkspace',
+			name: 'Update Base Workspace',
+			action: 'Rename a Bases WORKSPACE — the folder that groups bases in the /bases sidebar (call list_bases to see workspaces and their IDs)',
+			description: 'Rename a Bases WORKSPACE — the folder that groups bases in the /bases sidebar (call list_bases to see workspaces and their IDs). Use it when the user says "renomme mon espace Prospection" or wants the sidebar grouping to carry a new name. It only changes the label: bases, tables, records and permissions are untouched. The ROOT workspace (is_root on list_bases) cannot be renamed — the route refuses with 400; do not retry, tell the user the root space has no name of its own. Ordering of workspaces (sort_order) is a drag-and-drop concern of the UI, not something to set from here.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/bases/workspaces/{workspace_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Workspace ID',
+					name: 'workspace_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the workspace (list_bases)',
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: 'New name, 1-120 chars',
+					default: '',
 				}
 			],
 		}

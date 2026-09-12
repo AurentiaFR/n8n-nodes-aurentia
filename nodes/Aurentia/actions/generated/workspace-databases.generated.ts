@@ -431,7 +431,7 @@ export const workspaceDatabasesResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -505,7 +505,7 @@ export const workspaceDatabasesResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -553,6 +553,31 @@ export const workspaceDatabasesResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'moveBaseToProject',
+			name: 'Move Base To Project',
+			action: 'Attach a base to a PROJECT (its collaborators then see it in that project\'s Bases workspace) or detach it back to the user\'s personal space',
+			description: 'Attach a base to a PROJECT (its collaborators then see it in that project\'s Bases workspace) or detach it back to the user\'s personal space. Use it for "rattache ma base Prospects au projet Lancement" or "rends cette base perso". The base moves into the project\'s default workspace — created on the fly if needed — so list_bases will show it under a different workspace afterwards; nothing inside the base changes. Requires edit rights on the target project (403 otherwise). project_id null = personal. The path is the legacy workspace-databases one but the ID is a BASE ID from list_bases.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/workspace-databases/{base_id}/move","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Base ID',
+					name: 'base_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the base (list_bases)',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the target project, or null to detach to personal',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'searchEntries',
 			name: 'Search Entries',
 			action: 'Search entries inside a workspace database (case-insensitive substring match across all fields)',
@@ -586,7 +611,7 @@ export const workspaceDatabasesResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 					],

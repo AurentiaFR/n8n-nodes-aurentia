@@ -67,6 +67,64 @@ export const artifactsResource: GeneratedResource = {
 					],
 				}
 			],
+		},
+		{
+			value: 'listArtifacts',
+			name: 'List Artifacts',
+			action: 'List the files this account has generated with the AI, each with a fresh signed download URL',
+			description: 'List the files this account has generated with the AI, each with a fresh signed download URL. Every row carries `expires_at`: an UNPINNED file is DELETED 30 days after it was generated, a pinned one has `expires_at: null` and is permanent. This is the tool that answers "which of my files are about to disappear" — read it before telling the user anything about retention, and tell them to pin (project_id on generate_artifact) or download what is close to its deadline. Pass project_id to get one project\'s Files tab instead of the whole account: it lists the files pinned to that project AND those born in its conversations, which are still mortal.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/artifacts","queryParams":["project_id:projectId","limit"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Limit',
+							name: 'limit',
+							type: 'number',
+							description: 'Max number of results to return',
+							typeOptions: { minValue: 1 },
+							default: 50,
+						},
+						{
+							displayName: 'Project ID',
+							name: 'project_id',
+							type: 'string',
+							description: 'Optional UUID of one of the user\'s projects — scopes the list to that project\'s Files tab. Omitted, the whole account is listed.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'pinArtifact',
+			name: 'Pin Artifact',
+			action: 'KEEP a generated file: every unpinned artifact is deleted 30 days after generation, pinning to a project makes it permanent and files it in that project\'s Files tab',
+			description: 'KEEP a generated file: every unpinned artifact is deleted 30 days after generation, pinning to a project makes it permanent and files it in that project\'s Files tab. This is THE gesture when `list_artifacts` shows an `expires_at` close to now. `ID` from `list_artifacts`, `project_id` from `list_projects` (the person must have access). Pass ONLY `project_id` on Aurentia — `mission_id` is the Entreprises container and the two are exclusive (400 if both). Pinning an already-pinned file to another project moves it.',
+			routeSpec: {"method":"POST","path":"/api/artifacts/{id}/pin","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Artifact ID, from list_artifacts',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Project uuid to file the artifact into',
+					default: '',
+				}
+			],
 		}
 	],
 };

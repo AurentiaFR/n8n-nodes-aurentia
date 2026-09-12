@@ -98,4 +98,29 @@ console.log('test-generated-invariants:');
 	ok(`${opCount} operations across ${GENERATED_RESOURCES.length} resources are well-formed`);
 }
 
+// API credentials, visitor passwords and tokens must use n8n's masked input,
+// including optional fields nested inside Additional Fields collections.
+{
+	const checked = new Map(['apiKey', 'password', 'runToken', 'pageToken'].map((name) => [name, 0]));
+	function checkFields(properties, operation) {
+		for (const field of properties ?? []) {
+			if (field.type === 'string' && checked.has(field.name)) {
+				assert.equal(field.typeOptions?.password, true, `${operation}.${field.name} must be masked`);
+				checked.set(field.name, checked.get(field.name) + 1);
+			}
+			if (field.type === 'collection') checkFields(field.options, operation);
+			if (field.type === 'fixedCollection') {
+				for (const option of field.options ?? []) checkFields(option.values, operation);
+			}
+		}
+	}
+	for (const resource of GENERATED_RESOURCES) {
+		for (const operation of resource.operations) {
+			checkFields(operation.properties, `${resource.resource}.${operation.value}`);
+		}
+	}
+	for (const [name, count] of checked) assert.ok(count > 0, `missing regression fixture: ${name}`);
+	ok('credentials, passwords and tokens use masked fields, including nested collections');
+}
+
 console.log(`\ntest-generated-invariants: OK — ${passed} checks passed.`);

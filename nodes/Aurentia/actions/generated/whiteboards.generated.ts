@@ -8,8 +8,8 @@ export const whiteboardsResource: GeneratedResource = {
 		{
 			value: 'addWhiteboardCollaborator',
 			name: 'Add Whiteboard Collaborator',
-			action: 'Add a collaborator to a whiteboard',
-			description: 'Add a collaborator to a whiteboard',
+			action: 'Give someone access to a whiteboard',
+			description: 'Give someone access to a whiteboard. It takes the person\'s USER ID, not their name or their e-mail: read list_collaborators to find it, and ask the person which of their collaborators they mean rather than guessing. `role` decides whether they can edit or only look.',
 			routeSpec: {"method":"POST","path":"/api/whiteboards/{id}/collaborators","queryParams":[]},
 			properties: [
 				{
@@ -17,14 +17,165 @@ export const whiteboardsResource: GeneratedResource = {
 					name: 'id',
 					type: 'string',
 					required: true,
-					description: 'The ID for this operation',
+					description: 'UUID of the whiteboard (path)',
 					default: '',
 				},
 				{
-					displayName: 'User ID',
-					name: 'user_id',
+					displayName: 'Collaborator User ID',
+					name: 'collaborator_user_id',
 					type: 'string',
 					required: true,
+					description: 'UUID of the USER being invited — from list_collaborators. Never a name, an e-mail, a contact ID or an invented uuid: a wrong ID either fails or shares the board with the wrong person.',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Role',
+							name: 'role',
+							type: 'options',
+							description: 'What they may do: \'editor\' (draw and change the canvas, the default) or \'viewer\' (read only). Send \'viewer\' whenever the person only wants to show the board.',
+							default: 'editor',
+							options: [
+								{ name: 'Editor', value: 'editor' },
+								{ name: 'Viewer', value: 'viewer' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'answerWhiteboardEngage',
+			name: 'Answer Whiteboard Engage',
+			action: 'Submit (or change) the person\'s answer in a running poll, word cloud or estimation session',
+			description: 'Submit (or change) the person\'s answer in a running poll, word cloud or estimation session. `value` depends on the session kind: for a `poll` in `choice` mode the option `ID` from the session config; for an `open` poll free text up to 200 chars; for a `wordcloud` ONE word up to 40 chars (3 words max per person — send one call per word); for an `estimation` a value of the scale (fibonacci or t-shirt). A `wheel` session takes no answers (400), a dot-`vote` uses `cast_whiteboard_vote`. Any member of the board. Returns `{ cast, myValues }`. Answer only what the person actually said.',
+			routeSpec: {"method":"POST","path":"/api/whiteboards/{id}/facilitation/engage","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Session ID',
+					name: 'session_id',
+					type: 'string',
+					required: true,
+					description: 'Poll / wordcloud / estimation session ID',
+					default: '',
+				},
+				{
+					displayName: 'Value',
+					name: 'value',
+					type: 'string',
+					required: true,
+					description: 'Option ID, text, word or scale value - see the session kind. 1-200 chars.',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'castWhiteboardVote',
+			name: 'Cast Whiteboard Vote',
+			action: 'Put one of the person\'s dots on a shape during a running dot-vote session (`kind: \'vote\'`)',
+			description: 'Put one of the person\'s dots on a shape during a running dot-vote session (`kind: \'vote\'`). Idempotent — voting twice on the same shape is one dot. Each participant has `pointsPerUser` dots: a 400 means none is left (take one back with `uncast_whiteboard_vote`). The shape must be one of the session\'s `shapeIds`. Any member of the board can vote (viewers included). Returns `{ cast, remaining }`. Vote only for what the PERSON chose: this is their vote, not yours.',
+			routeSpec: {"method":"POST","path":"/api/whiteboards/{id}/facilitation/votes","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Session ID',
+					name: 'session_id',
+					type: 'string',
+					required: true,
+					description: 'Vote session ID',
+					default: '',
+				},
+				{
+					displayName: 'Shape ID',
+					name: 'shape_id',
+					type: 'string',
+					required: true,
+					description: 'Shape receiving the dot',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'controlWhiteboardFacilitation',
+			name: 'Control Whiteboard Facilitation',
+			action: 'Act on a RUNNING facilitation session: `pause` / `resume` / `extend` a timer, or `spin` a wheel (the server draws the entry)',
+			description: 'Act on a RUNNING facilitation session: `pause` / `resume` / `extend` a timer, or `spin` a wheel (the server draws the entry). `session_id` comes from `start_whiteboard_facilitation` or `get_whiteboard_facilitation`. Editors and owners only; an op that does not fit the session\'s kind is refused. This never ends a session — use `stop_whiteboard_facilitation` for that.',
+			routeSpec: {"method":"POST","path":"/api/whiteboards/{id}/facilitation","queryParams":[],"body":{"action":"update"}},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Session ID',
+					name: 'session_id',
+					type: 'string',
+					required: true,
+					description: 'Active session ID',
+					default: '',
+				},
+				{
+					displayName: 'Op',
+					name: 'op',
+					type: 'options',
+					required: true,
+					description: 'What to do to the running session',
+					default: 'extend',
+					options: [
+						{ name: 'Extend', value: 'extend' },
+						{ name: 'Pause', value: 'pause' },
+						{ name: 'Resume', value: 'resume' },
+						{ name: 'Spin', value: 'spin' },
+					],
+				}
+			],
+		},
+		{
+			value: 'createTaskFromWhiteboard',
+			name: 'Create Task From Whiteboard',
+			action: 'Create a REAL kanban task from a whiteboard (the TaskCard shape\'s backend): a card is created on the task board of the PROJECT the whiteboard belongs to (the project\'s first board; a default board is created when the project has none) and linked to the board',
+			description: 'Create a REAL kanban task from a whiteboard (the TaskCard shape\'s backend): a card is created on the task board of the PROJECT the whiteboard belongs to (the project\'s first board; a default board is created when the project has none) and linked to the board. Only `title` is accepted — set priority, dates or assignees afterwards with `update_card` on the returned `taskId`. The whiteboard must be attached to a project (400 « no task board » otherwise — use `move_whiteboard_to_project` first). Owner or editor of the whiteboard. Returns `{ taskId, boardId, … }`.',
+			routeSpec: {"method":"POST","path":"/api/whiteboards/{id}/tasks","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					description: 'Task title, 1-500 chars',
 					default: '',
 				}
 			],
@@ -37,11 +188,170 @@ export const whiteboardsResource: GeneratedResource = {
 			routeSpec: {"method":"POST","path":"/api/whiteboards","queryParams":[]},
 			properties: [
 				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					description: 'Name of the board as it appears in the list, 1-200 characters. Take the subject the person named ("Roadmap Q4", "Atelier personas"); when they gave none, propose one rather than sending an empty string — the route refuses it.',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Project ID',
+							name: 'project_id',
+							type: 'string',
+							description: 'Project UUID to file the board under. Omit it for a personal board, outside any project.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createWhiteboardComment',
+			name: 'Create Whiteboard Comment',
+			action: 'Pin a comment on a whiteboard, or reply in an existing thread',
+			description: 'Pin a comment on a whiteboard, or reply in an existing thread. A NEW thread needs `x` and `y` (page-space coordinates of the pin — take them from a shape\'s position in `whiteboard_list_shapes` when the comment is about that shape); a REPLY needs `parent_id` (the root comment ID from `list_whiteboard_comments`) and no coordinates. `mentions` are user IDs (from `list_whiteboard_comments` → `members`) and notify those people — mention only who the person names. Editors and owners only (viewers get 403). Returns the comment (201) with its ID, needed by `update_whiteboard_comment` / `delete_whiteboard_comment`.',
+			routeSpec: {"method":"POST","path":"/api/whiteboards/{id}/comments","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Body',
+					name: 'body',
+					type: 'string',
+					required: true,
+					description: 'Comment text, 1-4000 chars',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Mentions',
+							name: 'mentions',
+							type: 'json',
+							description: 'User IDs to notify. (provide a JSON array).',
+							default: '[]',
+						},
+						{
+							displayName: 'Parent ID',
+							name: 'parent_id',
+							type: 'string',
+							description: 'Reply only: root comment ID',
+							default: '',
+						},
+						{
+							displayName: 'X',
+							name: 'x',
+							type: 'number',
+							description: 'New thread only: pin X in page space',
+							default: 0,
+						},
+						{
+							displayName: 'Y',
+							name: 'y',
+							type: 'number',
+							description: 'New thread only: pin Y in page space',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createWhiteboardTemplate',
+			name: 'Create Whiteboard Template',
+			action: 'Publish a board as a reusable template in the person\'s template gallery',
+			description: 'Publish a board as a reusable template in the person\'s template gallery. `snapshot` is the FULL tldraw store of the board — never write it by hand: call `get_whiteboard` and pass its `snapshot` as is (2 MB max, 400 beyond). `visibility` must stay `personal` on Aurentia for Entrepreneurs: `team` needs an organisation and is refused here (400 « nécessite une organisation »). `created_from_whiteboard_id` records the origin board, `project_id` files the template under a project, `category` defaults to `formats`. Returns the template (201) with its ID.',
+			routeSpec: {"method":"POST","path":"/api/whiteboards/templates","queryParams":[]},
+			properties: [
+				{
 					displayName: 'Name',
 					name: 'name',
 					type: 'string',
 					required: true,
+					description: 'Template name, 1-120 chars',
 					default: '',
+				},
+				{
+					displayName: 'Snapshot',
+					name: 'snapshot',
+					type: 'json',
+					required: true,
+					description: 'Get_whiteboard().snapshot, verbatim. (provide a JSON object).',
+					default: '{}',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Category',
+							name: 'category',
+							type: 'string',
+							description: 'Gallery category, default \'formats\'',
+							default: '',
+						},
+						{
+							displayName: 'Created From Whiteboard ID',
+							name: 'created_from_whiteboard_id',
+							type: 'string',
+							description: 'Origin whiteboard ID',
+							default: '',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							description: 'Up to 500 chars',
+							default: '',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'project_id',
+							type: 'string',
+							description: 'Project to file the template under',
+							default: '',
+						},
+						{
+							displayName: 'Thumbnail URL',
+							name: 'thumbnail_url',
+							type: 'string',
+							description: 'Public image URL (optional)',
+							default: '',
+						},
+						{
+							displayName: 'Visibility',
+							name: 'visibility',
+							type: 'options',
+							description: 'Personal on Aurentia',
+							default: 'personal',
+							options: [
+								{ name: 'Personal', value: 'personal' },
+								{ name: 'Team', value: 'team' },
+							],
+						},
+					],
 				}
 			],
 		},
@@ -58,6 +368,47 @@ export const whiteboardsResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteWhiteboardComment',
+			name: 'Delete Whiteboard Comment',
+			action: 'Remove a whiteboard comment',
+			description: 'Remove a whiteboard comment. Allowed to its author, or to the board OWNER for anyone\'s comment (403 otherwise). Soft-deleted server-side but with no restore route, so treat it as final; deleting a root comment takes its thread out of view. If the person only wants the discussion closed, use `update_whiteboard_comment` with `resolved: true` — that is reversible. Quote the comment before deleting it.',
+			routeSpec: {"method":"DELETE","path":"/api/whiteboards/{id}/comments/{commentId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Comment ID',
+					name: 'commentId',
+					type: 'string',
+					required: true,
+					description: 'Comment ID (from list_whiteboard_comments)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteWhiteboardTemplate',
+			name: 'Delete Whiteboard Template',
+			action: 'Remove a whiteboard template from the gallery',
+			description: 'Remove a whiteboard template from the gallery. Owner only. Boards that were created from it are NOT touched (a template is only a starting point). Soft-deleted server-side but no route restores it, so treat it as final and name the template to the person first.',
+			routeSpec: {"method":"DELETE","path":"/api/whiteboards/templates/{templateId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Template ID',
+					name: 'templateId',
+					type: 'string',
+					required: true,
 					default: '',
 				}
 			],
@@ -80,6 +431,75 @@ export const whiteboardsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getWhiteboardFacilitation',
+			name: 'Get Whiteboard Facilitation',
+			action: 'The live facilitation state of a whiteboard: the sessions currently running (their `ID`, `kind`, config and remaining time), the aggregated results of the votes, polls, word clouds and estimations, and what THIS person has already answered',
+			description: 'The live facilitation state of a whiteboard: the sessions currently running (their `ID`, `kind`, config and remaining time), the aggregated results of the votes, polls, word clouds and estimations, and what THIS person has already answered. It is the reader every other facilitation tool depends on — `session_id` comes from here (or from `start_whiteboard_facilitation` in the same conversation), and it is how you tell the person where the vote stands before `stop_whiteboard_facilitation` freezes it.',
+			routeSpec: {"method":"GET","path":"/api/whiteboards/{id}/facilitation","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getWhiteboardLiveState',
+			name: 'Get Whiteboard Live State',
+			action: 'The state of the PUBLIC participation link of one facilitation session: whether a link is open, when it was opened, how many people have joined and the participant cap',
+			description: 'The state of the PUBLIC participation link of one facilitation session: whether a link is open, when it was opened, how many people have joined and the participant cap. The `token` is never returned again — only `open_whiteboard_live_link` shows it, once. Read this before opening a second link (opening one revokes the previous) and before `revoke_whiteboard_live_link`, to tell the person how many participants they are about to cut off. `sessionId` comes from `get_whiteboard_facilitation`.',
+			routeSpec: {"method":"GET","path":"/api/whiteboards/{id}/facilitation/live","queryParams":["sessionId"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Session ID',
+					name: 'sessionId',
+					type: 'string',
+					required: true,
+					description: 'Facilitation session ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listWhiteboardComments',
+			name: 'List Whiteboard Comments',
+			action: 'Every comment pinned on a whiteboard, as threads: root comments with their pin coordinates, their replies, their author, their resolved state — plus `members` (the user IDs you may pass as `mentions`) and `me`',
+			description: 'Every comment pinned on a whiteboard, as threads: root comments with their pin coordinates, their replies, their author, their resolved state — plus `members` (the user IDs you may pass as `mentions`) and `me`. Read it before `update_whiteboard_comment` (which needs a comment ID and, to resolve, a ROOT one), before `delete_whiteboard_comment`, and before mentioning anyone in `create_whiteboard_comment`.',
+			routeSpec: {"method":"GET","path":"/api/whiteboards/{id}/comments","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listWhiteboardTemplates',
+			name: 'List Whiteboard Templates',
+			action: 'The whiteboard templates of the person\'s gallery: ID, name, description, category, visibility, thumbnail and the board they were published from',
+			description: 'The whiteboard templates of the person\'s gallery: ID, name, description, category, visibility, thumbnail and the board they were published from. The ID is what `update_whiteboard_template` and `delete_whiteboard_template` need. On Aurentia for Entrepreneurs the gallery holds their own `personal` templates.',
+			routeSpec: {"method":"GET","path":"/api/whiteboards/templates","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
 			value: 'listWhiteboards',
 			name: 'List Whiteboards',
 			action: 'List of whiteboards',
@@ -87,6 +507,197 @@ export const whiteboardsResource: GeneratedResource = {
 			routeSpec: {"method":"GET","path":"/api/whiteboards","queryParams":[]},
 			properties: [
 
+			],
+		},
+		{
+			value: 'moveWhiteboardToProject',
+			name: 'Move Whiteboard To Project',
+			action: 'File a whiteboard under a project, or detach it (`project_id: null`) so it lives in the person\'s general gallery',
+			description: 'File a whiteboard under a project, or detach it (`project_id: null`) so it lives in the person\'s general gallery. Owner or editor of the board. Only the classification changes: content, collaborators and share link stay as they are — but note that a board attached to a project is only reachable in multiplayer by that project\'s collaborators. Use ONLY a project ID returned by `list_projects` for this person: the server refuses a project they cannot open (403), and filing a board where they cannot see it helps nobody.',
+			routeSpec: {"method":"PATCH","path":"/api/whiteboards/{id}/move","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Target project ID from list_projects, or null to detach',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'openWhiteboardLiveLink',
+			name: 'Open Whiteboard Live Link',
+			action: 'Open a PUBLIC participation link (URL + QR token) for a running facilitation session, so that people WITHOUT an Aurentia account can vote or answer from their phone — a workshop audience, a classroom',
+			description: 'Open a PUBLIC participation link (URL + QR token) for a running facilitation session, so that people WITHOUT an Aurentia account can vote or answer from their phone — a workshop audience, a classroom. Anyone holding the URL can participate (rate-limited, capped at `participant_cap` people), so only open it when the person is about to share it, and give them the `URL` verbatim. Opening a new link REVOKES the previous one of that session. The `token` is returned once and never again. For a `vote` session, `labels` maps shape IDs to the text shown to participants (500 max) — build it from `whiteboard_list_shapes`. Editors and owners only. Close it with `revoke_whiteboard_live_link` or by stopping the session.',
+			routeSpec: {"method":"POST","path":"/api/whiteboards/{id}/facilitation/live","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Session ID',
+					name: 'session_id',
+					type: 'string',
+					required: true,
+					description: 'Active facilitation session ID',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Labels',
+							name: 'labels',
+							type: 'json',
+							description: 'Vote sessions: { shapeId: label } shown to participants, 500 max. (provide a JSON object).',
+							default: '{}',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'removeWhiteboardCollaborator',
+			name: 'Remove Whiteboard Collaborator',
+			action: 'Revoke someone\'s access to a whiteboard (the mirror of `add_whiteboard_collaborator`)',
+			description: 'Revoke someone\'s access to a whiteboard (the mirror of `add_whiteboard_collaborator`). The board OWNER can remove anyone; a collaborator can only remove THEMSELVES (`collaborator_user_id` = their own ID) — anything else is 403. The person loses the board immediately, including any live multiplayer session. Nothing on the board is deleted. `collaborator_user_id` is a user ID: take it from `list_collaborators` of the project the board belongs to (there is no reader of a board\'s own collaborator list yet). Name the person to the caller before revoking.',
+			routeSpec: {"method":"DELETE","path":"/api/whiteboards/{id}/collaborators","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Collaborator User ID',
+					name: 'collaborator_user_id',
+					type: 'string',
+					required: true,
+					description: 'User ID to remove',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'revokeWhiteboardLiveLink',
+			name: 'Revoke Whiteboard Live Link',
+			action: 'Close the public participation link of a facilitation session: the URL and QR stop working immediately, people already on the page can no longer submit',
+			description: 'Close the public participation link of a facilitation session: the URL and QR stop working immediately, people already on the page can no longer submit. The session itself keeps running for board members. Editors and owners only. Returns `{ revoked }`.',
+			routeSpec: {"method":"DELETE","path":"/api/whiteboards/{id}/facilitation/live","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Session ID',
+					name: 'session_id',
+					type: 'string',
+					required: true,
+					description: 'Facilitation session ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'revokeWhiteboardShareLink',
+			name: 'Revoke Whiteboard Share Link',
+			action: 'Kill the public share link of a whiteboard (the mirror of `share_whiteboard`): the token hash is erased and the old URL answers 404 for everyone from the very next request — the way to react to a leaked link',
+			description: 'Kill the public share link of a whiteboard (the mirror of `share_whiteboard`): the token hash is erased and the old URL answers 404 for everyone from the very next request — the way to react to a leaked link. Owner only (403 otherwise). Named collaborators keep their access; only the link dies. Calling `share_whiteboard` afterwards issues a brand-new link. There is no undo: the old URL can never be revived.',
+			routeSpec: {"method":"DELETE","path":"/api/whiteboards/{id}/share","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'sendWhiteboardDocumentToNote',
+			name: 'Send Whiteboard Document To Note',
+			action: 'Save a markdown document as a NEW note in the person\'s Notes, filed as coming from this whiteboard (the « Envoyer vers Notes » of the document shape)',
+			description: 'Save a markdown document as a NEW note in the person\'s Notes, filed as coming from this whiteboard (the « Envoyer vers Notes » of the document shape). No AI and no credits: what you pass is what is saved — `title` (1-180) and `markdown` (up to 20 000 chars). Use it to turn the text of a document shape (read with `whiteboard_list_shapes`) into a note; for an AI SUMMARY of the whole board use `whiteboard_summarize_to_doc` instead. Any member of the board may call it. Returns `{ noteId, URL, title }`.',
+			routeSpec: {"method":"POST","path":"/api/whiteboards/{id}/document-to-note","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					description: 'Note title, 1-180 chars',
+					default: '',
+				},
+				{
+					displayName: 'Markdown',
+					name: 'markdown',
+					type: 'string',
+					required: true,
+					description: 'Note body in markdown, 1-20000 chars',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'setWhiteboardMultiplayer',
+			name: 'Set Whiteboard Multiplayer',
+			action: 'Switch a whiteboard\'s real-time collaboration ON or OFF',
+			description: 'Switch a whiteboard\'s real-time collaboration ON or OFF. This is a deliberate per-board decision, OWNER only: with multiplayer on, the board\'s content lives in the live sync room (edits from several people at once, saved on « Enregistrer »); with it off, the board autosaves its snapshot in the database. Switching modes changes WHERE the content is kept, and the bridge between the two is best-effort — never toggle it on a board someone is currently editing, and confirm with the person before changing it. Returns `{ multiplayerEnabled }`. Collaborators get access through `add_whiteboard_collaborator`; this switch does not invite anyone.',
+			routeSpec: {"method":"PUT","path":"/api/whiteboards/{id}/multiplayer","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Enabled',
+					name: 'enabled',
+					type: 'boolean',
+					required: true,
+					description: 'Whether true = real-time room, false = solo autosave',
+					default: false,
+				}
 			],
 		},
 		{
@@ -132,6 +743,106 @@ export const whiteboardsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'startWhiteboardFacilitation',
+			name: 'Start Whiteboard Facilitation',
+			action: 'Open a live facilitation session on a whiteboard, visible to everyone on the board within seconds: a `timer` (`config.durationMs`, 10 s to 4 h), a dot-`vote` on shapes (`config.shapeIds` from `whiteboard_list_shapes`, `pointsPerUser` 1-20, `anonymous`, `targetKind` notes|selection), a `poll` (`mode: \'choice\'` with a `question` and 2-6 `options` `{ID,label}`, or `mode: \'open\'` for free text), a `wordcloud` (`config.question`), an `estimation` (`config.scale` fibonacci|tshirt, optional `targetShapeId`/`targetLabel`), a `wheel` (`config.entries` 2-30 `{ID,label}`), or `private` mode (`config: {}`)',
+			description: 'Open a live facilitation session on a whiteboard, visible to everyone on the board within seconds: a `timer` (`config.durationMs`, 10 s to 4 h), a dot-`vote` on shapes (`config.shapeIds` from `whiteboard_list_shapes`, `pointsPerUser` 1-20, `anonymous`, `targetKind` notes|selection), a `poll` (`mode: \'choice\'` with a `question` and 2-6 `options` `{ID,label}`, or `mode: \'open\'` for free text), a `wordcloud` (`config.question`), an `estimation` (`config.scale` fibonacci|tshirt, optional `targetShapeId`/`targetLabel`), a `wheel` (`config.entries` 2-30 `{ID,label}`), or `private` mode (`config: {}`). ONE active session per kind: starting a second vote while one runs answers 409 — stop the first with `stop_whiteboard_facilitation`. Editors and owners only. Returns the session (201) with its `ID`, which every other facilitation tool needs. Participants answer with `cast_whiteboard_vote` / `answer_whiteboard_engage`; a public link for people without an account comes from `open_whiteboard_live_link`.',
+			routeSpec: {"method":"POST","path":"/api/whiteboards/{id}/facilitation","queryParams":[],"body":{"action":"start"}},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Kind',
+					name: 'kind',
+					type: 'options',
+					required: true,
+					description: 'What kind of session to open',
+					default: 'estimation',
+					options: [
+						{ name: 'Estimation', value: 'estimation' },
+						{ name: 'Poll', value: 'poll' },
+						{ name: 'Private', value: 'private' },
+						{ name: 'Timer', value: 'timer' },
+						{ name: 'Vote', value: 'vote' },
+						{ name: 'Wheel', value: 'wheel' },
+						{ name: 'Wordcloud', value: 'wordcloud' },
+					],
+				},
+				{
+					displayName: 'Config',
+					name: 'config',
+					type: 'json',
+					required: true,
+					description: 'Per-kind config - timer {durationMs}; vote {shapeIds[], pointsPerUser?, anonymous?, targetKind?}; poll {mode:\'choice\', question, options[{ID,label}], anonymous?} | {mode:\'open\', question, anonymous?}; wordcloud {question?}; estimation {scale?, targetShapeId?, targetLabel?}; wheel {entries[{ID,label}]}; private {}. (provide a JSON object).',
+					default: '{}',
+				}
+			],
+		},
+		{
+			value: 'stopWhiteboardFacilitation',
+			name: 'Stop Whiteboard Facilitation',
+			action: 'End a facilitation session for everyone: a vote or poll is CLOSED and its results frozen (they stay readable in `get_whiteboard_facilitation`), a timer stops, a live link opened on it stops accepting participants',
+			description: 'End a facilitation session for everyone: a vote or poll is CLOSED and its results frozen (they stay readable in `get_whiteboard_facilitation`), a timer stops, a live link opened on it stops accepting participants. Nobody can answer any more and the session cannot be reopened — start a new one instead. Editors and owners only. Say to the person that you are closing it, especially when participants are still answering.',
+			routeSpec: {"method":"POST","path":"/api/whiteboards/{id}/facilitation","queryParams":[],"body":{"action":"stop"}},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Session ID',
+					name: 'session_id',
+					type: 'string',
+					required: true,
+					description: 'Active session ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'uncastWhiteboardVote',
+			name: 'Uncast Whiteboard Vote',
+			action: 'Take back the person\'s dot from a shape in a running dot-vote (gives the point back)',
+			description: 'Take back the person\'s dot from a shape in a running dot-vote (gives the point back). Same fields as `cast_whiteboard_vote`; removing a dot that is not there changes nothing.',
+			routeSpec: {"method":"DELETE","path":"/api/whiteboards/{id}/facilitation/votes","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Session ID',
+					name: 'session_id',
+					type: 'string',
+					required: true,
+					description: 'Vote session ID',
+					default: '',
+				},
+				{
+					displayName: 'Shape ID',
+					name: 'shape_id',
+					type: 'string',
+					required: true,
+					description: 'Shape losing the dot',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'updateWhiteboard',
 			name: 'Update Whiteboard',
 			action: 'Update a whiteboard name / metadata',
@@ -154,10 +865,115 @@ export const whiteboardsResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateWhiteboardComment',
+			name: 'Update Whiteboard Comment',
+			action: 'Two different gestures on one route, and the server keeps them apart: `body` rewrites the text and is allowed to the AUTHOR only; `resolved` (true/false) closes or reopens a THREAD and is allowed to any editor+ but only on a ROOT comment (a reply cannot be resolved)',
+			description: 'Two different gestures on one route, and the server keeps them apart: `body` rewrites the text and is allowed to the AUTHOR only; `resolved` (true/false) closes or reopens a THREAD and is allowed to any editor+ but only on a ROOT comment (a reply cannot be resolved). Send only the field you mean. Resolving hides the thread from the default view — tell the person which thread you closed. IDs come from `list_whiteboard_comments`.',
+			routeSpec: {"method":"PATCH","path":"/api/whiteboards/{id}/comments/{commentId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Comment ID',
+					name: 'commentId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Body',
+							name: 'body',
+							type: 'string',
+							description: 'New text (author only), 1-4000 chars',
+							default: '',
+						},
+						{
+							displayName: 'Resolved',
+							name: 'resolved',
+							type: 'boolean',
+							description: 'Whether resolve / reopen the thread (root comment, editor+)',
+							default: false,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateWhiteboardTemplate',
+			name: 'Update Whiteboard Template',
+			action: 'Rename a whiteboard template or change its description, category or visibility',
+			description: 'Rename a whiteboard template or change its description, category or visibility. Owner only (404 for anyone else\'s template). Send only the fields you change; `description: null` clears it. The board content of the template cannot be changed here — to update the drawing, publish a new template with `create_whiteboard_template` and delete this one. IDs come from `list_whiteboard_templates`.',
+			routeSpec: {"method":"PATCH","path":"/api/whiteboards/templates/{templateId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Template ID',
+					name: 'templateId',
+					type: 'string',
+					required: true,
+					description: 'Template ID (from list_whiteboard_templates)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Category',
+							name: 'category',
+							type: 'string',
+							description: '1-40 chars',
+							default: '',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							description: 'Up to 500 chars. null clears.',
+							default: '',
+						},
+						{
 							displayName: 'Name',
 							name: 'name',
 							type: 'string',
+							description: '1-120 chars',
 							default: '',
+						},
+						{
+							displayName: 'Visibility',
+							name: 'visibility',
+							type: 'options',
+							description: 'Personal on Aurentia',
+							default: 'personal',
+							options: [
+								{ name: 'Personal', value: 'personal' },
+								{ name: 'Team', value: 'team' },
+							],
 						},
 					],
 				}
@@ -789,6 +1605,38 @@ export const whiteboardsResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'Target language code (fr, en, es, de, it…)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'withdrawWhiteboardEngageAnswer',
+			name: 'Withdraw Whiteboard Engage Answer',
+			action: 'Withdraw one of the person\'s answers in a running poll / word cloud / estimation (for a word cloud, the one word given in `value`)',
+			description: 'Withdraw one of the person\'s answers in a running poll / word cloud / estimation (for a word cloud, the one word given in `value`). Idempotent. Same fields as `answer_whiteboard_engage`.',
+			routeSpec: {"method":"DELETE","path":"/api/whiteboards/{id}/facilitation/engage","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Whiteboard ID',
+					default: '',
+				},
+				{
+					displayName: 'Session ID',
+					name: 'session_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Value',
+					name: 'value',
+					type: 'string',
+					required: true,
+					description: 'The answer to withdraw',
 					default: '',
 				}
 			],

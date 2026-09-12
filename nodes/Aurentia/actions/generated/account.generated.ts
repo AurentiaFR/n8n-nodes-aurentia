@@ -6,6 +6,151 @@ export const accountResource: GeneratedResource = {
 	displayName: 'Account Advanced',
 	operations: [
 		{
+			value: 'cancelSubscription',
+			name: 'Cancel Subscription',
+			action: 'Cancel the person\'s Aurentia subscription AT PERIOD END (they keep the plan until `period_end_at`, then drop to free) and record why',
+			description: 'Cancel the person\'s Aurentia subscription AT PERIOD END (they keep the plan until `period_end_at`, then drop to free) and record why. Only on an explicit request; before calling, check `get_retention_offer` — a one-time 50 % offer may exist and the person may prefer it (`claim_retention_offer`). `reason` is one of the exit-survey codes; `reasonText` (≤ 2000 chars) is their own words. Do not pass `agencyId` on Aurentia. Returns `cancelled_at`, `period_end_at`, `plan_at_cancel` — read them back.',
+			routeSpec: {"method":"POST","path":"/api/account/subscription/cancel","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Reason',
+					name: 'reason',
+					type: 'options',
+					required: true,
+					default: 'missing_features',
+					options: [
+						{ name: 'Missing Features', value: 'missing_features' },
+						{ name: 'Not Using', value: 'not_using' },
+						{ name: 'Other', value: 'other' },
+						{ name: 'Switching Competitor', value: 'switching_competitor' },
+						{ name: 'Temporary', value: 'temporary' },
+						{ name: 'Too Expensive', value: 'too_expensive' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Reason Text',
+							name: 'reasonText',
+							type: 'string',
+							description: 'Free text, ≤ 2000 chars',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'changePlan',
+			name: 'Change Plan',
+			action: 'Change the Aurentia plan or billing cycle',
+			description: 'Change the Aurentia plan or billing cycle. An UPGRADE bills the prorated difference IMMEDIATELY on the card on file; a DOWNGRADE is scheduled for period end with no refund. Only after `preview_plan_change` was shown to the person and they said yes. Refused for an account whose email is not verified. `plan` ∈ starter|pro|scale, `billingCycle` ∈ monthly|yearly.',
+			routeSpec: {"method":"POST","path":"/api/account/subscription/change-plan","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Plan',
+					name: 'plan',
+					type: 'options',
+					required: true,
+					default: 'pro',
+					options: [
+						{ name: 'Pro', value: 'pro' },
+						{ name: 'Scale', value: 'scale' },
+						{ name: 'Starter', value: 'starter' },
+					],
+				},
+				{
+					displayName: 'Billing Cycle',
+					name: 'billingCycle',
+					type: 'options',
+					required: true,
+					default: 'monthly',
+					options: [
+						{ name: 'Monthly', value: 'monthly' },
+						{ name: 'Yearly', value: 'yearly' },
+					],
+				}
+			],
+		},
+		{
+			value: 'claimRetentionOffer',
+			name: 'Claim Retention Offer',
+			action: 'Claim the one-time win-back offer (50 % off the next cycle, monthly plans only) instead of cancelling',
+			description: 'Claim the one-time win-back offer (50 % off the next cycle, monthly plans only) instead of cancelling. Check `get_retention_offer` first — the route refuses when not eligible or already claimed, and a claim is consumed for good. Applies the Stripe coupon and records the claim. Do not pass `agencyId` on Aurentia. Read `discount_percent` back to the person.',
+			routeSpec: {"method":"POST","path":"/api/account/subscription/retention-offer","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'clearAssistantInstructions',
+			name: 'Clear Assistant Instructions',
+			action: 'Remove the person\'s standing assistant instructions entirely — from the next message on, every chatbot runs with the default prompt only',
+			description: 'Remove the person\'s standing assistant instructions entirely — from the next message on, every chatbot runs with the default prompt only. No body, no undo except retyping them: read `get_assistant_instructions` and quote them back before calling if the person may want to keep part of it.',
+			routeSpec: {"method":"DELETE","path":"/api/account/assistant-instructions","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'contestAiDecision',
+			name: 'Contest AI Decision',
+			action: 'Open a formal contest about an automated decision that concerned the person\'s own account (AI Act art',
+			description: 'Open a formal contest about an automated decision that concerned the person\'s own account (AI Act art. 50 / RGPD art. 22): a CRM score on their card, an autopilot action, a marketplace matching boost. Creates a ticket handled by a human within 30 days, notifies the admins and writes the audit trail — one call = one ticket, so never duplicate it. `decisionId` is the identifier shown with the decision in the app (the person must give it; there is no list to pick from). `requestedAction` defaults to `human_review`. Quote the `ref` back to the person; follow up with `list_ai_decision_contests`.',
+			routeSpec: {"method":"POST","path":"/api/account/decisions/contest","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Decision ID',
+					name: 'decisionId',
+					type: 'string',
+					required: true,
+					description: 'Identifier of the contested decision, as shown in the app (1-200 chars)',
+					default: '',
+				},
+				{
+					displayName: 'Reason',
+					name: 'reason',
+					type: 'string',
+					required: true,
+					description: 'Why the decision is contested (1-5000 chars)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Requested Action',
+							name: 'requestedAction',
+							type: 'options',
+							default: 'erase',
+							options: [
+								{ name: 'Erase', value: 'erase' },
+								{ name: 'Human Review', value: 'human_review' },
+								{ name: 'Object', value: 'object' },
+								{ name: 'Rectify', value: 'rectify' },
+							],
+						},
+						{
+							displayName: 'Target Resource Type',
+							name: 'targetResourceType',
+							type: 'string',
+							description: 'Optional resource type the decision applied to (≤ 120 chars)',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'deleteAccount',
 			name: 'Delete Account',
 			action: 'Permanently delete the user account (GDPR Art',
@@ -25,6 +170,43 @@ export const accountResource: GeneratedResource = {
 							type: 'string',
 							default: '',
 						},
+					],
+				}
+			],
+		},
+		{
+			value: 'deleteOauthClient',
+			name: 'Delete Oauth Client',
+			action: 'Delete an OAuth client the person registered THEMSELVES (typically an n8n instance) — get `clientId` from `list_oauth_clients`',
+			description: 'Delete an OAuth client the person registered THEMSELVES (typically an n8n instance) — get `clientId` from `list_oauth_clients`. Future authorize/token calls with that client fail; the registration is gone for good (no restore, the secret was shown once and cannot be reissued). A client registered by an app on its own (Claude Desktop, DCR) is not reachable here and answers 404 — use `revoke_authorized_app` for those. The `aur_` API key is untouched.',
+			routeSpec: {"method":"DELETE","path":"/api/account/oauth-clients/{clientId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Client ID',
+					name: 'clientId',
+					type: 'string',
+					required: true,
+					description: 'OAuth client ID, from list_oauth_clients',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'disconnectMicrosoftCalendar',
+			name: 'Disconnect Microsoft Calendar',
+			action: 'Disconnect the Microsoft CALENDAR integration (the standalone Microsoft 365 calendar link, `microsoft_calendar`): revokes the OAuth token and removes the integration row',
+			description: 'Disconnect the Microsoft CALENDAR integration (the standalone Microsoft 365 calendar link, `microsoft_calendar`): revokes the OAuth token and removes the integration row. `integration` MUST be `calendar` — this route defaults to Outlook when the parameter is missing, and its Outlook branch leaves the synced mailbox and calendar behind; for Outlook use `disconnect_microsoft_outlook`, which purges everything. Definitive: the person has to re-authorise Microsoft to reconnect.',
+			routeSpec: {"method":"DELETE","path":"/api/account/integrations/microsoft","queryParams":["integration"]},
+			properties: [
+				{
+					displayName: 'Integration',
+					name: 'integration',
+					type: 'options',
+					required: true,
+					description: 'Always \'calendar\' here. Outlook goes through disconnect_microsoft_outlook.',
+					default: 'calendar',
+					options: [
+						{ name: 'Calendar', value: 'calendar' },
 					],
 				}
 			],
@@ -108,7 +290,7 @@ export const accountResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -119,6 +301,16 @@ export const accountResource: GeneratedResource = {
 						},
 					],
 				}
+			],
+		},
+		{
+			value: 'getAssistantInstructions',
+			name: 'Get Assistant Instructions',
+			action: 'The person\'s current standing assistant instructions (or null)',
+			description: 'The person\'s current standing assistant instructions (or null). Read it before `set_assistant_instructions`, which replaces the whole text.',
+			routeSpec: {"method":"GET","path":"/api/account/assistant-instructions","queryParams":[]},
+			properties: [
+
 			],
 		},
 		{
@@ -144,9 +336,36 @@ export const accountResource: GeneratedResource = {
 		{
 			value: 'getAutopilotConsent',
 			name: 'Get Autopilot Consent',
-			action: 'Whether the user has consented to autonomous collaborator actions (autopilot mode)',
-			description: 'Whether the user has consented to autonomous collaborator actions (autopilot mode)',
-			routeSpec: {"method":"GET","path":"/api/account/autopilot-consent","queryParams":[]},
+			action: 'Whether the person has an ACTIVE consent to autonomous actions for ONE agent — `active: true` means that agent may act on its own, `false` means it can only suggest',
+			description: 'Whether the person has an ACTIVE consent to autonomous actions for ONE agent — `active: true` means that agent may act on its own, `false` means it can only suggest. `agentId` is REQUIRED (the consent is per agent, never a single account-wide flag): take it from `list_agents`; without it the route answers 400 « agentId requis ». Read it before `update_autopilot_consent` (to avoid re-asking for a consent already given) and before `revoke_autopilot_consent` (to say what is actually being withdrawn).',
+			routeSpec: {"method":"GET","path":"/api/account/autopilot-consent","queryParams":["agentId"]},
+			properties: [
+				{
+					displayName: 'Agent ID',
+					name: 'agentId',
+					type: 'string',
+					required: true,
+					description: 'Agent ID whose consent is checked (list_agents). Required — the route 400s without it.',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getModelPreferences',
+			name: 'Get Model Preferences',
+			action: 'The model pinned on each tier (`fast_model`, `balanced_model`, `deep_model`) and where it comes from (user choice or default)',
+			description: 'The model pinned on each tier (`fast_model`, `balanced_model`, `deep_model`) and where it comes from (user choice or default). Read before `update_model_preferences`.',
+			routeSpec: {"method":"GET","path":"/api/account/model-preferences","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'getRetentionOffer',
+			name: 'Get Retention Offer',
+			action: 'Whether the person is eligible for the one-time 50 % win-back offer (monthly plans, never claimed)',
+			description: 'Whether the person is eligible for the one-time 50 % win-back offer (monthly plans, never claimed). Read it BEFORE `cancel_subscription`, and before `claim_retention_offer`. Omit `agencyId` on Aurentia.',
+			routeSpec: {"method":"GET","path":"/api/account/subscription/retention-offer","queryParams":[]},
 			properties: [
 
 			],
@@ -159,6 +378,172 @@ export const accountResource: GeneratedResource = {
 			routeSpec: {"method":"GET","path":"/api/account/has-agency","queryParams":[]},
 			properties: [
 
+			],
+		},
+		{
+			value: 'listAiDecisionContests',
+			name: 'List AI Decision Contests',
+			action: 'The contests the person opened about automated decisions on their account, with status and the 30-day SLA',
+			description: 'The contests the person opened about automated decisions on their account, with status and the 30-day SLA. Use it to follow up a `contest_ai_decision` ticket.',
+			routeSpec: {"method":"GET","path":"/api/account/decisions/contest","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'listAuthorizedApps',
+			name: 'List Authorized Apps',
+			action: 'Every application holding LIVE access to this account through OAuth (Claude Desktop, n8n, any consented client), with its `client_id` — the ID `revoke_authorized_app` needs',
+			description: 'Every application holding LIVE access to this account through OAuth (Claude Desktop, n8n, any consented client), with its `client_id` — the ID `revoke_authorized_app` needs. Distinct from `list_oauth_clients` (the clients the person registered themselves).',
+			routeSpec: {"method":"GET","path":"/api/account/authorized-apps","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'listOauthClients',
+			name: 'List Oauth Clients',
+			action: 'The OAuth clients the person registered themselves (n8n instances…), never the secret',
+			description: 'The OAuth clients the person registered themselves (n8n instances…), never the secret. Gives `client_id` for `delete_oauth_client`.',
+			routeSpec: {"method":"GET","path":"/api/account/oauth-clients","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'openBillingPortal',
+			name: 'Open Billing Portal',
+			action: 'Open the Stripe customer portal for this account and return its URL — the person manages payment method, invoices, plan and cancellation there themselves',
+			description: 'Open the Stripe customer portal for this account and return its URL — the person manages payment method, invoices, plan and cancellation there themselves. Hand them the link, it is single-use and short-lived. 404 when the account has never paid (no Stripe customer yet): say so instead of retrying. `returnUrl` must be on aurentia.fr; omit it.',
+			routeSpec: {"method":"POST","path":"/api/account/billing-portal","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Return URL',
+							name: 'returnUrl',
+							type: 'string',
+							description: 'Optional return URL on aurentia.fr; omit for the default billing tab',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'previewPlanChange',
+			name: 'Preview Plan Change',
+			action: 'Simulate a plan change WITHOUT doing it: returns what would be charged today (upgrade = immediate prorated invoice) or when the switch takes effect (downgrade = at period end, no refund)',
+			description: 'Simulate a plan change WITHOUT doing it: returns what would be charged today (upgrade = immediate prorated invoice) or when the switch takes effect (downgrade = at period end, no refund). ALWAYS call it and read the amount and date to the person before `change_plan`. `plan` ∈ starter|pro|scale, `billingCycle` ∈ monthly|yearly.',
+			routeSpec: {"method":"POST","path":"/api/account/subscription/change-plan/preview","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Plan',
+					name: 'plan',
+					type: 'options',
+					required: true,
+					default: 'pro',
+					options: [
+						{ name: 'Pro', value: 'pro' },
+						{ name: 'Scale', value: 'scale' },
+						{ name: 'Starter', value: 'starter' },
+					],
+				},
+				{
+					displayName: 'Billing Cycle',
+					name: 'billingCycle',
+					type: 'options',
+					required: true,
+					default: 'monthly',
+					options: [
+						{ name: 'Monthly', value: 'monthly' },
+						{ name: 'Yearly', value: 'yearly' },
+					],
+				}
+			],
+		},
+		{
+			value: 'reactivateAccount',
+			name: 'Reactivate Account',
+			action: 'Cancel a SCHEDULED account deletion during its grace period: the deletion date is cleared and, when a Stripe subscription was paused by the deletion request, it is resumed — billing restarts',
+			description: 'Cancel a SCHEDULED account deletion during its grace period: the deletion date is cleared and, when a Stripe subscription was paused by the deletion request, it is resumed — billing restarts. Only meaningful after `delete_account` was called and before the grace period ends (check `GET /api/account/deletion-status`). No body. Say explicitly to the person that their subscription resumes if `subscriptionResumed` is true.',
+			routeSpec: {"method":"POST","path":"/api/account/reactivate","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'registerOauthClient',
+			name: 'Register Oauth Client',
+			action: 'Register a new OAuth client for the person\'s own tooling — typically their n8n instance (redirect URL ending in `/rest/oauth2-credential/callback`)',
+			description: 'Register a new OAuth client for the person\'s own tooling — typically their n8n instance (redirect URL ending in `/rest/oauth2-credential/callback`). Returns `client_id` AND `client_secret` IN CLEAR, ONCE: relay both to the person verbatim and tell them to store the secret now, it can never be shown again. `redirect_uri` must be https (http only for localhost). A `redirect_uri_warning` in the answer is advisory, not an error. Creates a credential — confirm the name and URL with the person first.',
+			routeSpec: {"method":"POST","path":"/api/account/oauth-clients","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: 'Display name, 1-120 chars',
+					default: '',
+				},
+				{
+					displayName: 'Redirect Uri',
+					name: 'redirect_uri',
+					type: 'string',
+					required: true,
+					description: 'Https:// callback URL (http only for localhost)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'resetModelPreferences',
+			name: 'Reset Model Preferences',
+			action: 'Put all three model tiers back on the Aurentia defaults at once',
+			description: 'Put all three model tiers back on the Aurentia defaults at once. No body. Prefer `update_model_preferences` with `null` on one tier when the person only wants to reset one.',
+			routeSpec: {"method":"DELETE","path":"/api/account/model-preferences","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'revokeAuthorizedApp',
+			name: 'Revoke Authorized App',
+			action: 'Cut the live access of ONE application connected to this account through OAuth — Claude Desktop, an n8n instance, any client that went through the consent screen',
+			description: 'Cut the live access of ONE application connected to this account through OAuth — Claude Desktop, an n8n instance, any client that went through the consent screen. Get `client_id` from `list_authorized_apps`; never guess it. Definitive: the app\'s tokens stop working immediately and it must go through the consent screen again. Name the app to the person before calling, and WARN when the app being revoked is the one you are running in — revoking it ends this very session. This does NOT touch the `aur_` API key (`rotate_mcp_api_key` is for that) nor the client registration itself (`delete_oauth_client`).',
+			routeSpec: {"method":"DELETE","path":"/api/account/authorized-apps","queryParams":["client_id"]},
+			properties: [
+				{
+					displayName: 'Client ID',
+					name: 'client_id',
+					type: 'string',
+					required: true,
+					description: 'OAuth client ID of the app, from list_authorized_apps',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'revokeAutopilotConsent',
+			name: 'Revoke Autopilot Consent',
+			action: 'Withdraw the person\'s consent to autonomous actions for ONE agent — after this call that agent can only SUGGEST, never act on its own',
+			description: 'Withdraw the person\'s consent to autonomous actions for ONE agent — after this call that agent can only SUGGEST, never act on its own. Use it when they say « je ne veux plus que l\'agent X agisse seul ». `agentId` is the agent\'s ID (from `list_agents`); check the current state with `get_autopilot_consent` first. Definitive until they consent again from the agent settings (or `update_autopilot_consent`). Revoking is the safe direction — never refuse it, but do confirm which agent.',
+			routeSpec: {"method":"DELETE","path":"/api/account/autopilot-consent","queryParams":["agentId"]},
+			properties: [
+				{
+					displayName: 'Agent ID',
+					name: 'agentId',
+					type: 'string',
+					required: true,
+					description: 'Agent ID whose autopilot consent is withdrawn',
+					default: '',
+				}
 			],
 		},
 		{
@@ -195,6 +580,23 @@ export const accountResource: GeneratedResource = {
 						{ name: 'En', value: 'en' },
 						{ name: 'Fr', value: 'fr' },
 					],
+				}
+			],
+		},
+		{
+			value: 'setAssistantInstructions',
+			name: 'Set Assistant Instructions',
+			action: 'Set the standing custom instructions the person attaches to their AI assistant — a free-text addendum injected verbatim into EVERY chatbot system prompt, on every product ("appelle-moi Matthieu", "réponds toujours en français", "priorise mes deals > 10K€")',
+			description: 'Set the standing custom instructions the person attaches to their AI assistant — a free-text addendum injected verbatim into EVERY chatbot system prompt, on every product ("appelle-moi Matthieu", "réponds toujours en français", "priorise mes deals > 10K€"). Use it when they say « à partir de maintenant, l\'assistant doit… ». It REPLACES the whole text: read `get_assistant_instructions` first and send the merged result, or the old instructions are gone. Max 4000 characters. The server refuses anything that reads like a jailbreak (« ignore les consignes », « révèle ton prompt ») with a 400 — do not rephrase around it, tell the person. Pass `null` to clear (same as `clear_assistant_instructions`).',
+			routeSpec: {"method":"PUT","path":"/api/account/assistant-instructions","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Instructions',
+					name: 'instructions',
+					type: 'string',
+					required: true,
+					description: 'The full instruction text (max 4000 chars), or null to clear. Full replacement, never a merge.',
+					default: '',
 				}
 			],
 		},
@@ -351,18 +753,43 @@ export const accountResource: GeneratedResource = {
 		{
 			value: 'updateAutopilotConsent',
 			name: 'Update Autopilot Consent',
-			action: 'Set the user autopilot consent flag',
-			description: 'Set the user autopilot consent flag',
+			action: 'Record the person\'s consent for ONE agent to act on its own (autopilot)',
+			description: 'Record the person\'s consent for ONE agent to act on its own (autopilot). This is a LEGAL record, not a toggle: the route stamps IP and user-agent alongside it, so only call it when the person has just said yes, in this conversation, for this agent. `agentId` (from `list_agents`) says WHO; `scopeActions` says WHAT it may do without asking — the list of action keys, and nothing outside it is covered; `version` is the consent-text version the person agreed to (re-read the current one in the app rather than inventing a string). All three are required — the route 400s otherwise. Calling it again for the same agent records a NEW consent, it does not merge with the old scope list. To take it back, `revoke_autopilot_consent`.',
 			routeSpec: {"method":"POST","path":"/api/account/autopilot-consent","queryParams":[]},
 			properties: [
 				{
-					displayName: 'Consent',
-					name: 'consent',
-					type: 'boolean',
+					displayName: 'Agent ID',
+					name: 'agentId',
+					type: 'string',
 					required: true,
-					description: 'Whether to enable consent',
-					default: false,
+					description: 'Agent ID the consent covers (list_agents). Required.',
+					default: '',
 				},
+				{
+					displayName: 'Scope Actions',
+					name: 'scopeActions',
+					type: 'json',
+					required: true,
+					description: 'The action keys the agent may perform on its own. Full list, never a delta — max 100. (provide a JSON array)',
+					default: '[]',
+				},
+				{
+					displayName: 'Version',
+					name: 'version',
+					type: 'string',
+					required: true,
+					description: 'Version of the consent text the person agreed to (max 64 chars)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'updateModelPreferences',
+			name: 'Update Model Preferences',
+			action: 'Pin which AI model the person\'s assistant uses per tier — `fast_model`, `balanced_model`, `deep_model`',
+			description: 'Pin which AI model the person\'s assistant uses per tier — `fast_model`, `balanced_model`, `deep_model`. Send ONLY the tiers you change; `null` on a tier puts it back on the Aurentia default. Model IDs must come from the catalogue (`GET /api/account/model-catalog`) — a model outside the whitelist is refused. Read `get_model_preferences` first to say what changes. Applies to every new conversation immediately; it never changes what an agent (autopilot) uses.',
+			routeSpec: {"method":"PUT","path":"/api/account/model-preferences","queryParams":[]},
+			properties: [
 				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
@@ -371,11 +798,25 @@ export const accountResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Scopes',
-							name: 'scopes',
-							type: 'json',
-							description: 'Provide a JSON array',
-							default: '[]',
+							displayName: 'Balanced Model',
+							name: 'balanced_model',
+							type: 'string',
+							description: 'Model ID for the balanced tier, or null for the default',
+							default: '',
+						},
+						{
+							displayName: 'Deep Model',
+							name: 'deep_model',
+							type: 'string',
+							description: 'Model ID for the deep tier, or null for the default',
+							default: '',
+						},
+						{
+							displayName: 'Fast Model',
+							name: 'fast_model',
+							type: 'string',
+							description: 'Model ID for the fast tier, or null for the default',
+							default: '',
 						},
 					],
 				}

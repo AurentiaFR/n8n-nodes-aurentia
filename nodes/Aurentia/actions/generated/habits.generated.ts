@@ -6,6 +6,23 @@ export const habitsResource: GeneratedResource = {
 	displayName: 'Habits',
 	operations: [
 		{
+			value: 'archiveHabit',
+			name: 'Archive Habit',
+			action: 'Archive a habit: it leaves the daily view for good, its completion history is kept (soft delete)',
+			description: 'Archive a habit: it leaves the daily view for good, its completion history is kept (soft delete). There is no un-archive tool — treat it as final and name the habit to the person before calling (« archiver "Courir" ? »). If they only want to pause it, change `activeDays` with `update_habit` instead. `ID` from `list_habits`.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/habits/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Habit ID, from list_habits',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'completeHabit',
 			name: 'Complete Habit',
 			action: 'Toggle a habit as done (or not done) for a given day — insert if absent, remove if already there',

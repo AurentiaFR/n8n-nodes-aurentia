@@ -6,6 +6,72 @@ export const councilResource: GeneratedResource = {
 	displayName: 'Council',
 	operations: [
 		{
+			value: 'estimateCouncilRoundCost',
+			name: 'Estimate Council Round Cost',
+			action: '« How much would convening the Council on this cost?',
+			description: '« How much would convening the Council on this cost? » — READ-ONLY, free, triggers nothing: no session is opened, no agent is called, nothing is charged. Same body as `run_council_round`: `subjectType` (today only `idea`), `subjectId`, and optionally `agentIds` (the collaborateurs the person wants around the table — omit it and the price follows the automatic preselection from the subject\'s universe). The price is 2 credits per participating agent, at most 5 agents, and this returns the exact amount the round would charge. ALWAYS call it and quote the number before `run_council_round`. A subject the person cannot access is refused here exactly as it would be there.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/council/estimate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Subject Type',
+					name: 'subjectType',
+					type: 'options',
+					required: true,
+					default: 'idea',
+					options: [
+						{ name: 'Idea', value: 'idea' },
+					],
+				},
+				{
+					displayName: 'Subject ID',
+					name: 'subjectId',
+					type: 'string',
+					required: true,
+					description: 'UUID of the subject (an idea from list_ideas)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Agent IDs',
+							name: 'agentIds',
+							type: 'json',
+							description: 'Explicit selection; omit for the automatic preselection. (provide a JSON array).',
+							default: '[]',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'generateCouncilSummary',
+			name: 'Generate Council Summary',
+			action: 'Write (or REWRITE) the MINUTES of a Council session — the Chair\'s synthesis of the opinions already given: convergences, disagreements, recommendation',
+			description: 'Write (or REWRITE) the MINUTES of a Council session — the Chair\'s synthesis of the opinions already given: convergences, disagreements, recommendation. Free: it re-reads stored opinions, it convenes nobody. `sessionId` comes from `run_council_round` or `get_council_verdict`. A session with no opinion yet is refused (400) — run a round first. Regenerating REPLACES the previous minutes (the opinions themselves are untouched): do it when the person asks for a fresh synthesis, typically after a new round. Read the result back to them; it is also what `get_council_verdict` returns as the session\'s summary from now on.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/council/summary","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Session ID',
+					name: 'sessionId',
+					type: 'string',
+					required: true,
+					description: 'Council session ID (run_council_round / get_council_verdict)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'getCouncilVerdict',
 			name: 'Get Council Verdict',
 			action: 'Reads what the Council (the user\'s multi-collaborateur advisory panel) has already said about a subject — its opinions and, if generated, its minutes',
@@ -30,6 +96,55 @@ export const councilResource: GeneratedResource = {
 					required: true,
 					description: 'ID of the subject (e.g. the idea ID)',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'runCouncilRound',
+			name: 'Run Council Round',
+			action: 'CONVENE THE COUNCIL on a subject: up to 5 of the person\'s collaborateurs (specialist agents) each give a written opinion, in parallel, and the opinions are stored on a Council session you can read back with `get_council_verdict`',
+			description: 'CONVENE THE COUNCIL on a subject: up to 5 of the person\'s collaborateurs (specialist agents) each give a written opinion, in parallel, and the opinions are stored on a Council session you can read back with `get_council_verdict`. PAID: 2 credits per agent, charged BEFORE the calls; an agent that fails to answer is refunded. Call `estimate_council_round_cost` first and get an explicit yes on the amount. `subjectType` is `idea` (the only subject type today), `subjectId` the idea\'s UUID. `agentIds` picks the participants explicitly; omit it for the automatic preselection from the idea\'s universe. Calling again on the SAME subject opens a NEW ROUND on the same session (round 2, 3…), billed again — it is not a retry. Returns the session, the round number, `creditsCharged` (the real amount) and one outcome per agent. Then offer `generate_council_summary` for the minutes.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/council/round","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Subject Type',
+					name: 'subjectType',
+					type: 'options',
+					required: true,
+					default: 'idea',
+					options: [
+						{ name: 'Idea', value: 'idea' },
+					],
+				},
+				{
+					displayName: 'Subject ID',
+					name: 'subjectId',
+					type: 'string',
+					required: true,
+					description: 'UUID of the idea (list_ideas)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Agent IDs',
+							name: 'agentIds',
+							type: 'json',
+							description: 'Explicit selection; omit for the automatic preselection. (provide a JSON array).',
+							default: '[]',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							default: '',
+						},
+					],
 				}
 			],
 		}

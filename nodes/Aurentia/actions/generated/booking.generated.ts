@@ -239,6 +239,23 @@ export const bookingResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'convertBookingLeadToContact',
+			name: 'Convert Booking Lead To Contact',
+			action: 'Turn an unconverted booking lead (someone who filled the form without booking) into a CRM contact of the person\'s most recent project, tagged « Booking lead »',
+			description: 'Turn an unconverted booking lead (someone who filled the form without booking) into a CRM contact of the person\'s most recent project, tagged « Booking lead ». Idempotent: if the email already exists in the CRM it returns `alreadyExisted: true` with no duplicate. It sends nothing to the lead. `ID` comes from `list_booking_leads`. Call it on « add this prospect to the CRM ».',
+			routeSpec: {"method":"POST","path":"/api/booking/leads/{id}/convert","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Booking lead UUID',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'createBookingException',
 			name: 'Create Booking Exception',
 			action: 'Add an availability exception',
@@ -375,6 +392,23 @@ export const bookingResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'deleteBookingLead',
+			name: 'Delete Booking Lead',
+			action: 'PERMANENTLY erase a booking lead (hard delete, GDPR right to erasure, art',
+			description: 'PERMANENTLY erase a booking lead (hard delete, GDPR right to erasure, art. 17). No trash, no restore. Only call it on a lead the person designated precisely (« erase jean@…\'s data »), and preferably after `convert_booking_lead_to_contact` if they want to keep the relationship. An already-erased lead answers 404.',
+			routeSpec: {"method":"DELETE","path":"/api/booking/leads/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Booking lead UUID',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'deleteBookingPage',
 			name: 'Delete Booking Page',
 			action: 'Delete a booking page',
@@ -388,6 +422,31 @@ export const bookingResource: GeneratedResource = {
 					required: true,
 					description: 'The page ID for this operation',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'draftBookingPagePromoPost',
+			name: 'Draft Booking Page Promo Post',
+			action: 'Write, with AI, a promotional post as a DRAFT for a booking page (text adapted to each `platform` + a per-platform tracked link) and attach it to the page',
+			description: 'Write, with AI, a promotional post as a DRAFT for a booking page (text adapted to each `platform` + a per-platform tracked link) and attach it to the page. Costs credits (`social_post_generation`, refunded if the generation fails). IT NEVER PUBLISHES: the draft follows the normal circuit (review → submission → publication) — say that to the person and offer to open it in the social composer. `platforms` needs at least one connected social platform. `pageId` comes from `list_booking_pages`. Can take up to 60 s.',
+			routeSpec: {"method":"POST","path":"/api/booking/pages/{pageId}/publish-social","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Page ID',
+					name: 'pageId',
+					type: 'string',
+					required: true,
+					description: 'Booking page UUID',
+					default: '',
+				},
+				{
+					displayName: 'Platforms',
+					name: 'platforms',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
 				}
 			],
 		},
@@ -496,6 +555,16 @@ export const bookingResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getExternalBookingUrl',
+			name: 'Get External Booking URL',
+			action: 'Read the person\'s external booking link (Calendly, Cal.com…), or `null` when none is set',
+			description: 'Read the person\'s external booking link (Calendly, Cal.com…), or `null` when none is set. Read it BEFORE `set_external_booking_url`, which REPLACES the value without warning — a link already given to clients would silently stop being shown.',
+			routeSpec: {"method":"GET","path":"/api/booking/external-url","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
 			value: 'listBookingAppointments',
 			name: 'List Booking Appointments',
 			action: 'List of appointments',
@@ -583,7 +652,7 @@ export const bookingResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 					],
@@ -702,6 +771,55 @@ export const bookingResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'rescheduleBookingAppointment',
+			name: 'Reschedule Booking Appointment',
+			action: 'Move an appointment booked through a booking page, AS THE HOST: the row goes to `rescheduled`, the calendar event is re-projected, and an EMAIL LEAVES IMMEDIATELY to the guest with the new slot and your optional `reason` (500 chars max, shown to them verbatim — write it FOR THE GUEST, not for the person)',
+			description: 'Move an appointment booked through a booking page, AS THE HOST: the row goes to `rescheduled`, the calendar event is re-projected, and an EMAIL LEAVES IMMEDIATELY to the guest with the new slot and your optional `reason` (500 chars max, shown to them verbatim — write it FOR THE GUEST, not for the person). `start_at`/`end_at` are ISO 8601 with offset, end after start. An appointment that is `cancelled` or `completed` cannot be moved (400). `ID` comes from `list_booking_appointments`. Do not use it to cancel: that is `cancel_booking_appointment`.',
+			routeSpec: {"method":"POST","path":"/api/booking/appointments/{id}/reschedule","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Appointment UUID',
+					default: '',
+				},
+				{
+					displayName: 'Start At',
+					name: 'start_at',
+					type: 'string',
+					required: true,
+					description: 'ISO 8601 with offset',
+					default: '',
+				},
+				{
+					displayName: 'End At',
+					name: 'end_at',
+					type: 'string',
+					required: true,
+					description: 'ISO 8601 with offset',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Reason',
+							name: 'reason',
+							type: 'string',
+							description: 'Reason shown to the guest in the email',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'setBookingPageHosts',
 			name: 'Set Booking Page Hosts',
 			action: 'Replace all hosts on a booking page (upsert)',
@@ -723,6 +841,23 @@ export const bookingResource: GeneratedResource = {
 					required: true,
 					description: 'Provide a JSON array',
 					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'setExternalBookingUrl',
+			name: 'Set External Booking URL',
+			action: 'Save the person\'s EXTERNAL booking link (Calendly, Cal.com…), shown to their clients when they have no active Aurentia booking page',
+			description: 'Save the person\'s EXTERNAL booking link (Calendly, Cal.com…), shown to their clients when they have no active Aurentia booking page. `externalBookingUrl` must be an absolute http/https URL (any other scheme is refused), or `null` to clear it. It writes the person\'s own profile and nothing else. Read `get_external_booking_url` first if you are about to replace an existing link. Call it on « use my Calendly as my booking link ».',
+			routeSpec: {"method":"PUT","path":"/api/booking/external-url","queryParams":[]},
+			properties: [
+				{
+					displayName: 'External Booking URL',
+					name: 'externalBookingUrl',
+					type: 'string',
+					required: true,
+					description: 'Absolute http(s) URL, or null to clear',
+					default: '',
 				}
 			],
 		},
@@ -800,6 +935,52 @@ export const bookingResource: GeneratedResource = {
 						{
 							displayName: 'Title',
 							name: 'title',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateHostCalendarSource',
+			name: 'Update Host Calendar Source',
+			action: 'Configure a calendar source used to compute booking availability: `label` (displayed name), `enabled` (taken into account or not), `as_busy` (`true` = its events BLOCK slots, `false` = they are ignored)',
+			description: 'Configure a calendar source used to compute booking availability: `label` (displayed name), `enabled` (taken into account or not), `as_busy` (`true` = its events BLOCK slots, `false` = they are ignored). At least one field. `ID` comes from `list_host_calendar_sources`. Passing `as_busy: false` on the main calendar makes the person bookable during their own meetings: say so before doing it.',
+			routeSpec: {"method":"PATCH","path":"/api/booking/calendar-sources/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Calendar source UUID',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'As Busy',
+							name: 'as_busy',
+							type: 'boolean',
+							description: 'Whether to enable as busy',
+							default: false,
+						},
+						{
+							displayName: 'Enabled',
+							name: 'enabled',
+							type: 'boolean',
+							description: 'Whether to enable enabled',
+							default: false,
+						},
+						{
+							displayName: 'Label',
+							name: 'label',
 							type: 'string',
 							default: '',
 						},

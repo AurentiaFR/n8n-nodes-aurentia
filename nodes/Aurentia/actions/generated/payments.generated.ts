@@ -6,6 +6,125 @@ export const paymentsResource: GeneratedResource = {
 	displayName: 'Payments',
 	operations: [
 		{
+			value: 'listReceivedPayments',
+			name: 'List Received Payments',
+			action: 'Payments a project received through Aurentia Payments, from its ledger: amount in centimes, currency, kind, date, `stripe_payment_intent_id` (what `refund_project_payment` takes — it is the only source of that ID) and `refunded_cents` already refunded',
+			description: 'Payments a project received through Aurentia Payments, from its ledger: amount in centimes, currency, kind, date, `stripe_payment_intent_id` (what `refund_project_payment` takes — it is the only source of that ID) and `refunded_cents` already refunded. `from`/`to` are ISO dates bounding the period; omit them for everything. For totals and trends use `stripe_sales_analytics`; this is the line-by-line list.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/payments/received","queryParams":["projectId","from","to"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'From',
+							name: 'from',
+							type: 'string',
+							description: 'ISO date, inclusive',
+							default: '',
+						},
+						{
+							displayName: 'To',
+							name: 'to',
+							type: 'string',
+							description: 'ISO date, inclusive',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'refundProjectPayment',
+			name: 'Refund Project Payment',
+			action: 'Refund a payment the project received through Aurentia Payments — REAL MONEY leaves the person\'s Stripe balance and goes back to their customer',
+			description: 'Refund a payment the project received through Aurentia Payments — REAL MONEY leaves the person\'s Stripe balance and goes back to their customer. `paymentIntentId` is the `stripe_payment_intent_id` of a payment listed by `list_received_payments`; it must belong to this project (anything else is refused). Omit `amountCents` for a full refund of what remains refundable; give it, in centimes, for a partial refund (a second partial refund on the same payment is fine, the total can never exceed the payment). Refunds are irreversible and Stripe fees are not returned. Whether to refund, and how much, is the person\'s commercial decision: state the customer, the amount and the payment date, and get an explicit yes. Owner-only.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/payments/refund","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Payment Intent ID',
+					name: 'paymentIntentId',
+					type: 'string',
+					required: true,
+					description: 'Stripe_payment_intent_id from list_received_payments',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Amount Cents',
+							name: 'amountCents',
+							type: 'number',
+							description: 'Partial refund amount in centimes. Omit for a full refund.',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'setPaymentsTaxCollection',
+			name: 'Set Payments Tax Collection',
+			action: 'Switch automatic VAT collection (Stripe Tax) on or off for a project\'s Aurentia Payments account',
+			description: 'Switch automatic VAT collection (Stripe Tax) on or off for a project\'s Aurentia Payments account. When on, Stripe computes and adds the applicable VAT on every payment link and charge of that project; when off, amounts are charged as given. This is a FISCAL setting — whether the person must collect VAT depends on their legal status (a micro-entrepreneur under the franchise threshold does not); do not switch it on your own initiative, confirm what their accountant said. Requires an existing payments account (`stripe_payment_status`, or `start_payments_onboarding` to open one).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/payments/account/tax","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Enabled',
+					name: 'enabled',
+					type: 'boolean',
+					required: true,
+					description: 'Whether to enable enabled',
+					default: false,
+				}
+			],
+		},
+		{
+			value: 'startPaymentsOnboarding',
+			name: 'Start Payments Onboarding',
+			action: 'Start Aurentia Payments for a PROJECT: create the project\'s Stripe connected account if it does not exist yet and return the hosted onboarding URL where the person completes Stripe\'s identity and bank checks themselves — you cannot do that part for them, give them the link',
+			description: 'Start Aurentia Payments for a PROJECT: create the project\'s Stripe connected account if it does not exist yet and return the hosted onboarding URL where the person completes Stripe\'s identity and bank checks themselves — you cannot do that part for them, give them the link. Check `stripe_payment_status` first: if `charges_enabled` is already true there is nothing to start, and if onboarding is merely unfinished this returns a fresh link to resume it. Creating the account is a real Stripe object in the person\'s name; say so before calling. One account per project. Owner-only. This is NOT `start_stripe_connect_onboarding`: that one opens the person\'s OWN Express account for the Aurentia marketplace (getting paid as a provider), this one opens the project\'s account for charging their own customers. Two different Stripe accounts.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/payments/account","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'stripeCreatePaymentLink',
 			name: 'Stripe Create Payment Link',
 			action: 'Aurentia Payments — create a Stripe payment link for a project (a shareable link that charges the amount, in cents, on the entrepreneur\'s connected account)',
@@ -47,6 +166,31 @@ export const paymentsResource: GeneratedResource = {
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'stripeDeactivatePaymentLink',
+			name: 'Stripe Deactivate Payment Link',
+			action: 'Aurentia Payments — deactivate a Stripe payment link of a project: it stops accepting payments IMMEDIATELY, everywhere it was shared (a client clicking it will see a dead page), and Aurentia cannot switch it back on (only the Stripe dashboard can)',
+			description: 'Aurentia Payments — deactivate a Stripe payment link of a project: it stops accepting payments IMMEDIATELY, everywhere it was shared (a client clicking it will see a dead page), and Aurentia cannot switch it back on (only the Stripe dashboard can). `ID` is the Stripe link ID (`plink_…`) from `stripe_list_payment_links`. Name the link and its amount to the person before calling; if they want a different amount, create a new link with `stripe_create_payment_link` before killing the old one.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/payments/links/{id}","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Stripe payment link ID (plink_…), from stripe_list_payment_links',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project owning the connected Stripe account',
+					default: '',
 				}
 			],
 		},

@@ -6,10 +6,117 @@ export const financialForecastResource: GeneratedResource = {
 	displayName: 'Financial Forecast',
 	operations: [
 		{
+			value: 'addForecastProduct',
+			name: 'Add Forecast Product',
+			action: 'Add a product line to the project\'s financial forecast workbook',
+			description: 'Add a product line to the project\'s financial forecast workbook. `priceHt` is the PRE-TAX unit price and `vatRatePct` a percentage between 0 and 100. `baseVersion` is the workbook version you last read: it is the concurrency guard, a stale value is refused rather than silently overwriting someone else\'s edit. `catalogProductId` links the line to an existing catalogue product, or null for a free line.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/financial-forecast/workbook/product","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Section ID',
+					name: 'sectionId',
+					type: 'string',
+					required: true,
+					description: 'Workbook section UUID',
+					default: '',
+				},
+				{
+					displayName: 'Base Version',
+					name: 'baseVersion',
+					type: 'string',
+					required: true,
+					description: 'ISO-8601 version of the workbook you read (concurrency guard)',
+					default: '',
+				},
+				{
+					displayName: 'Sheet Key',
+					name: 'sheetKey',
+					type: 'string',
+					required: true,
+					description: 'Sheet the product belongs to',
+					default: '',
+				},
+				{
+					displayName: 'Label',
+					name: 'label',
+					type: 'string',
+					required: true,
+					description: 'Product name, max 200 chars',
+					default: '',
+				},
+				{
+					displayName: 'Price Ht',
+					name: 'priceHt',
+					type: 'number',
+					required: true,
+					description: 'Pre-tax unit price, >= 0',
+					default: 0,
+				},
+				{
+					displayName: 'VAT Rate Pct',
+					name: 'vatRatePct',
+					type: 'number',
+					required: true,
+					description: 'VAT rate in percent, 0-100',
+					default: 0,
+				},
+				{
+					displayName: 'Catalog Product ID',
+					name: 'catalogProductId',
+					type: 'string',
+					required: true,
+					description: 'Catalogue product UUID, or null',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'closeForecastInterview',
+			name: 'Close Forecast Interview',
+			action: 'Close the assisted forecast interview of a project and GENERATE the forecast from it — this is the paid step: 1 200 credits (12 €), taken once, at this call',
+			description: 'Close the assisted forecast interview of a project and GENERATE the forecast from it — this is the paid step: 1 200 credits (12 €), taken once, at this call. Say the price out loud and get an explicit yes before calling; a second call never charges twice (the service is idempotent: two clicks, or a click plus this call, take the money once). Do not close an interview that has not actually taken place: the interview is held in the app\'s Finance chat, and closing it right after `open_forecast_interview` generates a forecast from an empty conversation — check with the person that they have finished talking to the finance agent. Three outcomes, ALL returned as 200 and none an error: `previsionnel_session_closed` (done, `charged` says whether this call took the money, `cost` what it cost), `previsionnel_insufficient_credits` (`missing` credits — nothing was closed, the session stays open, the person can top up and retry), `previsionnel_session_not_open` (no session to close, or it expired after 24 h of silence — reopen with `open_forecast_interview`). When the project is sponsored by its owner, the owner\'s wallet pays and their daily cap applies; a cap hit comes back as a 402 with a `contact_owner` action. Requires the `edit` right on the project\'s finances.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/financial-forecast/assisted/session/close","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Locale',
+							name: 'locale',
+							type: 'options',
+							default: 'en',
+							options: [
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createForecastLine',
 			name: 'Create Forecast Line',
 			action: 'Add a line to the financial forecast workbook — a revenue/cost/personnel/investment/loan/driver/parameter/computed row',
-			description: 'Add a line to the financial forecast workbook — a revenue/cost/personnel/investment/loan/driver/parameter/computed row. sheetKey must be one of the workbook\'s sheets (read them with get_forecast_workbook — sheets[].key, or writableSheetKeys for every sheet that accepts a line); if sectionId is set, the section must belong to the same sheet. unit is decorative (\'€\', \'€/mois\', \'mois\'…) — pass null when there is none.',
+			description: 'Add a line to the financial forecast workbook — a revenue/cost/personnel/investment/loan/driver/parameter/computed row. sheetKey must be one of the workbook\'s sheets (read them with get_forecast_workbook — sheets[].key, or writableSheetKeys for every sheet that accepts a line); if sectionId is set, the section must belong to the same sheet. unit is decorative (\'€\', \'€/mois\', \'mois\'…) — pass null when there is none. A \'revenue\' line whose label names a product that ALREADY EXISTS — a product block of this workbook, or a priced product sheet in the project catalogue — is REFUSED with 409 REVENU_EN_DOUBLE_D_UN_PRODUIT, because the same revenue would then be counted twice: put its sales on that product block, or create the product with create_forecast_product, or pick another label. A \'personnel\' line reads exactly three attributes, which you then set with update_forecast_line, spelled lowercase with the underscore: annualgross (annual GROSS per person, or the pay actually taken out when the status is tns), chargerate (a DECIMAL FRACTION, 0.42 for 42%, never 42) and pay_status, one of \'salarie\' | \'dirigeant_assimile\' | \'tns\' | \'micro\'.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/financial-forecast/workbook/line","queryParams":[]},
 			properties: [
 				{
@@ -88,6 +195,53 @@ export const financialForecastResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createForecastScenario',
+			name: 'Create Forecast Scenario',
+			action: 'Add a derived scenario (« Ambitieux », « Sans levée de fonds », « Prix +10 % ») to a project\'s forecast workbook',
+			description: 'Add a derived scenario (« Ambitieux », « Sans levée de fonds », « Prix +10 % ») to a project\'s forecast workbook. A scenario is a LAYER over the reference workbook, never a copy: it starts identical to the reference and diverges only through its swing percentages and its cell overrides. `revenueSwingPct` and `costSwingPct` apply a uniform multiplier to every revenue / cost line (15 means +15 %, -20 means -20 %; bounds are enforced server-side); leave them at 0 to adjust individual cells afterwards with `set_forecast_scenario_overrides`. Creating a scenario is free — the app bills intelligence, never structure. Read the existing tabs first with `list_forecast_scenarios`; the workbook already has a reference plus two default derived scenarios, and a label that duplicates an existing one is confusing for the person even if the server accepts it. Requires an existing workbook (404 otherwise — use `open_forecast_interview` or `generate_project_forecast` to create one) and the `edit` right on finances. Returns the scenario (ID, key, label, position) and the workbook `version` token.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/financial-forecast/workbook/scenario","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Label',
+					name: 'label',
+					type: 'string',
+					required: true,
+					description: 'Tab name shown to the person',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Cost Swing Pct',
+							name: 'costSwingPct',
+							type: 'number',
+							description: 'Uniform cost multiplier in %. Default 0.',
+							default: 0,
+						},
+						{
+							displayName: 'Revenue Swing Pct',
+							name: 'revenueSwingPct',
+							type: 'number',
+							description: 'Uniform revenue multiplier in %. Default 0.',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createForecastSection',
 			name: 'Create Forecast Section',
 			action: 'Add a section to group lines within a forecast workbook sheet (e.g',
@@ -150,6 +304,61 @@ export const financialForecastResource: GeneratedResource = {
 				{
 					displayName: 'Line ID',
 					name: 'lineId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteForecastProduct',
+			name: 'Delete Forecast Product',
+			action: 'Remove a product line from the financial forecast workbook',
+			description: 'Remove a product line from the financial forecast workbook. Same `baseVersion` concurrency guard as the creation. Destructive: the line and its projected revenue disappear from the forecast.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/financial-forecast/workbook/product","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Section ID',
+					name: 'sectionId',
+					type: 'string',
+					required: true,
+					description: 'Workbook section UUID holding the product',
+					default: '',
+				},
+				{
+					displayName: 'Base Version',
+					name: 'baseVersion',
+					type: 'string',
+					required: true,
+					description: 'ISO-8601 version of the workbook you read (concurrency guard)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteForecastScenario',
+			name: 'Delete Forecast Scenario',
+			action: 'Delete a derived forecast scenario AND every cell override it carried — the overrides go with it, in cascade, and there is no undo',
+			description: 'Delete a derived forecast scenario AND every cell override it carried — the overrides go with it, in cascade, and there is no undo. The reference scenario cannot be deleted (the server refuses: everything else derives from it). Tell the person how many adjustments are attached before deleting: `list_forecast_scenarios` returns each scenario\'s `overrides`, and the response\'s `removedOverrides` confirms what disappeared. To keep the scenario but drop its adjustments, use `reset_forecast_scenario_overrides` instead.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/financial-forecast/workbook/scenario","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Scenario ID',
+					name: 'scenarioId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -273,6 +482,81 @@ export const financialForecastResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'listForecastScenarios',
+			name: 'List Forecast Scenarios',
+			action: 'List the scenarios (tabs) of a project\'s forecast workbook: for each, its `ID` (what `create_forecast_scenario`, `update_forecast_scenario`, `delete_forecast_scenario`, `set_forecast_scenario_overrides` and `reset_forecast_scenario_overrides` all take), `key`, `label`, `isBase` (the reference — not renamable, not deletable, no overrides), `revenueSwingPct`, `costSwingPct`, `position` and its cell `overrides` (a map `"&lt;lineId&gt;:&lt;monthIndex&gt;" → value`)',
+			description: 'List the scenarios (tabs) of a project\'s forecast workbook: for each, its `ID` (what `create_forecast_scenario`, `update_forecast_scenario`, `delete_forecast_scenario`, `set_forecast_scenario_overrides` and `reset_forecast_scenario_overrides` all take), `key`, `label`, `isBase` (the reference — not renamable, not deletable, no overrides), `revenueSwingPct`, `costSwingPct`, `position` and its cell `overrides` (a map `"&lt;lineId&gt;:&lt;monthIndex&gt;" → value`). It is the ONLY source of a scenario ID: `get_forecast_workbook` reads the grid and never returns the scenarios. The response also carries the whole `workbook` and its `version` token; if you only need the grid, `get_forecast_workbook` is lighter. `workbook: null` with an empty list means the project has no forecast yet — `open_forecast_interview` or `generate_project_forecast` creates one. Reading converts a legacy forecast into a workbook once, exactly as the app does on first open.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/financial-forecast/workbook","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'openForecastInterview',
+			name: 'Open Forecast Interview',
+			action: 'Open the assisted financial-forecast interview for a project — FREE',
+			description: 'Open the assisted financial-forecast interview for a project — FREE. The route stopped charging on 2026-08-28, its own header says so: opening costs nothing, the price moved to the CLOSING. Two things happen here: if the project has no forecast workbook yet, one is seeded server-side from the project\'s sector (the official pack when one matches, an AI-written pack otherwise), and a 24-hour interview session is opened with the finance agent. The interview itself is then held IN THE APP (Finance › Prévisionnel, the « Directeur financier » chat) — you cannot conduct it from here; tell the person to go there, or to use the workbook tools (`get_forecast_workbook`, `set_forecast_cell`, `create_forecast_line`…) if they prefer filling the numbers directly. Idempotent: calling it while a session is open returns that session unchanged (`previsionnel_session_open`, with `session`, `cost` and `seed` describing what was created, if anything). The session closes by itself after 24 h without a message. CLOSING the interview — which generates the forecast from what was said — is the paid step: 1 200 credits, via the in-app button or `close_forecast_interview`; the `cost` field of the response is that price, announce it before the person starts. Requires the `edit` right on the project\'s finances (opt-in) and the forecast section not hidden.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/financial-forecast/assisted/session","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Locale',
+							name: 'locale',
+							type: 'options',
+							description: 'Language of the seeded workbook labels. Default fr.',
+							default: 'en',
+							options: [
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'resetForecastScenarioOverrides',
+			name: 'Reset Forecast Scenario Overrides',
+			action: 'Wipe EVERY cell adjustment of a derived scenario so it shows the reference numbers again — its swing percentages survive (they are a setting, not an adjustment)',
+			description: 'Wipe EVERY cell adjustment of a derived scenario so it shows the reference numbers again — its swing percentages survive (they are a setting, not an adjustment). No undo; `list_forecast_scenarios` shows how many overrides the scenario carries, and the response\'s `cleared` confirms it. For a single cell, send `value: null` through `set_forecast_scenario_overrides` instead. The reference scenario has no overrides and is refused.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/financial-forecast/workbook/scenario/override","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Scenario ID',
+					name: 'scenarioId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'setForecastCell',
 			name: 'Set Forecast Cell',
 			action: 'Set (or clear) the VALUE of one or more cells of the financial forecast workbook',
@@ -297,10 +581,58 @@ export const financialForecastResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'setForecastScenarioOverrides',
+			name: 'Set Forecast Scenario Overrides',
+			action: 'Set or remove cell adjustments on a DERIVED scenario of the forecast — the way to write a number « under » a scenario without touching the reference workbook',
+			description: 'Set or remove cell adjustments on a DERIVED scenario of the forecast — the way to write a number « under » a scenario without touching the reference workbook. Never use `set_forecast_cell` for that: it writes the reference and would freeze the scenario\'s rewritten formula. Each override names a line (`lineId` from `get_forecast_workbook`), a month index (0-based from the workbook\'s start month, below its horizon) and a `value`; `value: null` REMOVES the adjustment so the cell falls back to the reference — do not write 0 to « undo », 0 is a value. Lines of type `parameter` (their value lives in line attributes, adjust it on the reference) and `computed` (formula-driven, adjust the lines it cites) are refused with an explanatory 400. Pass `baseVersion` (the `version` returned by the workbook reads/writes) to get a 409 instead of overwriting a change made meanwhile in the app; omit it to write unconditionally. Up to 2 160 overrides per call. `scenarioId` comes from `list_forecast_scenarios`. Returns `{ saved, version }`.',
+			routeSpec: {"method":"PUT","path":"/api/aurentia/financial-forecast/workbook/scenario/override","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Scenario ID',
+					name: 'scenarioId',
+					type: 'string',
+					required: true,
+					description: 'A derived scenario, from list_forecast_scenarios',
+					default: '',
+				},
+				{
+					displayName: 'Overrides',
+					name: 'overrides',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Base Version',
+							name: 'baseVersion',
+							type: 'string',
+							description: 'Workbook version token for optimistic concurrency. Optional.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'updateForecastLine',
 			name: 'Update Forecast Line',
 			action: 'Rename, reposition, reparent (to another section, or to the sheet root with sectionId=null), or update the attributes of a forecast workbook line',
-			description: 'Rename, reposition, reparent (to another section, or to the sheet root with sectionId=null), or update the attributes of a forecast workbook line. Each field is applied only when present — at least one of label/position/sectionId/attributes is required. UNITS ARE A CONTRACT, and getting one wrong is silent: annualRate is a DECIMAL FRACTION (0.04 means 4% a year, NEVER 4 — sending 4 would mean 400% and multiply financial charges by a hundred); principal/amount are in the workbook currency, excluding VAT; monthIndex is 0-BASED from the start of the workbook (0 = month 1 on screen); durationMonths/deferralMonths/amortYears are plain counts. A loan line reads exactly principal, monthIndex, annualRate, durationMonths, deferralMonths — any other spelling is ignored and read as 0. Never set attributes.value or attributes.key on a \'parameter\' line: its value is edited through its cell, not here. attributes.formula and a top-level formula are REFUSED: no verb writes a line\'s formula, and the engine never reads an attribute of that name.',
+			description: 'Rename, reposition, reparent (to another section, or to the sheet root with sectionId=null), or update the attributes of a forecast workbook line. Each field is applied only when present — at least one of label/position/sectionId/attributes is required. UNITS ARE A CONTRACT, and getting one wrong is silent: annualRate is a DECIMAL FRACTION (0.04 means 4% a year, NEVER 4 — sending 4 would mean 400% and multiply financial charges by a hundred); principal/amount are in the workbook currency, excluding VAT; monthIndex is 0-BASED from the start of the workbook (0 = month 1 on screen); durationMonths/deferralMonths/amortYears are plain counts. A loan line reads exactly principal, monthIndex, annualRate, durationMonths, deferralMonths — any other spelling is ignored and read as 0. Never set attributes.value or attributes.key on a \'parameter\' line: its value is edited through its cell, not here. attributes.formula and a top-level formula are REFUSED: no verb writes a line\'s formula, and the engine never reads an attribute of that name. RENAMING a \'revenue\' line onto the name of a product that ALREADY EXISTS — a product block of this workbook, or a priced product sheet in the project catalogue — is REFUSED with 409 REVENU_EN_DOUBLE_D_UN_PRODUIT, because the same revenue would then be counted twice: put its sales on that product block, or create the product with create_forecast_product, or pick another label. A \'personnel\' line reads exactly three attributes, spelled lowercase with the underscore (attributes are MERGED, so any other spelling coexists with them instead of replacing them): annualgross (annual GROSS per person, or the pay actually taken out when the status is tns), chargerate (a DECIMAL FRACTION, 0.42 for 42%, never 42) and pay_status, one of \'salarie\' | \'dirigeant_assimile\' | \'tns\' | \'micro\' — it is what tells the screen whether annualgross is a gross salary or pay taken out, so set it together with chargerate; any other value is refused (STATUT_INCONNU).',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/financial-forecast/workbook/line","queryParams":[]},
 			properties: [
 				{
@@ -349,6 +681,57 @@ export const financialForecastResource: GeneratedResource = {
 							type: 'string',
 							description: 'Target section UUID (must belong to the same sheet as the line), or null to move the line to the sheet root',
 							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateForecastScenario',
+			name: 'Update Forecast Scenario',
+			action: 'Rename a derived forecast scenario and/or change its swing percentages',
+			description: 'Rename a derived forecast scenario and/or change its swing percentages. Send ONLY the fields you change: a PATCH with just `label` leaves the swings exactly as they were (there are no defaults that would reset them). At least one field is required. The REFERENCE scenario (`isBase: true` in `list_forecast_scenarios`) cannot be renamed nor given a swing — it IS the workbook; the server refuses. Changing a swing re-multiplies every revenue/cost line of that scenario immediately; it does not touch cell overrides. Returns the updated scenario and the workbook `version`.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/financial-forecast/workbook/scenario","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Scenario ID',
+					name: 'scenarioId',
+					type: 'string',
+					required: true,
+					description: 'From list_forecast_scenarios. Must be a derived scenario.',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Cost Swing Pct',
+							name: 'costSwingPct',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Label',
+							name: 'label',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Revenue Swing Pct',
+							name: 'revenueSwingPct',
+							type: 'number',
+							default: 0,
 						},
 					],
 				}

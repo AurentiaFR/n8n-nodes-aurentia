@@ -134,6 +134,54 @@ export const notesResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createNoteComment',
+			name: 'Create Note Comment',
+			action: 'Leave a comment on a note/page, visible to everyone who can open it',
+			description: 'Leave a comment on a note/page, visible to everyone who can open it. discussion_id is the thread key: reuse the discussion_id of an existing thread to add to it (and pass parent_comment_id to reply to a specific message), or generate a fresh UUID to open a new thread — a thread opened from here is not anchored to a text selection, it shows in the page\'s comments panel. body is PLAIN TEXT (1-10 000 chars), unlike base record comments. Comments are addressed to the team: never write private notes to yourself here.',
+			routeSpec: {"method":"POST","path":"/api/notes/{id}/comments","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Note ID',
+					default: '',
+				},
+				{
+					displayName: 'Discussion ID',
+					name: 'discussion_id',
+					type: 'string',
+					required: true,
+					description: 'Thread key (existing one, or a new UUID)',
+					default: '',
+				},
+				{
+					displayName: 'Body',
+					name: 'body',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Parent Comment ID',
+							name: 'parent_comment_id',
+							type: 'string',
+							description: 'Comment ID being replied to, inside the same thread',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createNoteTabs',
 			name: 'Create Note Tabs',
 			action: 'Crée un nouveau bloc onglets dans une note : un onglet vide par libellé, dans l\'ordre fourni',
@@ -175,6 +223,50 @@ export const notesResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createNoteTemplate',
+			name: 'Create Note Template',
+			action: 'Save a personal PAGE TEMPLATE the user can pick when creating a new note ("enregistre cette page comme modèle Compte rendu")',
+			description: 'Save a personal PAGE TEMPLATE the user can pick when creating a new note ("enregistre cette page comme modèle Compte rendu"). Pass a name, optional icon (emoji) and cover, and the content_jsonb read from the source note with get_note_jsonb — the template stores that document. Templates are private to the user and encrypted like notes. Curated Aurentia templates live in code and cannot be edited here.',
+			routeSpec: {"method":"POST","path":"/api/notes/templates","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Content Jsonb',
+							name: 'content_jsonb',
+							type: 'json',
+							description: 'Editor document (array of nodes). (provide a JSON object).',
+							default: '',
+						},
+						{
+							displayName: 'Cover',
+							name: 'cover',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Icon',
+							name: 'icon',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'deleteNote',
 			name: 'Delete Note',
 			action: 'Delete a note/page',
@@ -187,6 +279,31 @@ export const notesResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteNoteComment',
+			name: 'Delete Note Comment',
+			action: 'Permanently delete a note comment and its replies',
+			description: 'Permanently delete a note comment and its replies. Allowed for the comment\'s author or the NOTE\'S OWNER (moderation of a shared page); anyone else gets 403. No trash — prefer update_note_comment with resolved true to close a discussion without erasing it.',
+			routeSpec: {"method":"DELETE","path":"/api/notes/{id}/comments/{comment_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Comment ID',
+					name: 'comment_id',
+					type: 'string',
+					required: true,
+					description: 'The comment ID for this operation',
 					default: '',
 				}
 			],
@@ -213,6 +330,56 @@ export const notesResource: GeneratedResource = {
 					required: true,
 					description: 'ID de l\'onglet (voir get_note_tabs)',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteNoteTemplate',
+			name: 'Delete Note Template',
+			action: 'Delete one of the user\'s personal page templates',
+			description: 'Delete one of the user\'s personal page templates. Permanent — no trash. Pages already created from it are untouched. Template IDs come from GET /api/notes/templates (no MCP tool yet — take the ID from the create_note_template response or ask the user).',
+			routeSpec: {"method":"DELETE","path":"/api/notes/templates/{template_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Template ID',
+					name: 'template_id',
+					type: 'string',
+					required: true,
+					description: 'The template ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'duplicateNote',
+			name: 'Duplicate Note',
+			action: 'Duplicate a note/page AND its whole sub-page tree: every descendant is cloned and the sub-page links inside the copies are rewritten to point at the copies',
+			description: 'Duplicate a note/page AND its whole sub-page tree: every descendant is cloned and the sub-page links inside the copies are rewritten to point at the copies. The root copy stays in the same folder and scope (personal or project) as the original. title names the root copy (defaults to the original\'s title). Use it for "fais une copie de ma page Process pour le client B"; use create_note when the user wants a blank page.',
+			routeSpec: {"method":"POST","path":"/api/notes/{id}/duplicate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							description: 'Title of the root copy (optional)',
+							default: '',
+						},
+					],
 				}
 			],
 		},
@@ -335,6 +502,72 @@ export const notesResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'moveNoteScope',
+			name: 'Move Note Scope',
+			action: 'Move a page between the user\'s PERSONAL notes and a PROJECT wiki: project_id = a project UUID makes it a shared wiki page of that project (collaborator sharing is switched on, edit rights on the project required — 403 otherwise); null makes it personal again',
+			description: 'Move a page between the user\'s PERSONAL notes and a PROJECT wiki: project_id = a project UUID makes it a shared wiki page of that project (collaborator sharing is switched on, edit rights on the project required — 403 otherwise); null makes it personal again. The whole sub-page tree moves with it and the page becomes a ROOT of its new scope (its parent link is dropped). Owner-only (403). Use it for "mets cette note dans le wiki du projet X" — not update_note, whose parent_id only moves within the same scope.',
+			routeSpec: {"method":"POST","path":"/api/notes/{id}/scope","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					description: 'Target project UUID, or null for personal',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'publishNote',
+			name: 'Publish Note',
+			action: 'Publish a note/page (or a brand charter) as a PUBLIC web page at /n/{token}, readable by anyone with the link — the gesture for "partage cette page avec mon imprimeur / mon agence"',
+			description: 'Publish a note/page (or a brand charter) as a PUBLIC web page at /n/{token}, readable by anyone with the link — the gesture for "partage cette page avec mon imprimeur / mon agence". Owner-only (403). Every call mints a NEW token and invalidates the previous public link, so do not call it "to check": ask the user first. Returns { note, shareToken } — the token is shown once, build and hand over the URL immediately. Optional password (empty string = none) and expiresAt (ISO date; invalid date → 400). unpublish_note closes the page.',
+			routeSpec: {"method":"POST","path":"/api/notes/{id}/publish","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Expires At',
+							name: 'expiresAt',
+							type: 'string',
+							description: 'Optional ISO datetime after which the link dies',
+							default: '',
+						},
+						{
+							displayName: 'Password',
+							name: 'password',
+							type: 'string',
+							description: 'Optional visitor password',
+							typeOptions: { password: true },
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'restoreNote',
 			name: 'Restore Note',
 			action: 'Restore a soft-deleted note/page (clears deleted_at; reattaches to root if the parent is still deleted)',
@@ -352,6 +585,31 @@ export const notesResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'restoreNoteVersion',
+			name: 'Restore Note Version',
+			action: 'Write a saved version back onto the live note (title + content)',
+			description: 'Write a saved version back onto the live note (title + content). Safe: the current state is snapshotted first, so a restore can itself be restored. Use it for "reviens à la version d\'hier". Version IDs come from the note\'s history (the user\'s Versions panel — no MCP list yet). Returns the version metadata of the restored state.',
+			routeSpec: {"method":"POST","path":"/api/notes/{id}/versions/{version_id}/restore","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Note ID',
+					default: '',
+				},
+				{
+					displayName: 'Version ID',
+					name: 'version_id',
+					type: 'string',
+					required: true,
+					description: 'The version ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'searchNotes',
 			name: 'Search Notes',
 			action: 'Full-text search in notes/pages',
@@ -363,6 +621,75 @@ export const notesResource: GeneratedResource = {
 					name: 'query',
 					type: 'string',
 					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'snapshotNoteVersion',
+			name: 'Snapshot Note Version',
+			action: 'Save a named VERSION of a note (its "Save version" button) so the user can come back to it later with restore_note_version',
+			description: 'Save a named VERSION of a note (its "Save version" button) so the user can come back to it later with restore_note_version. The snapshot stores exactly what you SEND, not what is in the note: read the note first (get_note_jsonb) and pass its current title and content_jsonb, plus a short change_summary saying why ("avant refonte", "version validée par Paul"). Do it before any large rewrite of a page. Never set change_summary to "__agent_edit__" — that sentinel is reserved for automatic snapshots.',
+			routeSpec: {"method":"POST","path":"/api/notes/{id}/versions","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Change Summary',
+							name: 'change_summary',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Content',
+							name: 'content',
+							type: 'string',
+							description: 'Plain-text mirror (optional)',
+							default: '',
+						},
+						{
+							displayName: 'Content Jsonb',
+							name: 'content_jsonb',
+							type: 'json',
+							description: 'Editor document as read from get_note_jsonb. (provide a JSON object).',
+							default: '',
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'unpublishNote',
+			name: 'Unpublish Note',
+			action: 'Take a published note offline: the /n/{token} link dies immediately, password and expiry are cleared',
+			description: 'Take a published note offline: the /n/{token} link dies immediately, password and expiry are cleared. Owner-only. Republishing later gives a different URL. Returns the note.',
+			routeSpec: {"method":"DELETE","path":"/api/notes/{id}/publish","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
 					default: '',
 				}
 			],
@@ -412,6 +739,53 @@ export const notesResource: GeneratedResource = {
 							name: 'title',
 							type: 'string',
 							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateNoteComment',
+			name: 'Update Note Comment',
+			action: 'Edit the text of a note comment, or resolve/unresolve its thread',
+			description: 'Edit the text of a note comment, or resolve/unresolve its thread. Text edits are AUTHOR-ONLY (403 otherwise); resolving is open to anyone who can access the note — use resolved true for "ce point est traité" on any thread. At least one of body / resolved is required.',
+			routeSpec: {"method":"PATCH","path":"/api/notes/{id}/comments/{comment_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Note ID',
+					default: '',
+				},
+				{
+					displayName: 'Comment ID',
+					name: 'comment_id',
+					type: 'string',
+					required: true,
+					description: 'The comment ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Body',
+							name: 'body',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Resolved',
+							name: 'resolved',
+							type: 'boolean',
+							description: 'Whether to enable resolved',
+							default: false,
 						},
 					],
 				}

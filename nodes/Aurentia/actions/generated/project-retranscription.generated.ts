@@ -8,8 +8,8 @@ export const projectRetranscriptionResource: GeneratedResource = {
 		{
 			value: 'createProject',
 			name: 'Create Project',
-			action: 'Create a new entrepreneur project from a brief (voice-retranscription entry point)',
-			description: 'Create a new entrepreneur project from a brief (voice-retranscription entry point). Runs AI retranscription of the user\'s idea into structured project fields (value proposition, product/service, target customers, etc.). After creation, suggest the user open /projet/{projectId} to view the dashboard, or auto-call generate_project_modules to start the AI module generation. Returns { projectId, retranscription }.',
+			action: 'LAUNCH a project — « lance mon projet », « ouvre-moi un projet pour cette IDée »',
+			description: 'LAUNCH a project — « lance mon projet », « ouvre-moi un projet pour cette IDée ». Creates the project from a brief (voice-retranscription entry point) and runs the AI retranscription of the idea into structured fields (value proposition, product/service, target customers…). The project comes out ALREADY EQUIPPED, not as an empty shell: its CRM pipelines and its entry task board are seeded right after the answer, so the first lead and the first task have somewhere to land. Do NOT call `auto_provision_crm` or `create_board` behind this — that is what `seed_crm` / `seed_board` already did, and both are idempotent. THE ACTION PLAN IS NOT PART OF IT: it costs 1 500 credits and must be asked for explicitly (`create_action_plan_draft`, then `generate_action_plan`, then poll `get_action_plan_status`). After creation, suggest the user open /projet/{projectId}, or call generate_project_modules to start the AI module generation. Returns { projectID, retranscription }.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/project-retranscription","queryParams":[]},
 			properties: [
 				{
@@ -80,7 +80,7 @@ export const projectRetranscriptionResource: GeneratedResource = {
 							displayName: 'Organization ID',
 							name: 'organizationId',
 							type: 'string',
-							description: 'Optional incubator/agency organisation ID',
+							description: 'Optional incubator/agency organisation UUID — the caller MUST be an active member of it, otherwise the call is rejected with 403. Omit it to let the server attach the project to the user primary organisation.',
 							default: '',
 						},
 						{
@@ -121,6 +121,20 @@ export const projectRetranscriptionResource: GeneratedResource = {
 							type: 'string',
 							description: 'SaaS / e-commerce / service / etc',
 							default: '',
+						},
+						{
+							displayName: 'Seed Board',
+							name: 'seed_board',
+							type: 'boolean',
+							description: 'Whether creates the entry task board, so the first task has somewhere to land. Idempotent. Leave it out.',
+							default: false,
+						},
+						{
+							displayName: 'Seed CRM',
+							name: 'seed_crm',
+							type: 'boolean',
+							description: 'Whether seeds the default CRM pipelines and stages on the new project. Idempotent. Leave it out — false gives a project whose CRM is empty until someone opens the CRM screen.',
+							default: false,
 						},
 						{
 							displayName: 'Team Size',

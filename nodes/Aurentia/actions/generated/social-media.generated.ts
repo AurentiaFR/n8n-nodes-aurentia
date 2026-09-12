@@ -8,23 +8,228 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'adaptContent',
 			name: 'Adapt Content',
-			action: 'Adapt content for another platform',
-			description: 'Adapt content for another platform',
+			action: 'Rewrite one piece of content for other platforms (a LinkedIn post turned into an X thread, an Instagram caption…)',
+			description: 'Rewrite one piece of content for other platforms (a LinkedIn post turned into an X thread, an Instagram caption…). Works on TEXT, not on a post ID: read the post with get_post first and paste its text here. Returns one adapted version per target platform; it writes nothing — create or update the posts yourself afterwards.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/generate/adapt-content","queryParams":[]},
 			properties: [
 				{
-					displayName: 'Post ID',
-					name: 'post_id',
+					displayName: 'Original Text',
+					name: 'originalText',
+					type: 'string',
+					required: true,
+					description: 'The full text to adapt, exactly as it stands today. Not an ID, not a summary — the model rewrites what you give it.',
+					default: '',
+				},
+				{
+					displayName: 'Target Platforms',
+					name: 'targetPlatforms',
+					type: 'json',
+					required: true,
+					description: 'Lowercase platform IDs to adapt FOR, at least one (linkedin, twitter, instagram, facebook, tiktok…). One rewritten version comes back per entry. (provide a JSON array)',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Max Length',
+							name: 'maxLength',
+							type: 'number',
+							description: 'Hard character cap for each adapted version, when the person wants it short or a platform limit matters',
+							default: 0,
+						},
+						{
+							displayName: 'Source Platform',
+							name: 'sourcePlatform',
+							type: 'string',
+							description: 'Platform the original text was written for. Giving it makes the rewrite sharper — the model knows which conventions to drop.',
+							default: '',
+						},
+						{
+							displayName: 'Tone Of Voice',
+							name: 'toneOfVoice',
+							type: 'string',
+							description: 'Tone to keep or to shift to. Omit it to preserve the tone of the original text.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'addGbpMedia',
+			name: 'Add Gbp Media',
+			action: 'PUBLIE une photo ou une vidéo sur la fiche Google Business Profile (visible immédiatement par les clients sur Google Maps)',
+			description: 'PUBLIE une photo ou une vidéo sur la fiche Google Business Profile (visible immédiatement par les clients sur Google Maps). Appelle-le pour « mets cette photo sur ma fiche Google », « change la photo de couverture ». `category` : `PROFILE` (logo), `COVER` (couverture), `INTERIOR`, `EXTERIOR`, `PRODUCT`, `ADDITIONAL`. Fournis SOIT `sourceUrl` (URL publique de l\'image/vidéo — elle est d\'abord envoyée chez Bundle.social puis attachée), SOIT `uploadId` (un upload Bundle.social déjà existant, par ex. issu de la médiathèque). Rien d\'autre n\'est stocké côté Aurentia. `projectId` obligatoire. Rend `{ media }` avec son `mediaName` — c\'est la clé pour `delete_gbp_media`.',
+			routeSpec: {"method":"POST","path":"/api/social-media/gbp/media","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
 				},
 				{
-					displayName: 'Target Platform',
-					name: 'target_platform',
+					displayName: 'Category',
+					name: 'category',
+					type: 'options',
+					required: true,
+					default: 'ADDITIONAL',
+					options: [
+						{ name: 'ADDITIONAL', value: 'ADDITIONAL' },
+						{ name: 'COVER', value: 'COVER' },
+						{ name: 'EXTERIOR', value: 'EXTERIOR' },
+						{ name: 'INTERIOR', value: 'INTERIOR' },
+						{ name: 'PRODUCT', value: 'PRODUCT' },
+						{ name: 'PROFILE', value: 'PROFILE' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Source URL',
+							name: 'sourceUrl',
+							type: 'string',
+							description: 'URL publique du média (l\'un de sourceUrl / uploadId est requis)',
+							default: '',
+						},
+						{
+							displayName: 'Upload ID',
+							name: 'uploadId',
+							type: 'string',
+							description: 'Identifiant d\'upload Bundle.social existant',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'addRedditSubreddit',
+			name: 'Add Reddit Subreddit',
+			action: 'Ajoute un subreddit à la veille d\'un projet — il sera parcouru à chaque scan',
+			description: 'Ajoute un subreddit à la veille d\'un projet — il sera parcouru à chaque scan. `subreddit_name` sans le `r/` (lettres, chiffres, underscore, ≤ 21 car.). Appelle-le quand l\'utilisateur nomme une communauté à suivre, ou après `suggest_subreddits` pour enregistrer celles qu\'il retient (la suggestion n\'enregistre rien). 409 si le subreddit est déjà suivi. `projectId` obligatoire. Rend le subreddit créé (201). Pour l\'enlever, `remove_reddit_subreddit`.',
+			routeSpec: {"method":"POST","path":"/api/social-media/reddit/subreddits","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet de veille',
+					default: '',
+				},
+				{
+					displayName: 'Subreddit Name',
+					name: 'subreddit_name',
+					type: 'string',
+					required: true,
+					description: 'Nom du subreddit sans r/',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'addRedditWatchlistKeyword',
+			name: 'Add Reddit Watchlist Keyword',
+			action: 'Ajoute un mot-clé à la watchlist Reddit d\'un projet : les fils qui le contiennent remontent au scan',
+			description: 'Ajoute un mot-clé à la watchlist Reddit d\'un projet : les fils qui le contiennent remontent au scan. `type` : `keyword` (sujet général), `brand` (la marque de l\'utilisateur — alimente l\'onglet Mentions), `competitor` (une marque concurrente), `topic`. `expression` (facultatif, ≤ 500 car.) : mini-langage booléen `AND` / `OR` / `NOT`, les groupes de mots entre guillemets (ex. `"machine learning" AND NOT cours`) — une expression mal formée est refusée avec le détail. 409 si le mot-clé existe déjà. `projectId` obligatoire. Appelle-le après `suggest_reddit_watchlist_keywords` pour enregistrer les mots-clés retenus, ou quand l\'utilisateur dit « surveille aussi le mot X ».',
+			routeSpec: {"method":"POST","path":"/api/social-media/reddit/watchlist","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet de veille',
+					default: '',
+				},
+				{
+					displayName: 'Keyword',
+					name: 'keyword',
 					type: 'string',
 					required: true,
 					default: '',
+				},
+				{
+					displayName: 'Type',
+					name: 'type',
+					type: 'options',
+					required: true,
+					default: 'brand',
+					options: [
+						{ name: 'Brand', value: 'brand' },
+						{ name: 'Competitor', value: 'competitor' },
+						{ name: 'Keyword', value: 'keyword' },
+						{ name: 'Topic', value: 'topic' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Expression',
+							name: 'expression',
+							type: 'string',
+							description: 'Expression booléenne AND/OR/NOT, phrases entre guillemets (facultatif)',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'addVideoToYoutubePlaylist',
+			name: 'Add Video To Youtube Playlist',
+			action: 'Range une vidéo déjà publiée sur YouTube dans une playlist de la chaîne connectée',
+			description: 'Range une vidéo déjà publiée sur YouTube dans une playlist de la chaîne connectée. Appelle-le après une publication YouTube (« ajoute cette vidéo à ma playlist Tutoriels ») ou pour réorganiser une chaîne. `postId` est l\'identifiant Bundle.social du post YouTube publié (pas l\'identifiant de vidéo YouTube, pas l\'UUID `social_posts` d\'Aurentia) — récupère-le sur la ligne plateforme du post. `position` (entier ≥ 0) place la vidéo à cet index dans la playlist ; omis, elle va à la fin. Ne l\'appelle pas sur un post encore en brouillon ou programmé : la vidéo n\'existe pas encore sur YouTube. Impose un compte YouTube relié par Bundle.social.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/bundle-social/youtube/playlists/{playlistId}/videos","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Playlist ID',
+					name: 'playlistId',
+					type: 'string',
+					required: true,
+					description: 'Identifiant YouTube de la playlist cible',
+					default: '',
+				},
+				{
+					displayName: 'Post ID',
+					name: 'postId',
+					type: 'string',
+					required: true,
+					description: 'Identifiant Bundle.social du post YouTube publié à ajouter',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Position',
+							name: 'position',
+							type: 'number',
+							description: 'Index dans la playlist ; omis = à la fin',
+							default: 0,
+						},
+					],
 				}
 			],
 		},
@@ -63,15 +268,123 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'attachCarouselToPost',
+			name: 'Attach Carousel To Post',
+			action: 'Greffe les images rendues d\'un carrousel sur un post EXISTANT : les slides deviennent les médias du post, le format passe à `carousel`, et la légende n\'est remplie avec la caption IA que si le post n\'en avait pas (un texte écrit par l\'utilisateur est conservé tel quel)',
+			description: 'Greffe les images rendues d\'un carrousel sur un post EXISTANT : les slides deviennent les médias du post, le format passe à `carousel`, et la légende n\'est remplie avec la caption IA que si le post n\'en avait pas (un texte écrit par l\'utilisateur est conservé tel quel). Appelle-le quand l\'utilisateur a un post en cours et dit « mets le carrousel dedans », « utilise ces slides pour ce post ». Impose un carrousel `ready` avec des images rendues (400 sinon) et un post qui appartient à l\'utilisateur. Ne publie rien. Si le post n\'existe pas encore, préfère `create_post_from_carousel`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/posts/{id}/attach-carousel","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du post cible',
+					default: '',
+				},
+				{
+					displayName: 'Carousel ID',
+					name: 'carouselId',
+					type: 'string',
+					required: true,
+					description: 'UUID du carrousel rendu (statut ready)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'blogToPosts',
 			name: 'Blog To Posts',
-			action: 'Convert a blog article into social posts',
-			description: 'Convert a blog article into social posts',
+			action: 'Turn a long article into social posts',
+			description: 'Turn a long article into social posts. Asynchronous: it returns a job — poll get_blog_to_posts_job, then create_blog_posts to actually write the posts. `sourceType` decides WHERE the article comes from and which source field must travel with it; sending the wrong pair is refused (400).',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/generate/blog-to-posts","queryParams":[]},
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project UUID (injected from the session when you have one)',
+					default: '',
+				},
+				{
+					displayName: 'Source Type',
+					name: 'sourceType',
+					type: 'options',
+					required: true,
+					description: 'Where the article comes from, and it dictates the companion field: \'blog_article\' needs sourceBlogArticleId (an article of the project\'s own blog), \'external_url\' needs sourceUrl, \'manual\' needs sourceContent (the text pasted in full). Any other combination is rejected.',
+					default: 'blog_article',
+					options: [
+						{ name: 'Blog Article', value: 'blog_article' },
+						{ name: 'External URL', value: 'external_url' },
+						{ name: 'Manual', value: 'manual' },
+					],
+				},
+				{
+					displayName: 'Platforms',
+					name: 'platforms',
+					type: 'json',
+					required: true,
+					description: 'Lowercase platform IDs to write for, at least one. Each one adds posts to the job, so send the platforms the project really publishes on. (provide a JSON array)',
+					default: '[]',
+				},
+				{
+					displayName: 'Formats',
+					name: 'formats',
+					type: 'json',
+					required: true,
+					description: 'Post shapes to produce, at least one. `post` is the default single text post; `carousel` and `reel` only make sense on the platforms that support them. (provide a JSON array)',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Custom Instructions',
+							name: 'customInstructions',
+							type: 'string',
+							description: 'Angle or constraints for the rewrite ("garde le ton pédagogique", "insiste sur le prix"), max 2000 characters',
+							default: '',
+						},
+						{
+							displayName: 'Source Blog Article ID',
+							name: 'sourceBlogArticleId',
+							type: 'string',
+							description: 'UUID of an article of the project\'s blog, when sourceType is blog_article (list_blog_articles)',
+							default: '',
+						},
+						{
+							displayName: 'Source Content',
+							name: 'sourceContent',
+							type: 'string',
+							description: 'The article text itself, when sourceType is manual. Paste it whole (up to 100 000 characters) — the model has no other access to it.',
+							default: '',
+						},
+						{
+							displayName: 'Source URL',
+							name: 'sourceUrl',
+							type: 'string',
+							description: 'Full URL of the article, when sourceType is external_url',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'buildLinkedinMentionText',
+			name: 'Build Linkedin Mention Text',
+			action: 'Turn a LinkedIn post text plus a list of people/companies to tag into the exact text LinkedIn expects for @-mentions, ready to paste into `content.text` of `create_post` / `update_post`',
+			description: 'Turn a LinkedIn post text plus a list of people/companies to tag into the exact text LinkedIn expects for @-mentions, ready to paste into `content.text` of `create_post` / `update_post`. Find the mentions first with `social_lookup_linkedin_mentions` (it gives the `urn`, `name` and `type`); pass them here with the plain text in which the names appear. Returns `builtText`. Read-only and free — but do not call it for a post with no mentions, the text is returned unchanged.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/bundle-social/linkedin/build-text","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Text',
+					name: 'text',
 					type: 'string',
 					required: true,
 					default: '',
@@ -84,10 +397,11 @@ export const socialMediaResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Article URL',
-							name: 'article_url',
-							type: 'string',
-							default: '',
+							displayName: 'Mentions',
+							name: 'mentions',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
 						},
 					],
 				}
@@ -128,11 +442,45 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'cancelMediaGeneration',
+			name: 'Cancel Media Generation',
+			action: 'Annule une génération d\'image/vidéo/audio IA encore en file ou en cours (`queued`/`running`) : le job passe en `cancelled`, la génération est annulée chez le fournisseur, et 50 % des crédits débités sont REMBOURSÉS — l\'autre moitié est perdue',
+			description: 'Annule une génération d\'image/vidéo/audio IA encore en file ou en cours (`queued`/`running`) : le job passe en `cancelled`, la génération est annulée chez le fournisseur, et 50 % des crédits débités sont REMBOURSÉS — l\'autre moitié est perdue. Appelle-le quand l\'utilisateur dit « annule cette génération », « laisse tomber la vidéo » ; dis-lui qu\'il ne récupérera que la moitié. Sur un job déjà `completed`/`failed`/`cancelled`, l\'appel ne fait rien et rend `{ refundedCredits: 0 }` (idempotent). Vérifie d\'abord l\'état avec `get_media_generation_status`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/media/jobs/{jobId}/cancel","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Job ID',
+					name: 'jobId',
+					type: 'string',
+					required: true,
+					description: 'UUID du job de génération (jobId rendu par generate_social_image / generate_social_video)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'cancelOrDeletePostHistoryImport',
+			name: 'Cancel Or Delete Post History Import',
+			action: 'Deux effets selon l\'état du job d\'import d\'historique (`import_post_history`) : si le job est encore `queued`/`processing`, il est ANNULÉ (rend `{ action: \'cancelled\' }`) ; s\'il est terminé, TOUS les posts qu\'il a importés sont SUPPRIMÉS d\'Aurentia et retirés en masse chez Bundle.social (rend `{ action: \'deleted\' }`)',
+			description: 'Deux effets selon l\'état du job d\'import d\'historique (`import_post_history`) : si le job est encore `queued`/`processing`, il est ANNULÉ (rend `{ action: \'cancelled\' }`) ; s\'il est terminé, TOUS les posts qu\'il a importés sont SUPPRIMÉS d\'Aurentia et retirés en masse chez Bundle.social (rend `{ action: \'deleted\' }`). Lis d\'abord `get_post_history_import_status` et dis à l\'utilisateur lequel des deux va se produire avant d\'appeler. Ne l\'utilise pas pour « réimporte » : c\'est `retry_post_history_import`. Les analytics natives récupérées avec ces posts disparaissent aussi.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/history-import/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du job d\'import (jobId rendu par import_post_history)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'checkBannedHashtags',
 			name: 'Check Banned Hashtags',
-			action: 'Check a list of hashtags for banned or shadowban-risk terms',
-			description: 'Check a list of hashtags for banned or shadowban-risk terms',
-			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/hashtags/check-banned","queryParams":[]},
+			action: 'Check a list of hashtags against the known banned / shadow-ban list for a platform BEFORE putting them in a post',
+			description: 'Check a list of hashtags against the known banned / shadow-ban list for a platform BEFORE putting them in a post. Returns `allowed` and `banned`. Today only Instagram has a curated list — for any other platform every hashtag comes back allowed, which is « no known ban », not « safe ». Pass the hashtags without or with the leading #, 1 to 50 at a time. Read-only and free: call it on every hashtag set you draft for Instagram, drop what comes back banned, and never present a banned hashtag as fine. Use `suggest_hashtags` / `social_ai_hashtags` to find hashtags, this tool to filter them.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/ai/banned-hashtags","queryParams":[]},
 			properties: [
 				{
 					displayName: 'Hashtags',
@@ -141,6 +489,160 @@ export const socialMediaResource: GeneratedResource = {
 					required: true,
 					description: 'Provide a JSON array',
 					default: '[]',
+				},
+				{
+					displayName: 'Platform',
+					name: 'platform',
+					type: 'options',
+					required: true,
+					default: 'bluesky',
+					options: [
+						{ name: 'Bluesky', value: 'bluesky' },
+						{ name: 'Discord', value: 'discord' },
+						{ name: 'Facebook', value: 'facebook' },
+						{ name: 'Google Business', value: 'google_business' },
+						{ name: 'Instagram', value: 'instagram' },
+						{ name: 'Linkedin', value: 'linkedin' },
+						{ name: 'Mastodon', value: 'mastodon' },
+						{ name: 'Pinterest', value: 'pinterest' },
+						{ name: 'Reddit', value: 'reddit' },
+						{ name: 'Slack', value: 'slack' },
+						{ name: 'Snapchat', value: 'snapchat' },
+						{ name: 'Telegram', value: 'telegram' },
+						{ name: 'Threads', value: 'threads' },
+						{ name: 'Tiktok', value: 'tiktok' },
+						{ name: 'Twitter', value: 'twitter' },
+						{ name: 'Youtube', value: 'youtube' },
+					],
+				}
+			],
+		},
+		{
+			value: 'checkPostDraft',
+			name: 'Check Post Draft',
+			action: '« Vérifier » : rend la liste des points à corriger sur un brouillon de post pour UN réseau (longueur, hashtags, CTA, créneau horaire…) — GRATUIT, aucun modèle appelé, aucun crédit',
+			description: '« Vérifier » : rend la liste des points à corriger sur un brouillon de post pour UN réseau (longueur, hashtags, CTA, créneau horaire…) — GRATUIT, aucun modèle appelé, aucun crédit. Appelle-le avant de proposer une publication, ou quand l\'utilisateur demande « c\'est bon pour LinkedIn ? ». Passe le texte TEL QUE l\'utilisateur veut le publier (`text`, `hashtags`, `call_to_action`, `scheduled_at`, `timezone` IANA) : la route vérifie la requête, pas le post en base — le post doit exister et appartenir à l\'utilisateur. La réponse contient aussi `improveCost`, le prix en crédits d\'`improve_post_draft` : c\'est ce nombre-là que tu annonces, jamais un chiffre de mémoire. Ne l\'appelle pas en boucle sur chaque frappe : rate-limit `query`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/posts/{id}/check","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du post',
+					default: '',
+				},
+				{
+					displayName: 'Platform',
+					name: 'platform',
+					type: 'options',
+					required: true,
+					default: 'bluesky',
+					options: [
+						{ name: 'Bluesky', value: 'bluesky' },
+						{ name: 'Discord', value: 'discord' },
+						{ name: 'Facebook', value: 'facebook' },
+						{ name: 'Google Business', value: 'google_business' },
+						{ name: 'Instagram', value: 'instagram' },
+						{ name: 'Linkedin', value: 'linkedin' },
+						{ name: 'Mastodon', value: 'mastodon' },
+						{ name: 'Pinterest', value: 'pinterest' },
+						{ name: 'Reddit', value: 'reddit' },
+						{ name: 'Slack', value: 'slack' },
+						{ name: 'Snapchat', value: 'snapchat' },
+						{ name: 'Telegram', value: 'telegram' },
+						{ name: 'Threads', value: 'threads' },
+						{ name: 'Tiktok', value: 'tiktok' },
+						{ name: 'Twitter', value: 'twitter' },
+						{ name: 'Youtube', value: 'youtube' },
+					],
+				},
+				{
+					displayName: 'Text',
+					name: 'text',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Call To Action',
+							name: 'call_to_action',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Hashtags',
+							name: 'hashtags',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Scheduled At',
+							name: 'scheduled_at',
+							type: 'string',
+							description: 'Date-heure ISO prévue (facultatif)',
+							default: '',
+						},
+						{
+							displayName: 'Timezone',
+							name: 'timezone',
+							type: 'string',
+							description: 'Fuseau IANA de l\'auteur (ex. Europe/Paris).',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'classifyPostFunnelStage',
+			name: 'Classify Post Funnel Stage',
+			action: 'Classe automatiquement un post dans l\'entonnoir marketing — `tofu` (notoriété : éducatif, large), `mofu` (considération : cas d\'usage, comparatifs), `bofu` (conversion : offre, preuve, appel à l\'action) — et ENREGISTRE le résultat sur le post (`funnel_stage`)',
+			description: 'Classe automatiquement un post dans l\'entonnoir marketing — `tofu` (notoriété : éducatif, large), `mofu` (considération : cas d\'usage, comparatifs), `bofu` (conversion : offre, preuve, appel à l\'action) — et ENREGISTRE le résultat sur le post (`funnel_stage`). Rend `{ funnel_stage, confidence, reasoning }`. Appelle-le quand l\'utilisateur veut équilibrer sa ligne éditoriale (« je publie trop de bofu ? ») ou après un import en masse. Un appel IA par post — ne classe pas 200 posts en boucle sans le dire. Si l\'utilisateur connaît déjà le stade, écris-le directement avec `update_post` (`funnel_stage`) : plus fiable et gratuit.',
+			routeSpec: {"method":"POST","path":"/api/social-media/posts/{id}/auto-classify-funnel","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du post à classer',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'clearDefaultSocialChannel',
+			name: 'Clear Default Social Channel',
+			action: 'Remove the project\'s default Discord or Slack channel',
+			description: 'Remove the project\'s default Discord or Slack channel. IMMEDIATE EFFECT: that platform becomes non-publishable for the whole project until a channel is set again, and scheduled posts targeting it will fail. Only do this when the person explicitly wants the bot to stop publishing there (server left, channel archived) — « change the channel » means `set_default_social_channel`, not this. Nothing is deleted on Discord/Slack themselves; only Aurentia\'s routing is cleared.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/bundle-social/channels","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Platform',
+					name: 'platform',
+					type: 'options',
+					required: true,
+					default: 'discord',
+					options: [
+						{ name: 'Discord', value: 'discord' },
+						{ name: 'Slack', value: 'slack' },
+					],
 				}
 			],
 		},
@@ -148,7 +650,7 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'completeSocialOnboarding',
 			name: 'Complete Social Onboarding',
 			action: 'Finalize social media setup with chosen platforms, formats, brand profile and themes',
-			description: 'Finalize social media setup with chosen platforms, formats, brand profile and themes. Idempotent — re-running updates the config. After: user URL /social-media/calendar.',
+			description: 'Finalize social media setup with chosen platforms, formats, brand profile and themes. GUARDED — refuses (400) unless the sheet is complete (brand mission, brand story, brand personality, tone of voice, value proposition, at least one platform) AND the universe is not empty: at least 3 content pillars, a hashtag group (passed in globalHashtags or derived from selectedPostIdeas), and publishing days for every selected platform (platformStrategies[platform].frequency_per_week > 0). The error message lists exactly what is missing. The 3 starter posts are written for you from selectedPostIdeas (free, once per project) — send ideas that carry real content_preview text. Idempotent — re-running updates the config. After: user URL /social-media/calendar.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/onboarding/complete","queryParams":[]},
 			properties: [
 				{
@@ -190,6 +692,13 @@ export const socialMediaResource: GeneratedResource = {
 							default: '[]',
 						},
 						{
+							displayName: 'Platform Strategies',
+							name: 'platformStrategies',
+							type: 'json',
+							description: 'Map platform → { frequency_per_week, best_times[], recommended_formats[], tone }. Optional: omitted, it is taken from the project\'s active onboarding draft. Every selected platform must end up with frequency_per_week > 0, otherwise the call is refused. (provide a JSON object)',
+							default: '{}',
+						},
+						{
 							displayName: 'Selected Formats',
 							name: 'selectedFormats',
 							type: 'json',
@@ -197,13 +706,44 @@ export const socialMediaResource: GeneratedResource = {
 							default: '{}',
 						},
 						{
+							displayName: 'Selected Post Ideas',
+							name: 'selectedPostIdeas',
+							type: 'json',
+							description: 'Post ideas with { title, content_preview, platform, theme, format, funnel_stage, hashtags }. Optional: omitted, they are taken from the active onboarding draft. Their content_preview becomes the text of the 3 starter posts written for the project. (provide a JSON array)',
+							default: '[]',
+						},
+						{
 							displayName: 'Selected Themes',
 							name: 'selectedThemes',
 							type: 'json',
-							description: 'Final list of content pillars to commit. (provide a JSON array).',
+							description: 'Final list of content pillars to commit. At least 3 are required. (provide a JSON array)',
 							default: '[]',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'configureRedditAssistance',
+			name: 'Configure Reddit Assistance',
+			action: 'Configure or pause automatic replies ONLY to imported comments on the selected account own posts',
+			description: 'Configure or pause automatic replies ONLY to imported comments on the selected account own posts. Explicit consent and a daily credit budget are mandatory to enable. Watched conversations remain copy-only. Limits are checked atomically for each dispatch.',
+			routeSpec: {"method":"PATCH","path":"/api/social-media/reddit/studio","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Assistance',
+					name: 'assistance',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
 				}
 			],
 		},
@@ -283,6 +823,14 @@ export const socialMediaResource: GeneratedResource = {
 					],
 				},
 				{
+					displayName: 'Redirect URL',
+					name: 'redirectUrl',
+					type: 'string',
+					required: true,
+					description: 'Where the person lands once they have authorized the account. MANDATORY, and the host is checked against a strict allowlist: only https on an Aurentia host (entrepreneurs.aurentia.fr, app.aurentia.fr, entreprises.aurentia.fr, freelance.aurentia.fr, aurentia.fr…). Anything else — a Bundle.social URL, a customer domain, http — is rejected (400). Send the page the person should come back to, normally https://entrepreneurs.aurentia.fr/social-media.',
+					default: '',
+				},
+				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
 					type: 'collection',
@@ -290,11 +838,16 @@ export const socialMediaResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Return To',
-							name: 'returnTo',
-							type: 'string',
-							description: 'Optional return URL after OAuth completes (defaults to /social-media)',
-							default: '',
+							displayName: 'Instagram Connection Method',
+							name: 'instagramConnectionMethod',
+							type: 'options',
+							description: 'Instagram only: which kind of account is being linked. Ask the person rather than guessing — a business/creator account unlocks publishing, a personal one does not.',
+							default: 'business',
+							options: [
+								{ name: 'Business', value: 'business' },
+								{ name: 'Creator', value: 'creator' },
+								{ name: 'Personal', value: 'personal' },
+							],
 						},
 					],
 				}
@@ -439,6 +992,120 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createGbpActionLink',
+			name: 'Create Gbp Action Link',
+			action: 'Ajoute un bouton d\'action sur la fiche Google Business Profile : « Réserver », « Commander », « Acheter », « En savoir plus », « S\'inscrire », « Appeler », pointant vers une URL',
+			description: 'Ajoute un bouton d\'action sur la fiche Google Business Profile : « Réserver », « Commander », « Acheter », « En savoir plus », « S\'inscrire », « Appeler », pointant vers une URL. Appelle-le pour « mets un bouton Réserver vers mon Calendly », « ajoute un lien de commande ». `type` : `BOOK`, `ORDER`, `BUY`, `LEARN_MORE`, `SIGN_UP`, `CALL`. `URL` : l\'URL complète (https). `language` (facultatif) : code langue du lien. Rend `{ actionLink }` avec son `name` — garde-le, c\'est la clé pour `update_gbp_action_link` / `delete_gbp_action_link`. `projectId` obligatoire. Lis d\'abord les liens existants (GET action-links) pour ne pas doublonner un même type.',
+			routeSpec: {"method":"POST","path":"/api/social-media/gbp/action-links","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Type',
+					name: 'type',
+					type: 'options',
+					required: true,
+					default: 'BOOK',
+					options: [
+						{ name: 'BOOK', value: 'BOOK' },
+						{ name: 'BUY', value: 'BUY' },
+						{ name: 'CALL', value: 'CALL' },
+						{ name: 'LEARN MORE', value: 'LEARN_MORE' },
+						{ name: 'ORDER', value: 'ORDER' },
+						{ name: 'SIGN UP', value: 'SIGN_UP' },
+					],
+				},
+				{
+					displayName: 'URL',
+					name: 'url',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Language',
+							name: 'language',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createGeoQuery',
+			name: 'Create Geo Query',
+			action: 'Add a GEO query — a question a prospect might ask an AI answer engine (ChatGPT, Perplexity, Google AI…) — to the project\'s AI-visibility watch',
+			description: 'Add a GEO query — a question a prospect might ask an AI answer engine (ChatGPT, Perplexity, Google AI…) — to the project\'s AI-visibility watch. Each query is later scanned (`run_geo_scan`, paid) to see whether the brand is cited. `queryText` is the question as a person would type it (1-500 chars, in the brand\'s language — `language` \'fr\' | \'en\'); `region` and `segment` are optional dimensions (« Lyon », « PME industrielles ») used to compare visibility; `isActive` false parks it without deleting. Requires the social brand profile to exist (« Configure d\'abord ta marque »). List first with `list_geo_queries` to avoid near-duplicates; for a starter set let `seed_geo_queries` propose them. Creating a query costs nothing; scanning does.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/geo/queries","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Query Text',
+					name: 'queryText',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Is Active',
+							name: 'isActive',
+							type: 'boolean',
+							description: 'Whether to enable is active',
+							default: false,
+						},
+						{
+							displayName: 'Language',
+							name: 'language',
+							type: 'options',
+							default: 'en',
+							options: [
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+							],
+						},
+						{
+							displayName: 'Region',
+							name: 'region',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Segment',
+							name: 'segment',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createHashtagGroup',
 			name: 'Create Hashtag Group',
 			action: 'Create a hashtag group',
@@ -472,6 +1139,98 @@ export const socialMediaResource: GeneratedResource = {
 							type: 'json',
 							description: 'Provide a JSON array',
 							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createHookSnippet',
+			name: 'Create Hook Snippet',
+			action: 'Enregistre une accroche, un CTA, une transition ou un « pattern interrupt » PERSONNEL dans la bibliothèque de snippets de l\'utilisateur, pour le retrouver ensuite dans le composer et via `search_hook_library`',
+			description: 'Enregistre une accroche, un CTA, une transition ou un « pattern interrupt » PERSONNEL dans la bibliothèque de snippets de l\'utilisateur, pour le retrouver ensuite dans le composer et via `search_hook_library`. Appelle-le quand l\'utilisateur dit « garde cette accroche », « ajoute ce CTA à mes favoris ». `kind` : `hook`, `cta`, `transition`, `pattern_interrupt`. `category` : pour un hook `curiosity`, `question`, `social_proof`, `data`, `storytelling`, `controversy`, `authority`, `pattern_interrupt` ; pour un CTA `newsletter`, `lead_magnet`, `book_call`, `comment`, `save`, `share`, `follow`, `link_in_bio`. `text` ≤ 600 caractères ; les variables s\'écrivent `{nom_de_variable}` et se déclarent dans `placeholder_keys` (≤ 12). `locale` obligatoire (`fr`/`en`). Ne l\'utilise pas pour les snippets curatés d\'Aurentia (source `aurentia`) : ils ne se créent pas ici. Rend le snippet créé (201).',
+			routeSpec: {"method":"POST","path":"/api/social-media/hooks","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Kind',
+					name: 'kind',
+					type: 'options',
+					required: true,
+					default: 'cta',
+					options: [
+						{ name: 'Cta', value: 'cta' },
+						{ name: 'Hook', value: 'hook' },
+						{ name: 'Pattern Interrupt', value: 'pattern_interrupt' },
+						{ name: 'Transition', value: 'transition' },
+					],
+				},
+				{
+					displayName: 'Text',
+					name: 'text',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Locale',
+					name: 'locale',
+					type: 'options',
+					required: true,
+					default: 'en',
+					options: [
+						{ name: 'En', value: 'en' },
+						{ name: 'Fr', value: 'fr' },
+					],
+				},
+				{
+					displayName: 'Category',
+					name: 'category',
+					type: 'options',
+					required: true,
+					default: 'authority',
+					options: [
+						{ name: 'Authority', value: 'authority' },
+						{ name: 'Book Call', value: 'book_call' },
+						{ name: 'Comment', value: 'comment' },
+						{ name: 'Controversy', value: 'controversy' },
+						{ name: 'Curiosity', value: 'curiosity' },
+						{ name: 'Data', value: 'data' },
+						{ name: 'Follow', value: 'follow' },
+						{ name: 'Lead Magnet', value: 'lead_magnet' },
+						{ name: 'Link In Bio', value: 'link_in_bio' },
+						{ name: 'Newsletter', value: 'newsletter' },
+						{ name: 'Pattern Interrupt', value: 'pattern_interrupt' },
+						{ name: 'Question', value: 'question' },
+						{ name: 'Save', value: 'save' },
+						{ name: 'Share', value: 'share' },
+						{ name: 'Social Proof', value: 'social_proof' },
+						{ name: 'Storytelling', value: 'storytelling' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Placeholder Keys',
+							name: 'placeholder_keys',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Target Audience',
+							name: 'target_audience',
+							type: 'options',
+							default: 'all',
+							options: [
+								{ name: 'All', value: 'all' },
+								{ name: 'B2b', value: 'b2b' },
+								{ name: 'B2c', value: 'b2c' },
+							],
 						},
 					],
 				}
@@ -530,6 +1289,38 @@ export const socialMediaResource: GeneratedResource = {
 							type: 'json',
 							description: 'Provide a JSON array',
 							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createMediaLibraryFolder',
+			name: 'Create Media Library Folder',
+			action: 'Create a folder in the person\'s social media library (the place where generated images/videos and uploads are filed)',
+			description: 'Create a folder in the person\'s social media library (the place where generated images/videos and uploads are filed). `name` is required; `parentId` nests it under an existing folder (IDs from `list_media_library_folders`), omit for a root folder. Use it to organise before filing assets with `create_media_library_asset` / `update_media_library_asset`. No credit.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/library/folders","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Parent ID',
+							name: 'parentId',
+							type: 'string',
+							description: 'Parent folder ID, omit for root',
+							default: '',
 						},
 					],
 				}
@@ -648,6 +1439,127 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createPost',
+			name: 'Create Post',
+			action: 'Create a social media post as a DRAFT in the project\'s calendar',
+			description: 'Create a social media post as a DRAFT in the project\'s calendar. IF THE PERSON WANTS IT PUBLISHED OR PROGRAMMED, USE `publish_or_schedule_post` INSTEAD — one call, and the post is really armed. Nothing is published by this call: publishing is `publish_post`, programming is `schedule_post` (with `arm: true`) — `scheduled_at` here only stores a target date on the draft, IT ARMS NOTHING: a draft dated with `scheduled_at` and left there shows a date in the calendar and NEVER goes out, with no error and no notification. That silent failure is the reason `publish_or_schedule_post` exists. `content` is `{ text, hashtags?: string[], call_to_action?, link?, prompt_suggestion?, thread_blocks?, upload_ids?, platform_options? }`: `thread_blocks` is X/Twitter ONLY (up to 25 `{ text }` blocks, one per tweet); `upload_ids` are IDs of media already attached to this post; `platform_options` carries native options (twitter.poll `{ options: 2-4 strings ≤25 chars, durationMinutes 5-10080 }`, twitter.replySettings, threads.topicTag, facebook.textFormatPresetId). `platform_content` overrides `content` per platform — it REPLACES the whole content object for that platform, so copy every field you keep, not just the one you change. `platforms` may be EMPTY for a draft the person will target later; publishing requires a connected account for every platform. `format` (\'post\',\'carousel\',\'story\',\'reel\',\'article\') is resolved from the series/pillar when omitted; `funnel_stage` \'tofu\' | \'mofu\' | \'bofu\'; `pillar_id` / `series_id` from `list_content_pillars` and the series tools. Run `check_banned_hashtags` on Instagram hashtags before creating. Returns the post with its ID.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/posts","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Content',
+					name: 'content',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
+				},
+				{
+					displayName: 'Platforms',
+					name: 'platforms',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Format',
+							name: 'format',
+							type: 'options',
+							default: 'article',
+							options: [
+								{ name: 'Article', value: 'article' },
+								{ name: 'Carousel', value: 'carousel' },
+								{ name: 'Post', value: 'post' },
+								{ name: 'Reel', value: 'reel' },
+								{ name: 'Story', value: 'story' },
+							],
+						},
+						{
+							displayName: 'Funnel Stage',
+							name: 'funnel_stage',
+							type: 'options',
+							default: 'bofu',
+							options: [
+								{ name: 'Bofu', value: 'bofu' },
+								{ name: 'Mofu', value: 'mofu' },
+								{ name: 'Tofu', value: 'tofu' },
+							],
+						},
+						{
+							displayName: 'Pillar ID',
+							name: 'pillar_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Platform Content',
+							name: 'platform_content',
+							type: 'json',
+							description: 'Per-platform full content override. (provide a JSON object).',
+							default: '{}',
+						},
+						{
+							displayName: 'Scheduled At',
+							name: 'scheduled_at',
+							type: 'string',
+							description: 'ISO date. Stores a target date only; schedule_post arms it.',
+							default: '',
+						},
+						{
+							displayName: 'Series ID',
+							name: 'series_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Tags',
+							name: 'tags',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createPostFromCarousel',
+			name: 'Create Post From Carousel',
+			action: '« Publier avec ce carrousel » : crée un post BROUILLON au format carrousel à partir d\'un carrousel rendu — plateformes = les réseaux cibles du carrousel, légende = la caption IA du carrousel, médias = toutes les slides rendues',
+			description: '« Publier avec ce carrousel » : crée un post BROUILLON au format carrousel à partir d\'un carrousel rendu — plateformes = les réseaux cibles du carrousel, légende = la caption IA du carrousel, médias = toutes les slides rendues. Rend `{ postId }`. Appelle-le quand l\'utilisateur veut poster le carrousel qu\'il vient de valider ; ensuite, relis le post (`get_post`), ajuste la légende si besoin (`update_post`), puis programme (`schedule_post`) ou publie (`publish_post_now`) — cet outil NE publie PAS. Impose un carrousel en statut `ready` avec au moins une image rendue et un projet associé (400 sinon). Si l\'utilisateur a DÉJÀ un post en cours et veut y greffer le carrousel, utilise `attach_carousel_to_post` à la place. La légende est marquée d\'origine IA (AI Act art. 50).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels/{id}/create-post","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du carrousel rendu (statut ready)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'createPostsBatch',
 			name: 'Create Posts Batch',
 			action: 'Run a bulk ACTION on existing posts — approve, schedule, delete or archive several at once (approuver plusieurs posts, programmer mes posts en lot, supprimer ces posts, archiver en masse; bulk approve, schedule several posts)',
@@ -688,6 +1600,90 @@ export const socialMediaResource: GeneratedResource = {
 							type: 'json',
 							description: 'Action parameters — for `schedule`, `{ "scheduled_at": "&lt;ISO date&gt;" }`. (provide a JSON object).',
 							default: '{}',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createRedditProductAction',
+			name: 'Create Reddit Product Action',
+			action: 'Explicitly turn a watched conversation into a source-linked note, unverified hypothesis, editorial brief, reminder task, or native Reddit post DRAFT',
+			description: 'Explicitly turn a watched conversation into a source-linked note, unverified hypothesis, editorial brief, reminder task, or native Reddit post DRAFT. Reuses the existing object on retry and returns its real destination URL. No AI charge, no external message, no automatic publication.',
+			routeSpec: {"method":"POST","path":"/api/social-media/reddit/studio","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Thread ID',
+					name: 'threadId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Kind',
+					name: 'kind',
+					type: 'options',
+					required: true,
+					default: 'brief',
+					options: [
+						{ name: 'Brief', value: 'brief' },
+						{ name: 'Hypothesis', value: 'hypothesis' },
+						{ name: 'Note', value: 'note' },
+						{ name: 'Post', value: 'post' },
+						{ name: 'Task', value: 'task' },
+					],
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Agency ID',
+							name: 'agencyId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Board ID',
+							name: 'boardId',
+							type: 'string',
+							description: 'Required for an Entrepreneurs task; choose an accessible board in the destination project',
+							default: '',
+						},
+						{
+							displayName: 'Body',
+							name: 'body',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Destination Project ID',
+							name: 'destinationProjectId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Due Date',
+							name: 'dueDate',
+							type: 'string',
+							default: '',
 						},
 					],
 				}
@@ -826,6 +1822,120 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createWorkflowStage',
+			name: 'Create Workflow Stage',
+			action: 'Add a column (stage) to the project\'s social post workflow board — e.g',
+			description: 'Add a column (stage) to the project\'s social post workflow board — e.g. « IDée », « À relire », « Validé ». `name` required; `color` (hex) and `position` optional. Three EXCLUSIVE flags decide the board\'s mechanics and the server clears the flag on the previous holder when you set one: `is_default_entry` (where new posts land), `is_written` (the stage that means « the text is done »), `is_terminal` (the end column). `is_approval` marks a review stage (not exclusive). Do not set a flag unless the person asked to move it — it silently changes where every new post appears. List stages first with `list_workflow_stages`; edit with `update_workflow_stage`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/workflow-stages","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							default: '',
+						},
+						{
+							displayName: 'Is Approval',
+							name: 'is_approval',
+							type: 'boolean',
+							description: 'Whether to enable is approval',
+							default: false,
+						},
+						{
+							displayName: 'Is Default Entry',
+							name: 'is_default_entry',
+							type: 'boolean',
+							description: 'Whether to enable is default entry',
+							default: false,
+						},
+						{
+							displayName: 'Is Terminal',
+							name: 'is_terminal',
+							type: 'boolean',
+							description: 'Whether to enable is terminal',
+							default: false,
+						},
+						{
+							displayName: 'Is Written',
+							name: 'is_written',
+							type: 'boolean',
+							description: 'Whether to enable is written',
+							default: false,
+						},
+						{
+							displayName: 'Position',
+							name: 'position',
+							type: 'number',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createYoutubePlaylist',
+			name: 'Create Youtube Playlist',
+			action: 'Create a playlist on the person\'s connected YouTube channel',
+			description: 'Create a playlist on the person\'s connected YouTube channel. THIS WRITES ON YOUTUBE ITSELF, not just in Aurentia: the playlist appears on the channel at once (visibility per `privacyStatus`: \'public\', \'unlisted\' or \'private\' — default the channel\'s own). Requires a connected YouTube account (Bundle.social) — a 400 « Bundle.social non configuré » means none is linked; send the person to connect it. Check `list_youtube_playlists` first to reuse an existing playlist rather than creating a duplicate. Then `add_video_to_youtube_playlist` to fill it, `update_youtube_playlist` to rename.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/bundle-social/youtube/playlists","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Privacy Status',
+							name: 'privacyStatus',
+							type: 'options',
+							default: 'private',
+							options: [
+								{ name: 'Private', value: 'private' },
+								{ name: 'Public', value: 'public' },
+								{ name: 'Unlisted', value: 'unlisted' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'deleteAutoReply',
 			name: 'Delete Auto Reply',
 			action: 'Delete a DM auto-reply rule',
@@ -843,6 +1953,96 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'deleteCarousel',
+			name: 'Delete Carousel',
+			action: 'Supprime un carrousel généré (ses slides, ses rendus PNG et sa vidéo exportée s\'il y en a une)',
+			description: 'Supprime un carrousel généré (ses slides, ses rendus PNG et sa vidéo exportée s\'il y en a une). Les posts qui ont déjà reçu ses images via `create_post_from_carousel` ou `attach_carousel_to_post` gardent leurs médias — seul l\'objet carrousel disparaît. Appelle-le quand l\'utilisateur dit « supprime ce carrousel », « jette celui-là ». Ne l\'utilise pas pour « refais-le » : regénère avec `generate_carousel` ou corrige avec `update_carousel_designs`. Irréversible, aucun crédit remboursé.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/carousels/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du carrousel (voir list_carousels)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteGbpActionLink',
+			name: 'Delete Gbp Action Link',
+			action: 'Retire un bouton d\'action de la fiche Google Business Profile',
+			description: 'Retire un bouton d\'action de la fiche Google Business Profile. `name` est l\'identifiant Google du lien (champ `name` de la liste des liens). Appelle-le pour « enlève le bouton Commander ». Le corps est envoyé dans un DELETE (`{ projectId, name }`). `projectId` obligatoire.',
+			routeSpec: {"method":"DELETE","path":"/api/social-media/gbp/action-links","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: 'Identifiant Google du lien à retirer',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteGbpMedia',
+			name: 'Delete Gbp Media',
+			action: 'Supprime une photo/vidéo de la fiche Google Business Profile',
+			description: 'Supprime une photo/vidéo de la fiche Google Business Profile. `mediaName` est l\'identifiant Google du média, rendu par la liste des médias (GET media) ou par `add_gbp_media`. Appelle-le pour « retire cette vieille photo de la vitrine ». Irréversible côté Google. Le corps est envoyé dans un DELETE (`{ projectId, mediaName }`). `projectId` obligatoire.',
+			routeSpec: {"method":"DELETE","path":"/api/social-media/gbp/media","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Media Name',
+					name: 'mediaName',
+					type: 'string',
+					required: true,
+					description: 'Identifiant Google du média à supprimer',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteGeoQuery',
+			name: 'Delete Geo Query',
+			action: 'Supprime une requête de visibilité IA et TOUT son historique de mesures (les snapshots sont supprimés en cascade en base)',
+			description: 'Supprime une requête de visibilité IA et TOUT son historique de mesures (les snapshots sont supprimés en cascade en base). Appelle-le quand l\'utilisateur ne veut plus suivre cette question ET accepte de perdre la courbe. Si l\'utilisateur veut juste arrêter de la scanner, préfère `update_geo_query` avec `isActive: false` — l\'historique reste. `projectId` obligatoire (passé en query string).',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/geo/queries/{id}","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID de la requête GEO',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet (obligatoire, query string)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'deleteHashtagGroup',
 			name: 'Delete Hashtag Group',
 			action: 'Delete a hashtag group',
@@ -855,6 +2055,23 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The group ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteHookSnippet',
+			name: 'Delete Hook Snippet',
+			action: 'Supprime un snippet PERSONNEL de la bibliothèque d\'accroches/CTA',
+			description: 'Supprime un snippet PERSONNEL de la bibliothèque d\'accroches/CTA. Appelle-le pour « enlève cette accroche de ma bibliothèque ». Ne fonctionne que sur un snippet créé par l\'utilisateur (source `user`) : un snippet curaté d\'Aurentia ne peut pas être supprimé — pour le faire disparaître du picker, dé-épingle-le avec `pin_hook`. `hook_id` vient de `search_hook_library`.',
+			routeSpec: {"method":"DELETE","path":"/api/social-media/hooks/{hook_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Hook ID',
+					name: 'hook_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du snippet personnel',
 					default: '',
 				}
 			],
@@ -894,6 +2111,31 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'deleteOwnSocialComment',
+			name: 'Delete Own Social Comment',
+			action: 'Efface, sur le réseau, un commentaire que NOUS avons publié nous-mêmes (notre réponse à quelqu\'un), via Bundle.social, et remet à zéro la trace de réponse sur la ligne d\'inbox',
+			description: 'Efface, sur le réseau, un commentaire que NOUS avons publié nous-mêmes (notre réponse à quelqu\'un), via Bundle.social, et remet à zéro la trace de réponse sur la ligne d\'inbox. Appelle-le quand l\'utilisateur dit « supprime ma réponse », « retire ce que j\'ai répondu ». Ce n\'est PAS de la modération : pour cacher/supprimer le commentaire d\'un tiers, utilise `moderate_comment`. La propriété est prouvée contre nos propres lignes d\'inbox avant tout appel réseau : l\'identifiant d\'un commentaire reçu d\'un tiers est refusé (403), un identifiant inconnu rend 404. `comment_id` est l\'identifiant Bundle.social de NOTRE commentaire (`reply_external_id` de l\'item d\'inbox), `projectId` le projet de l\'item. Pour corriger le texte plutôt que le supprimer, `edit_own_social_comment`.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/inbox/comments/{comment_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Comment ID',
+					name: 'comment_id',
+					type: 'string',
+					required: true,
+					description: 'Identifiant Bundle.social de NOTRE commentaire (social_inbox_items.reply_external_id)',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet auquel l\'item d\'inbox appartient',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'deletePillar',
 			name: 'Delete Pillar',
 			action: 'Delete a content pillar',
@@ -924,6 +2166,49 @@ export const socialMediaResource: GeneratedResource = {
 					required: true,
 					description: 'The account ID for this operation',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'deletePostOnPlatform',
+			name: 'Delete Post On Platform',
+			action: 'Supprime NATIVEMENT, sur le réseau, un post déjà PUBLIÉ (via Bundle.social) — la publication disparaît pour le public',
+			description: 'Supprime NATIVEMENT, sur le réseau, un post déjà PUBLIÉ (via Bundle.social) — la publication disparaît pour le public. Le post reste dans Aurentia. Appelle-le quand l\'utilisateur dit « retire ce post de LinkedIn », « supprime-le sur Instagram », après confirmation : c\'est irréversible côté réseau. `platform` : clé interne minuscule (`linkedin`, `instagram`, `facebook`, `twitter`…). Refusé si le post n\'a pas été publié sur cette plateforme (404 « Published post on platform ») ou si la ligne plateforme n\'est pas en statut `published` (un post encore programmé se retire avec `update_post`/`delete_post`). Pour supprimer le post d\'Aurentia lui-même, `delete_post`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/posts/{id}/delete-on-platform","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du post publié',
+					default: '',
+				},
+				{
+					displayName: 'Platform',
+					name: 'platform',
+					type: 'options',
+					required: true,
+					description: 'Plateforme sur laquelle retirer la publication',
+					default: 'bluesky',
+					options: [
+						{ name: 'Bluesky', value: 'bluesky' },
+						{ name: 'Discord', value: 'discord' },
+						{ name: 'Facebook', value: 'facebook' },
+						{ name: 'Google Business', value: 'google_business' },
+						{ name: 'Instagram', value: 'instagram' },
+						{ name: 'Linkedin', value: 'linkedin' },
+						{ name: 'Mastodon', value: 'mastodon' },
+						{ name: 'Pinterest', value: 'pinterest' },
+						{ name: 'Reddit', value: 'reddit' },
+						{ name: 'Slack', value: 'slack' },
+						{ name: 'Snapchat', value: 'snapchat' },
+						{ name: 'Telegram', value: 'telegram' },
+						{ name: 'Threads', value: 'threads' },
+						{ name: 'Tiktok', value: 'tiktok' },
+						{ name: 'Twitter', value: 'twitter' },
+						{ name: 'Youtube', value: 'youtube' },
+					],
 				}
 			],
 		},
@@ -987,6 +2272,48 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'deleteWorkflowStage',
+			name: 'Delete Workflow Stage',
+			action: 'Supprime une colonne du tableau de production des posts',
+			description: 'Supprime une colonne du tableau de production des posts. Les posts qui s\'y trouvaient ne sont PAS perdus : ils sont déplacés dans la colonne d\'entrée par défaut du projet. Appelle-le quand l\'utilisateur dit « enlève la colonne X ». Ne supprime pas la colonne d\'entrée par défaut sans avoir d\'abord donné ce rôle à une autre (`update_workflow_stage` avec `is_default_entry: true`) : sinon les posts n\'ont plus de colonne où aller. `projectId` obligatoire (query string).',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/workflow-stages/{id}","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID de l\'étape à supprimer',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet (obligatoire, query string)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteYoutubePlaylist',
+			name: 'Delete Youtube Playlist',
+			action: 'Supprime DÉFINITIVEMENT une playlist sur la chaîne YouTube connectée, via Bundle.social',
+			description: 'Supprime DÉFINITIVEMENT une playlist sur la chaîne YouTube connectée, via Bundle.social. Les vidéos qu\'elle contenait ne sont pas supprimées, seule la playlist disparaît. Appelle-le uniquement quand l\'utilisateur a nommé la playlist à supprimer et confirmé — il n\'y a pas de corbeille côté YouTube. Ne l\'utilise pas pour « vider » une playlist : pour retirer une vidéo, utilise `remove_video_from_youtube_playlist`. Impose un compte YouTube relié par Bundle.social.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/bundle-social/youtube/playlists/{playlistId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Playlist ID',
+					name: 'playlistId',
+					type: 'string',
+					required: true,
+					description: 'Identifiant YouTube de la playlist à supprimer',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'deployCarousel',
 			name: 'Deploy Carousel',
 			action: 'Deploy an already-validated carousel by declining it into the other image formats — one format per network',
@@ -1030,16 +2357,34 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'disconnectSocialAccount',
 			name: 'Disconnect Social Account',
 			action: 'Disconnect a connected social account (Bundle.social)',
-			description: 'Disconnect a connected social account (Bundle.social). The user can reconnect later via connect_social_account.',
+			description: 'Disconnect a connected social account (Bundle.social). Scheduled posts on that platform stop going out. The user can reconnect later via connect_social_account.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/bundle-social/disconnect","queryParams":[]},
 			properties: [
 				{
-					displayName: 'Account ID',
-					name: 'account_id',
-					type: 'string',
+					displayName: 'Platform',
+					name: 'platform',
+					type: 'options',
 					required: true,
-					description: 'Connected account ID (from list_platform_accounts)',
-					default: '',
+					description: 'Lowercase platform ID to unlink — the route disconnects BY PLATFORM, not by account ID, so read list_platform_accounts first and pass the platform of the account the person named',
+					default: 'bluesky',
+					options: [
+						{ name: 'Bluesky', value: 'bluesky' },
+						{ name: 'Discord', value: 'discord' },
+						{ name: 'Facebook', value: 'facebook' },
+						{ name: 'Google Business', value: 'google_business' },
+						{ name: 'Instagram', value: 'instagram' },
+						{ name: 'Linkedin', value: 'linkedin' },
+						{ name: 'Mastodon', value: 'mastodon' },
+						{ name: 'Pinterest', value: 'pinterest' },
+						{ name: 'Reddit', value: 'reddit' },
+						{ name: 'Slack', value: 'slack' },
+						{ name: 'Snapchat', value: 'snapchat' },
+						{ name: 'Telegram', value: 'telegram' },
+						{ name: 'Threads', value: 'threads' },
+						{ name: 'Tiktok', value: 'tiktok' },
+						{ name: 'Twitter', value: 'twitter' },
+						{ name: 'Youtube', value: 'youtube' },
+					],
 				}
 			],
 		},
@@ -1161,6 +2506,77 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'exportCarouselPdf',
+			name: 'Export Carousel PDF',
+			action: 'Render a carousel as a PDF (one page per slide) from its slides and template — the same inputs as `render_carousel`, which produces PNGs',
+			description: 'Render a carousel as a PDF (one page per slide) from its slides and template — the same inputs as `render_carousel`, which produces PNGs. ALWAYS pass `save_to_drive: true` when calling from a chat: the PDF is then filed in the person\'s Drive under « Généré par Aurentia / Social media » and you can point them to it, whereas the raw response carries the whole PDF as base64 (`pdf`) which is useless in a conversation and can be large. `templateKey` and `slides` are the carousel\'s design data as returned by `get_carousel` (slide objects with their text fields); `dimensions` and `config` are optional overrides. No credit. Nothing is posted anywhere.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels/pdf","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Template Key',
+					name: 'templateKey',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Slides',
+					name: 'slides',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Config',
+							name: 'config',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Dimensions',
+							name: 'dimensions',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Save To Drive',
+							name: 'save_to_drive',
+							type: 'boolean',
+							description: 'Whether true: also file the PDF in Drive (recommended)',
+							default: false,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'exportCarouselVideo',
+			name: 'Export Carousel Video',
+			action: 'Exporte un carrousel rendu en vidéo verticale animée (.mp4) pour Reels/TikTok/Shorts',
+			description: 'Exporte un carrousel rendu en vidéo verticale animée (.mp4) pour Reels/TikTok/Shorts. DÉBITE 15 CRÉDITS (remboursés si l\'encodage échoue) ; si la vidéo a déjà été exportée, rend l\'existante (`cached: true`) sans redébiter. Appelle-le seulement quand l\'utilisateur demande explicitement une version vidéo du carrousel et après lui avoir dit le coût. Impose un carrousel en statut `ready` avec des images rendues (400 sinon). La fonctionnalité est derrière un drapeau : un 503 « Export vidéo bientôt disponible » signifie qu\'elle n\'est pas ouverte sur cet environnement — dis-le tel quel, ne réessaie pas. Rend `{ URL, storagePath, cached }`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels/{id}/video","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du carrousel rendu (statut ready)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'fetchRssFeedNow',
 			name: 'Fetch Rss Feed Now',
 			action: 'Trigger an immediate fetch of an RSS feed (max 25 items)',
@@ -1174,6 +2590,57 @@ export const socialMediaResource: GeneratedResource = {
 					required: true,
 					description: 'The ID for this operation',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'forceRefreshSocialAnalytics',
+			name: 'Force Refresh Social Analytics',
+			action: 'Force-refresh the analytics of ONE published social post (scope \'post\', default: postId + platform) or of a whole connected account (scope \'account\': projectId + platform)',
+			description: 'Force-refresh the analytics of ONE published social post (scope \'post\', default: postId + platform) or of a whole connected account (scope \'account\': projectId + platform). Costs 3 credits, charged ONLY if fresh data actually arrived (refunded otherwise, with an honest `refreshed: false` outcome). Rate-limited server-side to 1 refresh per hour per (post, platform) via an idempotent hour bucket — a second call within the hour returns a conflict error, no charge. Main use case: X/Twitter, the only platform whose analytics are manual-only at the provider (no automatic sync). For a free best-effort refetch of ALL published posts, use `refresh_social_analytics` instead.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/analytics/refresh","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Platform',
+					name: 'platform',
+					type: 'string',
+					required: true,
+					description: 'Platform slug (e.g. \'twitter\', \'linkedin\')',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Post ID',
+							name: 'postId',
+							type: 'string',
+							description: 'Post ID (scope \'post\'). camelCase required by the route body.',
+							default: '',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'Project ID (scope \'account\')',
+							default: '',
+						},
+						{
+							displayName: 'Scope',
+							name: 'scope',
+							type: 'options',
+							description: 'Default \'post\'',
+							default: 'account',
+							options: [
+								{ name: 'Account', value: 'account' },
+								{ name: 'Post', value: 'post' },
+							],
+						},
+					],
 				}
 			],
 		},
@@ -1307,15 +2774,22 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
-			value: 'generateImage',
-			name: 'Generate Image',
-			action: 'Generate an image with AI',
-			description: 'Generate an image with AI',
-			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/images/generate","queryParams":[]},
+			value: 'generateCarouselSmartPhoto',
+			name: 'Generate Carousel Smart Photo',
+			action: 'Generate a « smart photo » for ONE carousel slide: an AI photograph matching the slide\'s text, returned as a public storage URL (`URL`) plus an `imageId` you then place on the slide with `update_carousel_designs`',
+			description: 'Generate a « smart photo » for ONE carousel slide: an AI photograph matching the slide\'s text, returned as a public storage URL (`URL`) plus an `imageId` you then place on the slide with `update_carousel_designs`. COSTS IMAGE CREDITS (the standard social image price, ×5 provider cost) — tell the person before calling, and do not loop over ten slides without asking. `slideText` is the text of that slide (used to derive the scene); `styleHint` adds a mood (« minimal studio », « warm outdoor »); `aspectRatio` should match the carousel format (\'4:5\' or \'1:1\' for Instagram/LinkedIn). Project-scoped only.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels/smart-photo","queryParams":[]},
 			properties: [
 				{
-					displayName: 'Prompt',
-					name: 'prompt',
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Slide Text',
+					name: 'slideText',
 					type: 'string',
 					required: true,
 					default: '',
@@ -1328,14 +2802,152 @@ export const socialMediaResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Size',
-							name: 'size',
+							displayName: 'Aspect Ratio',
+							name: 'aspectRatio',
 							type: 'string',
 							default: '',
 						},
 						{
-							displayName: 'Style',
-							name: 'style',
+							displayName: 'Style Hint',
+							name: 'styleHint',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'generateImage',
+			name: 'Generate Image',
+			action: 'Generate a finished image, SYNCHRONOUSLY — the image URL comes back in this call\'s answer (unlike generate_social_image, which only returns a jobId to poll)',
+			description: 'Generate a finished image, SYNCHRONOUSLY — the image URL comes back in this call\'s answer (unlike generate_social_image, which only returns a jobId to poll). Costs 63 credits per image, so never call it twice for the same visual. The brand kit (colours, visual DNA, tone) is injected into the prompt server-side by default: leave brandLock alone unless the user explicitly asked for an off-brand picture. Pick the aspectRatio the platform actually uses (2:3 for an Instagram/Pinterest post, 16:9 for LinkedIn/Twitter, 1:1 for a square) and ask for imageSize 1536 rather than the 1024 default — the picture is published as-is, a soft one is a wasted 63 credits. Pass postId to attach the image to an existing draft.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/images/generate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Prompt',
+					name: 'prompt',
+					type: 'string',
+					required: true,
+					description: 'What the picture shows. 3 to 2000 characters. Describe the scene, not the brand: the brand style is added server-side.',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Aspect Ratio',
+							name: 'aspectRatio',
+							type: 'options',
+							description: 'Default 1:1. Match the destination platform.',
+							default: '1:1',
+							options: [
+								{ name: '1:1', value: '1:1' },
+								{ name: '16:9', value: '16:9' },
+								{ name: '2:3', value: '2:3' },
+								{ name: '21:9', value: '21:9' },
+								{ name: '3:2', value: '3:2' },
+							],
+						},
+						{
+							displayName: 'Brand Lock',
+							name: 'brandLock',
+							type: 'boolean',
+							description: 'Whether default true (brand style injected). Pass false ONLY for an explicitly off-brand picture.',
+							default: false,
+						},
+						{
+							displayName: 'Image Size',
+							name: 'imageSize',
+							type: 'number',
+							description: 'Long edge in pixels, 256-2048. Default 1024; use 1536 for anything meant to be published.',
+							default: 0,
+						},
+						{
+							displayName: 'Platform',
+							name: 'platform',
+							type: 'string',
+							description: 'Destination platform key (e.g. instagram_post, linkedin_post) — recorded on the image',
+							default: '',
+						},
+						{
+							displayName: 'Post ID',
+							name: 'postId',
+							type: 'string',
+							description: 'Optional UUID of the social_posts draft this visual illustrates',
+							default: '',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'UUID of the owning project. Filled from the active project when omitted — never invent one.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'generatePillarInstructions',
+			name: 'Generate Pillar Instructions',
+			action: 'Write the editorial instruction of a content pillar (theme) with AI, in the house format: a short `description` (1-2 sentences) and a markdown `instruction` (angle, tone, narrative structure, hooks, what to avoid, concrete topics — never per-platform format rules or hashtags)',
+			description: 'Write the editorial instruction of a content pillar (theme) with AI, in the house format: a short `description` (1-2 sentences) and a markdown `instruction` (angle, tone, narrative structure, hooks, what to avoid, concrete topics — never per-platform format rules or hashtags). COSTS 1 CREDIT, refunded if the model fails. Give `pillarName`, and whatever you know: `pillarDescription`, `platforms`, `cta` (the pillar\'s call to action), `targetName` (the audience it speaks to). Pass `existingInstruction` to IMPROVE a draft instead of starting over — the model keeps its intent. When no `cta` is set and you pass `availableCtas`, the response also carries `suggestedCta` chosen from that list. Then store the result with `create_pillar` or `update_pillar`; this tool writes nothing itself.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/generate-pillar-instructions","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Pillar Name',
+					name: 'pillarName',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Available Ctas',
+							name: 'availableCtas',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Cta',
+							name: 'cta',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Existing Instruction',
+							name: 'existingInstruction',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Pillar Description',
+							name: 'pillarDescription',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Platforms',
+							name: 'platforms',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Target Name',
+							name: 'targetName',
 							type: 'string',
 							default: '',
 						},
@@ -1346,13 +2958,77 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'generatePost',
 			name: 'Generate Post',
-			action: 'Generate a post with AI',
-			description: 'Generate a post with AI',
+			action: 'Run one AI generation on the project\'s social media universe',
+			description: 'Run one AI generation on the project\'s social media universe. `type` says WHAT is produced — post ideas, content pillars, the brand profile, hashtag groups, CTA presets… — and it is not optional: the route dispatches on it and refuses anything else. Billed. To write and schedule an actual post afterwards, use create_post / update_post.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/generate","queryParams":[]},
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project UUID (injected from the session when you have one)',
+					default: '',
+				},
+				{
+					displayName: 'Type',
+					name: 'type',
+					type: 'options',
+					required: true,
+					description: 'What to generate: \'post-ideas\' (a batch of post subjects), \'pillars\' (the recurring content themes), \'strategy-tips\' (advice on the current strategy), \'brand-profile\' (tone of voice, audience, value proposition), \'hashtag-groups\', \'cta-presets\', \'text-adjust\' (rewrite a piece of text passed in `context`). Pick the one the person actually asked for — each writes to a different part of the universe.',
+					default: 'brand-profile',
+					options: [
+						{ name: 'Brand Profile', value: 'brand-profile' },
+						{ name: 'Cta Presets', value: 'cta-presets' },
+						{ name: 'Hashtag Groups', value: 'hashtag-groups' },
+						{ name: 'Pillars', value: 'pillars' },
+						{ name: 'Post Ideas', value: 'post-ideas' },
+						{ name: 'Strategy Tips', value: 'strategy-tips' },
+						{ name: 'Text Adjust', value: 'text-adjust' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Context',
+							name: 'context',
+							type: 'string',
+							description: 'Free-text steering for this generation (max 10000): the angle asked for, the audience, or the text to rework when type is text-adjust',
+							default: '',
+						},
+						{
+							displayName: 'Idea Count',
+							name: 'ideaCount',
+							type: 'number',
+							description: 'How many items to produce, 1-50. Only meaningful for the list-shaped types (post-ideas, pillars, hashtag-groups, cta-presets).',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'generatePostVariants',
+			name: 'Generate Post Variants',
+			action: 'Génère 3 à 10 variantes d\'un post à partir d\'un brief pour UN réseau, chacune notée par le prédicteur de viralité et triée par score décroissant',
+			description: 'Génère 3 à 10 variantes d\'un post à partir d\'un brief pour UN réseau, chacune notée par le prédicteur de viralité et triée par score décroissant. N\'écrit RIEN : présente les variantes, l\'utilisateur en choisit une, puis crée le post (`generate_post` / `create_posts_batch`). Appelle-le pour « propose-moi plusieurs versions », « fais-moi 5 accroches différentes ». `brief` (≤ 2000 car.), `platform` (clé minuscule), `count` 3-10 (défaut serveur), `tone`, `locale`, `brand_voice` (ton de marque libre, ≤ 2000 car. — passe celui du projet si tu le connais). Un appel IA par requête.',
+			routeSpec: {"method":"POST","path":"/api/social-media/virality/variants","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Brief',
+					name: 'brief',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Platform',
+					name: 'platform',
 					type: 'string',
 					required: true,
 					default: '',
@@ -1365,22 +3041,39 @@ export const socialMediaResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Pillar ID',
-							name: 'pillar_id',
+							displayName: 'Brand Voice',
+							name: 'brand_voice',
 							type: 'string',
 							default: '',
 						},
 						{
-							displayName: 'Platform',
-							name: 'platform',
-							type: 'string',
-							default: '',
+							displayName: 'Count',
+							name: 'count',
+							type: 'number',
+							default: 0,
 						},
 						{
-							displayName: 'Topic',
-							name: 'topic',
-							type: 'string',
-							default: '',
+							displayName: 'Locale',
+							name: 'locale',
+							type: 'options',
+							default: 'en',
+							options: [
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+							],
+						},
+						{
+							displayName: 'Tone',
+							name: 'tone',
+							type: 'options',
+							default: 'analytical',
+							options: [
+								{ name: 'Analytical', value: 'analytical' },
+								{ name: 'Conversational', value: 'conversational' },
+								{ name: 'Humorous', value: 'humorous' },
+								{ name: 'Inspirational', value: 'inspirational' },
+								{ name: 'Professional', value: 'professional' },
+							],
 						},
 					],
 				}
@@ -1501,8 +3194,8 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'generateRedditReply',
 			name: 'Generate Reddit Reply',
-			action: 'Generate a voice-matched Reddit reply draft for a veille thread (respects the subreddit rules)',
-			description: 'Generate a voice-matched Reddit reply draft for a veille thread (respects the subreddit rules). Returns draft + rationale + risk level. Charges 2 credits (suggest). `projectId` (mandatory) is the veille project that scopes the thread; `contextProjectId` (optional) overrides the brand-voice context (an Aurentia project or Entreprises agency ID) and defaults to `projectId`.',
+			action: 'Generate a voice-matched Reddit reply draft to copy manually to a watched thread (never sent automatically) (respects the subreddit rules)',
+			description: 'Generate a voice-matched Reddit reply draft to copy manually to a watched thread (never sent automatically) (respects the subreddit rules). Returns draft + rationale + risk level. Charges 2 credits (suggest). `projectId` (mandatory) is the veille project that scopes the thread; `contextProjectId` (optional) overrides the brand-voice context (an Aurentia project or Entreprises agency ID) and defaults to `projectId`.',
 			routeSpec: {"method":"POST","path":"/api/social-media/reddit/replies","queryParams":[]},
 			properties: [
 				{
@@ -1658,6 +3351,13 @@ export const socialMediaResource: GeneratedResource = {
 							description: 'Lookback window in days (7-365, default 30)',
 							default: 0,
 						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'Scope the analysis to ONE project top posts. Without it the analysis mixes every project of the user.',
+							default: '',
+						},
 					],
 				}
 			],
@@ -1665,8 +3365,8 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'generateSocialThemes',
 			name: 'Generate Social Themes',
-			action: 'Generate AI-suggested content themes (pillars) for the project based on brand profile and audience',
-			description: 'Generate AI-suggested content themes (pillars) for the project based on brand profile and audience. Used during onboarding or to refresh themes later.',
+			action: 'Generate AI-suggested content themes (pillars) for the project, from its brand profile and audience',
+			description: 'Generate AI-suggested content themes (pillars) for the project, from its brand profile and audience. Used during onboarding or to refresh the themes later. The suggested themes are proposals — commit them with complete_social_onboarding or the themes tools.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/onboarding/generate-themes","queryParams":[]},
 			properties: [
 				{
@@ -1678,6 +3378,22 @@ export const socialMediaResource: GeneratedResource = {
 					default: '',
 				},
 				{
+					displayName: 'Existing Themes',
+					name: 'existingThemes',
+					type: 'json',
+					required: true,
+					description: 'The themes the project already has, so the model does not propose them again. Send the objects as get_social_onboarding_status returns them ({ name, description, objective, example_topics }); send an empty array when there are none — the route always expects the field. (provide a JSON array)',
+					default: '[]',
+				},
+				{
+					displayName: 'Selected Platforms',
+					name: 'selectedPlatforms',
+					type: 'json',
+					required: true,
+					description: 'Lowercase platform IDs the themes must work on, at least one (linkedin, instagram, tiktok…). Themes are shaped by the platform mix, so send the ones the project actually publishes on — take them from get_social_onboarding_status when the person did not name any. (provide a JSON array)',
+					default: '[]',
+				},
+				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
 					type: 'collection',
@@ -1685,18 +3401,11 @@ export const socialMediaResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Existing Themes',
-							name: 'existingThemes',
-							type: 'json',
-							description: 'Existing themes to avoid duplicating (optional) (provide a JSON array)',
-							default: '[]',
-						},
-						{
-							displayName: 'Target Count',
-							name: 'targetCount',
-							type: 'number',
-							description: 'Desired number of themes (default 5)',
-							default: 0,
+							displayName: 'User Suggestion',
+							name: 'userSuggestion',
+							type: 'string',
+							description: 'A direction the person asked for in their own words ("plus de coulisses", "moins de promo"). Free text, steers the proposals.',
+							default: '',
 						},
 					],
 				}
@@ -1809,15 +3518,32 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'generateWeek',
 			name: 'Generate Week',
-			action: 'Generate a week of content',
-			description: 'Generate a week of content',
+			action: 'Generate a full week of social posts at once, spread over the days from `startDate`',
+			description: 'Generate a full week of social posts at once, spread over the days from `startDate`. Billed per generated post — say how many platforms and how many posts per day before firing it. The posts land as drafts on the calendar; publishing them stays a separate, explicit step.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/generate/week","queryParams":[]},
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
+					description: 'Project UUID (injected from the session when you have one)',
+					default: '',
+				},
+				{
+					displayName: 'Platforms',
+					name: 'platforms',
+					type: 'json',
+					required: true,
+					description: 'Lowercase platform IDs to write for — at least one. Use the ones the project actually publishes on (list_platform_accounts), not the full list: every extra platform multiplies the cost. (provide a JSON array)',
+					default: '[]',
+				},
+				{
+					displayName: 'Start Date',
+					name: 'startDate',
+					type: 'string',
+					required: true,
+					description: 'First day of the week to fill, ISO 8601 (2026-09-08 or a full datetime). The days that follow are filled from there.',
 					default: '',
 				},
 				{
@@ -1828,9 +3554,24 @@ export const socialMediaResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Week Start',
-							name: 'week_start',
+							displayName: 'Posts Per Day',
+							name: 'postsPerDay',
+							type: 'number',
+							description: 'Posts to write per day. Omit for the project default — each unit multiplies the cost.',
+							default: 0,
+						},
+						{
+							displayName: 'Target Audience',
+							name: 'targetAudience',
 							type: 'string',
+							description: 'Who the week speaks to, if different from the brand profile audience',
+							default: '',
+						},
+						{
+							displayName: 'Tone Of Voice',
+							name: 'toneOfVoice',
+							type: 'string',
+							description: 'Override the brand tone for this week only. Omit it and the brand profile is used.',
 							default: '',
 						},
 					],
@@ -1983,12 +3724,19 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
-			value: 'getGeoVisibility',
-			name: 'Get Geo Visibility',
-			action: 'Your AI-search visibility (ChatGPT/Perplexity/Gemini): global score, per-engine breakdown, top mentioned & top absent queries, 30-day trend',
-			description: 'Your AI-search visibility (ChatGPT/Perplexity/Gemini): global score, per-engine breakdown, top mentioned & top absent queries, 30-day trend',
-			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/geo/overview","queryParams":["project_id:projectId"]},
+			value: 'getGeoImpact',
+			name: 'Get Geo Impact',
+			action: 'Read tracked GEO actions and exact-scope before/after measurements for 7, 30 or 90 days',
+			description: 'Read tracked GEO actions and exact-scope before/after measurements for 7, 30 or 90 days. Deltas remain null until every frozen query-engine unit is comparable.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/geo/impact","queryParams":["projectId","period"]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
 				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
@@ -1997,12 +3745,163 @@ export const socialMediaResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Project ID',
-							name: 'project_id',
+							displayName: 'Period',
+							name: 'period',
+							type: 'options',
+							default: '30',
+							options: [
+								{ name: '30', value: '30' },
+								{ name: '7', value: '7' },
+								{ name: '90', value: '90' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'getGeoQuery',
+			name: 'Get Geo Query',
+			action: 'Read one project-scoped GEO query by ID, including language, region, audience, business priority and scan status',
+			description: 'Read one project-scoped GEO query by ID, including language, region, audience, business priority and scan status',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/geo/queries/{id}","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getGeoRecommendations',
+			name: 'Get Geo Recommendations',
+			action: 'Read up to three deterministic GEO recommendations, each tied to measured evidence and a real in-app destination',
+			description: 'Read up to three deterministic GEO recommendations, each tied to measured evidence and a real in-app destination. No model call and no credits.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/geo/recommendations","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getGeoVisibility',
+			name: 'Get Geo Visibility',
+			action: 'Read the evidence-based AI-search visibility cockpit across ChatGPT, Perplexity, Gemini, Claude, Grok and Exa: measured coverage, score, deltas, engines, queries, citations, competitors and recent changes',
+			description: 'Read the evidence-based AI-search visibility cockpit across ChatGPT, Perplexity, Gemini, Claude, Grok and Exa: measured coverage, score, deltas, engines, queries, citations, competitors and recent changes. Missing and failed measurements remain explicit.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/geo/dashboard","queryParams":["project_id:projectId","period","engine","language","region","segment"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Engine',
+							name: 'engine',
+							type: 'options',
+							default: 'all',
+							options: [
+								{ name: 'All', value: 'all' },
+								{ name: 'Claude', value: 'claude' },
+								{ name: 'Exa', value: 'exa' },
+								{ name: 'Gemini', value: 'gemini' },
+								{ name: 'Grok', value: 'grok' },
+								{ name: 'Openai', value: 'openai' },
+								{ name: 'Perplexity', value: 'perplexity' },
+							],
+						},
+						{
+							displayName: 'Language',
+							name: 'language',
+							type: 'options',
+							default: 'all',
+							options: [
+								{ name: 'All', value: 'all' },
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+							],
+						},
+						{
+							displayName: 'Period',
+							name: 'period',
+							type: 'options',
+							default: '30',
+							options: [
+								{ name: '30', value: '30' },
+								{ name: '7', value: '7' },
+								{ name: '90', value: '90' },
+							],
+						},
+						{
+							displayName: 'Region',
+							name: 'region',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Segment',
+							name: 'segment',
 							type: 'string',
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'getGeoVisibilitySignals',
+			name: 'Get Geo Visibility Signals',
+			action: 'List the project’s real GEO signals awaiting human review: versioned brand-truth contradictions, query candidates from authorized sources, and grouped actionable alerts',
+			description: 'List the project’s real GEO signals awaiting human review: versioned brand-truth contradictions, query candidates from authorized sources, and grouped actionable alerts. Read this before reviewing a signal.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/geo/signals","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getGeoVisibilitySummary',
+			name: 'Get Geo Visibility Summary',
+			action: 'Read the compact legacy-compatible GEO summary: current score, rates, query count, last scan and trend',
+			description: 'Read the compact legacy-compatible GEO summary: current score, rates, query count, last scan and trend',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/geo/overview","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
 				}
 			],
 		},
@@ -2118,6 +4017,106 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getRedditConversation',
+			name: 'Get Reddit Conversation',
+			action: 'Read one watched conversation and its saved draft in the chosen veille project',
+			description: 'Read one watched conversation and its saved draft in the chosen veille project. Does not generate or charge credits.',
+			routeSpec: {"method":"GET","path":"/api/social-media/reddit/threads/{thread_id}","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Thread ID',
+					name: 'thread_id',
+					type: 'string',
+					required: true,
+					description: 'The thread ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getRedditStudio',
+			name: 'Get Reddit Studio',
+			action: 'Read Reddit Studio: personal six-step guide, watch settings, results (7/30/90 days), existing product exports, or selected account quotas/assistance and journal',
+			description: 'Read Reddit Studio: personal six-step guide, watch settings, results (7/30/90 days), existing product exports, or selected account quotas/assistance and journal. 24 posts and 24 comments per real account and UTC day; never an organization-wide pool. Manual declarations and provider confirmations are distinct. Agency scope is required on enterprise accounts.',
+			routeSpec: {"method":"GET","path":"/api/social-media/reddit/studio","queryParams":["section","projectId","agencyId","accountId","threadId","days","date"]},
+			properties: [
+				{
+					displayName: 'Section',
+					name: 'section',
+					type: 'options',
+					required: true,
+					description: 'Limits/assistance require accountId; actions requires threadId',
+					default: 'actions',
+					options: [
+						{ name: 'Actions', value: 'actions' },
+						{ name: 'Assistance', value: 'assistance' },
+						{ name: 'Limits', value: 'limits' },
+						{ name: 'Results', value: 'results' },
+						{ name: 'State', value: 'state' },
+					],
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Account ID',
+							name: 'accountId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Agency ID',
+							name: 'agencyId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Date',
+							name: 'date',
+							type: 'string',
+							description: 'UTC target day for account quotas, including scheduled posts',
+							default: '',
+						},
+						{
+							displayName: 'Days',
+							name: 'days',
+							type: 'options',
+							default: '30',
+							options: [
+								{ name: '30', value: '30' },
+								{ name: '7', value: '7' },
+								{ name: '90', value: '90' },
+							],
+						},
+						{
+							displayName: 'Thread ID',
+							name: 'threadId',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'getSentimentOverview',
 			name: 'Get Sentiment Overview',
 			action: 'Sentiment overview (positive / neutral / negative counts) over the last N days, optionally broken down by platform',
@@ -2147,7 +4146,7 @@ export const socialMediaResource: GeneratedResource = {
 			name: 'Get Social Analytics Dashboard',
 			action: 'Aggregated engagement analytics across all your published social posts: totals (reach/impressions/engagement/weighted avg engagement rate), top 10 posts, per-platform and per-pillar breakdowns',
 			description: 'Aggregated engagement analytics across all your published social posts: totals (reach/impressions/engagement/weighted avg engagement rate), top 10 posts, per-platform and per-pillar breakdowns. Also returns: `publishing` (posts per calendar day over the window, best streak, days without posting — reads our own DB, so it stays accurate even when no network reports metrics), `previousTotals`/`variation` (same-length preceding window), `dailySeries` (one point per day per KPI), `followersByPlatform` (real follower time series), `connectedPlatforms` (networks connected but silent), and `scope` (native vs imported posts). Use for "How is my social performing?", "Which pillar drives the most engagement?", or "Have I kept up my publishing pace?". Refreshed nightly at 04:00 UTC.',
-			routeSpec: {"method":"GET","path":"/api/social-media/analytics","queryParams":["days","timezone"]},
+			routeSpec: {"method":"GET","path":"/api/social-media/analytics","queryParams":["days","timezone","projectId"]},
 			properties: [
 				{
 					displayName: 'Additional Fields',
@@ -2162,6 +4161,13 @@ export const socialMediaResource: GeneratedResource = {
 							type: 'number',
 							description: 'Lookback window in days. Default 30, clamped to [7, 365].',
 							default: 0,
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'Scope every number to ONE project. PASS IT whenever a project is in context: without it the answer covers ALL the user projects at once, which is what the UI used to show by mistake.',
+							default: '',
 						},
 						{
 							displayName: 'Timezone',
@@ -2301,6 +4307,120 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'improvePostDraft',
+			name: 'Improve Post Draft',
+			action: '« Améliorer » : réécrit le texte d\'un brouillon pour UN réseau en corrigeant les points relevés par `check_post_draft`',
+			description: '« Améliorer » : réécrit le texte d\'un brouillon pour UN réseau en corrigeant les points relevés par `check_post_draft`. DÉBITE `social_post_improve` (2 crédits aujourd\'hui — lis le montant exact dans `improveCost` rendu par `check_post_draft`, ne le code jamais en dur), remboursés si le modèle échoue. NE PERSISTE RIEN : la réécriture est rendue, l\'utilisateur choisit de l\'appliquer (via `update_post`) ou de la jeter — ne l\'applique pas sans lui montrer. Appelle-le après un `check_post_draft` non vide et quand l\'utilisateur dit « améliore-le », « corrige ça pour moi ». `instruction` (≤ 500 car., facultatif) : sa consigne libre (« plus court », « tutoie »). Mêmes champs de brouillon que `check_post_draft`. Rate-limit `ai`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/posts/{id}/improve","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du post',
+					default: '',
+				},
+				{
+					displayName: 'Platform',
+					name: 'platform',
+					type: 'options',
+					required: true,
+					default: 'bluesky',
+					options: [
+						{ name: 'Bluesky', value: 'bluesky' },
+						{ name: 'Discord', value: 'discord' },
+						{ name: 'Facebook', value: 'facebook' },
+						{ name: 'Google Business', value: 'google_business' },
+						{ name: 'Instagram', value: 'instagram' },
+						{ name: 'Linkedin', value: 'linkedin' },
+						{ name: 'Mastodon', value: 'mastodon' },
+						{ name: 'Pinterest', value: 'pinterest' },
+						{ name: 'Reddit', value: 'reddit' },
+						{ name: 'Slack', value: 'slack' },
+						{ name: 'Snapchat', value: 'snapchat' },
+						{ name: 'Telegram', value: 'telegram' },
+						{ name: 'Threads', value: 'threads' },
+						{ name: 'Tiktok', value: 'tiktok' },
+						{ name: 'Twitter', value: 'twitter' },
+						{ name: 'Youtube', value: 'youtube' },
+					],
+				},
+				{
+					displayName: 'Text',
+					name: 'text',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Call To Action',
+							name: 'call_to_action',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Hashtags',
+							name: 'hashtags',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Instruction',
+							name: 'instruction',
+							type: 'string',
+							description: 'Consigne libre de l\'utilisateur (facultatif)',
+							default: '',
+						},
+						{
+							displayName: 'Scheduled At',
+							name: 'scheduled_at',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Timezone',
+							name: 'timezone',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'initializeProfileSetup',
+			name: 'Initialize Profile Setup',
+			action: 'Open the « profile setup » checklists for the project\'s social platforms: for each platform given, the server creates (or refreshes) the list of profile assets to prepare — bio, avatar, banner, handle… with their character limits and dimensions — all marked pending',
+			description: 'Open the « profile setup » checklists for the project\'s social platforms: for each platform given, the server creates (or refreshes) the list of profile assets to prepare — bio, avatar, banner, handle… with their character limits and dimensions — all marked pending. Call it once before `generate_profile_setup` (which writes the texts) and `update_profile_setup` (which records what the person did). Platforms known here: instagram, facebook, linkedin, linkedin_personal, tiktok, pinterest, youtube, x — unknown names are silently skipped. Idempotent per platform (upsert). Read the result with `get_profile_setup`. No credit.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/profile-setup","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Platforms',
+					name: 'platforms',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				}
+			],
+		},
+		{
 			value: 'listApprovalQueue',
 			name: 'List Approval Queue',
 			action: 'List everything waiting for your approval (post drafts pending review + inbox replies) with a total count and a time estimate',
@@ -2349,6 +4469,38 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'listCarouselCommunityTemplates',
+			name: 'List Carousel Community Templates',
+			action: 'Browse the public community carousel templates (title, category, preview, slide count, author) shared by Aurentia users — to pick one for `remix_community_carousel_template`, or to check whether the person\'s own template is listed after `publish_carousel_community_template`',
+			description: 'Browse the public community carousel templates (title, category, preview, slide count, author) shared by Aurentia users — to pick one for `remix_community_carousel_template`, or to check whether the person\'s own template is listed after `publish_carousel_community_template`. `category` filters, `limit` caps (40 by default).',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/carousels/community-templates","queryParams":["limit","category"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Category',
+							name: 'category',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Limit',
+							name: 'limit',
+							type: 'number',
+							description: 'Max number of results to return',
+							typeOptions: { minValue: 1 },
+							default: 50,
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'listCarousels',
 			name: 'List Carousels',
 			action: 'List the caller\'s AI-generated carousels (most recent first)',
@@ -2367,7 +4519,7 @@ export const socialMediaResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 					],
@@ -2415,7 +4567,7 @@ export const socialMediaResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -2448,6 +4600,38 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'listGeoActions',
+			name: 'List Geo Actions',
+			action: 'List tracked GEO actions with append-only events, publication state and comparable post-action impact',
+			description: 'List tracked GEO actions with append-only events, publication state and comparable post-action impact',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/geo/actions","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listGeoQueries',
+			name: 'List Geo Queries',
+			action: 'List the project\'s GEO queries (the prospect questions tracked for AI-answer-engine visibility) with their IDs, text, language, region/segment and active flag — the IDs that `update_geo_query`, `delete_geo_query` and `rescan_geo_query_engine` need, and the list to check before `create_geo_query`',
+			description: 'List the project\'s GEO queries (the prospect questions tracked for AI-answer-engine visibility) with their IDs, text, language, region/segment and active flag — the IDs that `update_geo_query`, `delete_geo_query` and `rescan_geo_query_engine` need, and the list to check before `create_geo_query`. Free.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/geo/queries","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'listHashtagGroups',
 			name: 'List Hashtag Groups',
 			action: 'Hashtag groups',
@@ -2468,7 +4652,7 @@ export const socialMediaResource: GeneratedResource = {
 			name: 'List High Intent Matches',
 			action: 'List Reddit veille threads ranked by buying intent',
 			description: 'List Reddit veille threads ranked by buying intent. Filter by intent label (high/medium/low), minScore, and manual tag (`tagId`, cf. list_reddit_tags). Use to surface the hottest opportunities. `projectId` (mandatory since Lot P1) scopes which veille threads are visible.',
-			routeSpec: {"method":"GET","path":"/api/social-media/reddit/threads","queryParams":["projectId","intent","minScore","status","tagId","limit"]},
+			routeSpec: {"method":"GET","path":"/api/social-media/reddit/threads","queryParams":["projectId","intent","minScore","status","tagId","limit","offset","search","draftsOnly","withDrafts"]},
 			properties: [
 				{
 					displayName: 'Project ID',
@@ -2486,6 +4670,13 @@ export const socialMediaResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
+							displayName: 'Drafts Only',
+							name: 'draftsOnly',
+							type: 'boolean',
+							description: 'Whether to enable drafts only',
+							default: false,
+						},
+						{
 							displayName: 'Intent',
 							name: 'intent',
 							type: 'options',
@@ -2501,7 +4692,7 @@ export const socialMediaResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -2509,6 +4700,18 @@ export const socialMediaResource: GeneratedResource = {
 							name: 'minScore',
 							type: 'number',
 							default: 0,
+						},
+						{
+							displayName: 'Offset',
+							name: 'offset',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Search',
+							name: 'search',
+							type: 'string',
+							default: '',
 						},
 						{
 							displayName: 'Status',
@@ -2522,6 +4725,13 @@ export const socialMediaResource: GeneratedResource = {
 							type: 'string',
 							description: 'Only entries carrying this manual tag — a `reddit_tags` ID, use list_reddit_tags to discover them',
 							default: '',
+						},
+						{
+							displayName: 'With Drafts',
+							name: 'withDrafts',
+							type: 'boolean',
+							description: 'Whether to enable with drafts',
+							default: false,
 						},
 					],
 				}
@@ -2553,7 +4763,7 @@ export const socialMediaResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -2611,7 +4821,7 @@ export const socialMediaResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -2683,6 +4893,31 @@ export const socialMediaResource: GeneratedResource = {
 								{ name: 'Inline', value: 'inline' },
 								{ name: 'Upload', value: 'upload' },
 							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'listMediaLibraryFolders',
+			name: 'List Media Library Folders',
+			action: 'List the folders of the person\'s social media library',
+			description: 'List the folders of the person\'s social media library. `parent_id` \'root\' lists the top level, a folder ID lists its children, omitted lists all. Use the IDs as `parentId` in `create_media_library_folder` and to file assets with `update_media_library_asset`.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/library/folders","queryParams":["parent_id:parentId"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Parent ID',
+							name: 'parent_id',
+							type: 'string',
+							description: '\'root\', a folder ID, or omit for all',
+							default: '',
 						},
 					],
 				}
@@ -2770,6 +5005,136 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'listSocialChannels',
+			name: 'List Social Channels',
+			action: 'List the Discord servers\' channels or Slack workspace channels where the Aurentia bot was invited, for the project and platform — the ONLY source of the `channelId` that `set_default_social_channel` accepts',
+			description: 'List the Discord servers\' channels or Slack workspace channels where the Aurentia bot was invited, for the project and platform — the ONLY source of the `channelId` that `set_default_social_channel` accepts. Live call to the provider: an empty list means the bot is not in the server/workspace yet (send the person to connect it), not that channels do not exist. Read permission on the project\'s brand section required.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/bundle-social/channels","queryParams":["project_id:projectId","platform"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Platform',
+					name: 'platform',
+					type: 'options',
+					required: true,
+					default: 'discord',
+					options: [
+						{ name: 'Discord', value: 'discord' },
+						{ name: 'Slack', value: 'slack' },
+					],
+				}
+			],
+		},
+		{
+			value: 'listSocialContacts',
+			name: 'List Social Contacts',
+			action: 'Le CRM SOCIAL d\'un compte Aurentia : les personnes qui interagissent avec les comptes reliés (commentateurs récurrents, auteurs de DM, mentions), avec leur `ID`, leur plateforme, leur pseudo, leur `lead_score`, leur `state` et la date de dernière interaction',
+			description: 'Le CRM SOCIAL d\'un compte Aurentia : les personnes qui interagissent avec les comptes reliés (commentateurs récurrents, auteurs de DM, mentions), avec leur `ID`, leur plateforme, leur pseudo, leur `lead_score`, leur `state` et la date de dernière interaction. C\'EST LE SEUL OUTIL QUI REND L\'IDENTIFIANT que `update_social_contact` et `promote_social_contact_to_crm` exigent : appelle-le avant l\'un ou l\'autre, ne devine jamais un UUID de contact social. `state` filtre (`new` = jamais trié, `active` = suivi, `ignored` = écarté), `platform` restreint à un réseau, `sort` ordonne par `lead_score` (défaut, les plus chauds d\'abord) ou `last_seen_at` (les plus récents). Pagination par curseur : `limit` (1-100, défaut 30) et `cursor` = le `nextCursor` de la page précédente — un curseur inventé est refusé en 400, ne le fabrique pas. Ces contacts vivent dans l\'univers social ; ceux du CRM commercial se lisent avec `list_contacts`.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/contacts","queryParams":["platform","state","sort","cursor","limit"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Cursor',
+							name: 'cursor',
+							type: 'string',
+							description: '`nextCursor` rendu par la page précédente. Ne pas fabriquer.',
+							default: '',
+						},
+						{
+							displayName: 'Limit',
+							name: 'limit',
+							type: 'number',
+							description: 'Max number of results to return',
+							typeOptions: { minValue: 1 },
+							default: 50,
+						},
+						{
+							displayName: 'Platform',
+							name: 'platform',
+							type: 'string',
+							description: 'Clé minuscule du réseau (instagram, linkedin, tiktok…) pour ne garder que celui-là',
+							default: '',
+						},
+						{
+							displayName: 'Sort',
+							name: 'sort',
+							type: 'options',
+							description: 'Lead_score (défaut) ou last_seen_at',
+							default: 'last_seen_at',
+							options: [
+								{ name: 'Last Seen At', value: 'last_seen_at' },
+								{ name: 'Lead Score', value: 'lead_score' },
+							],
+						},
+						{
+							displayName: 'State',
+							name: 'state',
+							type: 'options',
+							description: 'État de tri du contact',
+							default: 'active',
+							options: [
+								{ name: 'Active', value: 'active' },
+								{ name: 'Ignored', value: 'ignored' },
+								{ name: 'New', value: 'new' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'listWorkflowStages',
+			name: 'List Workflow Stages',
+			action: 'List the columns (stages) of the project\'s social workflow board in order, with their flags (default entry, written, terminal, approval) and colours — the IDs for `update_workflow_stage` / `delete_workflow_stage`, and the picture to read before `create_workflow_stage`',
+			description: 'List the columns (stages) of the project\'s social workflow board in order, with their flags (default entry, written, terminal, approval) and colours — the IDs for `update_workflow_stage` / `delete_workflow_stage`, and the picture to read before `create_workflow_stage`',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/workflow-stages","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listYoutubePlaylists',
+			name: 'List Youtube Playlists',
+			action: 'List the playlists of the person\'s connected YouTube channel (ID, title, privacy)',
+			description: 'List the playlists of the person\'s connected YouTube channel (ID, title, privacy). Needed before `create_youtube_playlist` (reuse instead of duplicating) and for the IDs of `update_youtube_playlist` / `delete_youtube_playlist` / `add_video_to_youtube_playlist`. Requires a connected YouTube account.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/bundle-social/youtube/playlists","queryParams":["max_results:maxResults"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Max Results',
+							name: 'max_results',
+							type: 'number',
+							default: 0,
+						},
+					],
 				}
 			],
 		},
@@ -2956,30 +5321,32 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'optimizeProfile',
 			name: 'Optimize Profile',
-			action: 'Optimize a social profile with AI',
-			description: 'Optimize a social profile with AI',
+			action: 'Rewrite ONE field of the project\'s social media brand profile with AI, and save it',
+			description: 'Rewrite ONE field of the project\'s social media brand profile with AI, and save it. `field` names which one — it is not a platform: this tool never touches a LinkedIn or Instagram bio, it works on the Aurentia brand profile that feeds every generation. One call per field.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/optimize-profile","queryParams":[]},
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
+					description: 'Project UUID (injected from the session when you have one)',
 					default: '',
 				},
 				{
-					displayName: 'Additional Fields',
-					name: 'additionalFields',
-					type: 'collection',
-					placeholder: 'Add Field',
-					default: {},
+					displayName: 'Field',
+					name: 'field',
+					type: 'options',
+					required: true,
+					description: 'Which part of the brand profile to rework: \'tone_of_voice\' (tone + style instructions), \'brand_personality\', \'brand_keywords\' (the words to use), \'brand_avoid_words\' (the ones to ban), \'vocabulary\', \'publishing_strategy\' (frequency, best times, funnel split). Any other value is refused.',
+					default: 'brand_avoid_words',
 					options: [
-						{
-							displayName: 'Platform',
-							name: 'platform',
-							type: 'string',
-							default: '',
-						},
+						{ name: 'Brand Avoid Words', value: 'brand_avoid_words' },
+						{ name: 'Brand Keywords', value: 'brand_keywords' },
+						{ name: 'Brand Personality', value: 'brand_personality' },
+						{ name: 'Publishing Strategy', value: 'publishing_strategy' },
+						{ name: 'Tone Of Voice', value: 'tone_of_voice' },
+						{ name: 'Vocabulary', value: 'vocabulary' },
 					],
 				}
 			],
@@ -3006,6 +5373,23 @@ export const socialMediaResource: GeneratedResource = {
 					required: true,
 					description: 'Whether true to pin, false to unpin',
 					default: false,
+				}
+			],
+		},
+		{
+			value: 'postingCalendarArchive',
+			name: 'Posting Calendar Archive',
+			action: 'Archive un calendrier de publication récurrent : il passe en statut `archived`, plus aucun créneau n\'est généré et il disparaît des listes actives',
+			description: 'Archive un calendrier de publication récurrent : il passe en statut `archived`, plus aucun créneau n\'est généré et il disparaît des listes actives. C\'est un arrêt définitif, pas une pause — pour « arrête temporairement », utilise `posting_calendar_pause` ; pour reprendre un calendrier en pause, `posting_calendar_resume`. Appelle-le quand l\'utilisateur dit « supprime ce calendrier », « je n\'en veux plus ». Les posts déjà créés à partir des créneaux ne sont pas supprimés. Ce statut n\'est pas modifiable via `posting_calendar_update` (le schéma de mise à jour ne porte pas `status`) : cet outil est la seule porte.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/calendars/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du calendrier (voir posting_calendar_list)',
+					default: '',
 				}
 			],
 		},
@@ -3146,6 +5530,23 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'postingCalendarResume',
+			name: 'Posting Calendar Resume',
+			action: 'Reprend un calendrier de publication mis en pause et relance IMMÉDIATEMENT la génération des créneaux pour les 2 prochaines semaines (workflow asynchrone : la réponse `{ resumed: true }` arrive avant que les créneaux existent — relis `posting_calendar_slots_list` quelques secondes plus tard)',
+			description: 'Reprend un calendrier de publication mis en pause et relance IMMÉDIATEMENT la génération des créneaux pour les 2 prochaines semaines (workflow asynchrone : la réponse `{ resumed: true }` arrive avant que les créneaux existent — relis `posting_calendar_slots_list` quelques secondes plus tard). Appelle-le quand l\'utilisateur dit « reprends mon calendrier », « relance la publication automatique ». En mode `suggest`, les créneaux générés attendront une approbation (`posting_calendar_slot_approve`) ; en mode `autopilot`, ils seront programmés sans validation — préviens l\'utilisateur avant de reprendre un calendrier autopilot. Ne l\'appelle pas sur un calendrier archivé (utilise `posting_calendar_create` pour repartir).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/calendars/{id}/resume","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du calendrier en pause',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'postingCalendarSlotApprove',
 			name: 'Posting Calendar Slot Approve',
 			action: 'Approve a slot in suggest mode — transitions awaiting_approval → scheduled and queues it for Bundle.social publishing',
@@ -3166,6 +5567,87 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The slot ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'postingCalendarSlotRegenerate',
+			name: 'Posting Calendar Slot Regenerate',
+			action: 'Regénère le contenu IA d\'UN créneau de calendrier (le texte proposé pour ce jour/cette plateforme), en gardant la date et la plateforme',
+			description: 'Regénère le contenu IA d\'UN créneau de calendrier (le texte proposé pour ce jour/cette plateforme), en gardant la date et la plateforme. Appelle-le quand l\'utilisateur n\'aime pas la proposition d\'un créneau : « refais celui de mardi », « plus court, plus drôle », « parle plutôt de X ». `tone` (≤120 car.) et `topic` (≤240 car.) orientent la réécriture ; les deux sont facultatifs. Le créneau revient en `awaiting_approval` (mode suggest) ou `content_generated` (autopilot). Ne l\'appelle pas sur un créneau déjà approuvé/programmé : le post lié ne sera pas réécrit — modifie le post avec `update_post`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/calendars/{id}/slots/{slotId}/regenerate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du calendrier',
+					default: '',
+				},
+				{
+					displayName: 'Slot ID',
+					name: 'slotId',
+					type: 'string',
+					required: true,
+					description: 'UUID du créneau (voir posting_calendar_slots_list)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Tone',
+							name: 'tone',
+							type: 'string',
+							description: 'Ton souhaité (facultatif)',
+							default: '',
+						},
+						{
+							displayName: 'Topic',
+							name: 'topic',
+							type: 'string',
+							description: 'Sujet à traiter (facultatif)',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'postingCalendarSlotReject',
+			name: 'Posting Calendar Slot Reject',
+			action: 'Rejette un créneau proposé par un calendrier en mode suggest : il ne sera pas publié et la raison est conservée pour améliorer les prochaines propositions',
+			description: 'Rejette un créneau proposé par un calendrier en mode suggest : il ne sera pas publié et la raison est conservée pour améliorer les prochaines propositions. `reason` est OBLIGATOIRE (1-500 car.) — c\'est ce que l\'utilisateur t\'a dit (« hors sujet », « on ne parle pas de prix en public »), pas une phrase inventée : si l\'utilisateur ne t\'a pas donné de raison, demande-la. Symétrique de `posting_calendar_slot_approve`. Ne l\'utilise pas pour « je veux une autre version » : c\'est `posting_calendar_slot_regenerate`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/calendars/{id}/slots/{slotId}/reject","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du calendrier',
+					default: '',
+				},
+				{
+					displayName: 'Slot ID',
+					name: 'slotId',
+					type: 'string',
+					required: true,
+					description: 'UUID du créneau à rejeter',
+					default: '',
+				},
+				{
+					displayName: 'Reason',
+					name: 'reason',
+					type: 'string',
+					required: true,
+					description: 'Raison du rejet, dans les mots de l\'utilisateur',
 					default: '',
 				}
 			],
@@ -3361,6 +5843,91 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'promoteSocialContactToCrm',
+			name: 'Promote Social Contact To CRM',
+			action: 'Fait entrer un contact du CRM social dans le CRM commercial du projet (`crm_contacts`) : la personne devient un lead avec sa provenance sociale',
+			description: 'Fait entrer un contact du CRM social dans le CRM commercial du projet (`crm_contacts`) : la personne devient un lead avec sa provenance sociale. Appelle-le quand une interaction sociale devient une opportunité : « ce commentateur veut un devis, mets-le dans mon CRM ». `projectId` : le projet CRM de destination. IDEMPOTENT : rappeler l\'outil sur un contact déjà promu rend le lien existant avec `alreadyPromoted: true`, sans doublon — inutile de vérifier avant. Rend `{ socialContactId, crmContactId, alreadyPromoted }`. Pour un fil Reddit, l\'équivalent est `create_contact_from_reddit_thread`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/contacts/{id}/promote","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du contact social',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet CRM de destination',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'proposeGeoQueryCandidate',
+			name: 'Propose Geo Query Candidate',
+			action: 'Place a manually supplied prospect question in the GEO review queue',
+			description: 'Place a manually supplied prospect question in the GEO review queue. It is not activated or scanned until a human accepts it.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/geo/signals","queryParams":[],"body":{"provenance":"manual"}},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Query Text',
+					name: 'queryText',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Evidence Count',
+							name: 'evidenceCount',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Language',
+							name: 'language',
+							type: 'options',
+							default: 'en',
+							options: [
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+							],
+						},
+						{
+							displayName: 'Region',
+							name: 'region',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Segment',
+							name: 'segment',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'publishBatch',
 			name: 'Publish Batch',
 			action: 'Publish posts in bulk (publier en masse, publier plusieurs posts d\'un coup, tout publier maintenant; bulk publish, publish several posts at once)',
@@ -3369,11 +5936,128 @@ export const socialMediaResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Post IDs',
-					name: 'post_ids',
+					name: 'postIds',
 					type: 'json',
 					required: true,
 					description: 'Provide a JSON array',
 					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'publishCarouselCommunityTemplate',
+			name: 'Publish Carousel Community Template',
+			action: 'Share one of the person\'s carousels as a PUBLIC community template: its designs, theme and first preview image become visible to every Aurentia user, who can remix them',
+			description: 'Share one of the person\'s carousels as a PUBLIC community template: its designs, theme and first preview image become visible to every Aurentia user, who can remix them. Public and not retractable through a tool — say it clearly and get a yes. `carouselId` comes from `list_carousels` / `get_carousel` and must have rendered designs (a carousel that was never rendered is refused). `title` (max 120) and `category` (max 40, \'general\' by default) are what other users browse by (`list_carousel_community_templates`). The slide TEXT is shared too: never publish a carousel that contains client names, prices or anything private.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels/community-templates","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Carousel ID',
+					name: 'carouselId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Category',
+							name: 'category',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'publishOrSchedulePost',
+			name: 'Publish Or Schedule Post',
+			action: 'Publishes a post, or programmes it — AND ARMS IT',
+			description: 'Publishes a post, or programmes it — AND ARMS IT. One call replaces create + schedule: with no `when` the post goes out immediately, with `when` it is handed to the publisher and will leave on its own. THIS IS THE ONLY PATH THAT REALLY PROGRAMMES A POST. `create_post` with a `scheduled_at` writes a date on a DRAFT and stops there: the calendar shows the date, the post never goes out, and nothing raises an error — that silent failure is why this tool exists, do not rebuild the sequence by hand. A platform with no connected account makes the arming refuse: the draft IS KEPT, its date too, and the answer names the missing platforms in `missing_platforms` — tell the person to connect them, do not retry. To send a draft that already carries its images, pass `post_id` alone: this tool cannot attach a file (an image is made with `generate_social_image` passing `postId`), and `post_id` means « that draft, exactly as it is » — passing `text`, `platforms` or `projectId` alongside it is refused rather than silently overwriting its first comment, its X thread and its per-platform options (use `update_post` first if you want to change it). `platform_content` REPLACES the whole content object for that platform: copy every field you keep. The hand-off to the publisher happens AFTER the answer, so never read the post back in the same turn to check — and nothing recalls a post already handed over: that is `delete_post_on_platform`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/posts/compose","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Hashtags',
+							name: 'hashtags',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Link',
+							name: 'link',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Platform Content',
+							name: 'platform_content',
+							type: 'json',
+							description: 'Per-platform override. REPLACES the whole content object for that platform (`text` required inside each entry): copy everything you keep. (provide a JSON object)',
+							default: '{}',
+						},
+						{
+							displayName: 'Platforms',
+							name: 'platforms',
+							type: 'json',
+							description: 'At least one. Every platform needs a connected account, otherwise the arming is refused and they are named back to you. (provide a JSON array)',
+							default: '[]',
+						},
+						{
+							displayName: 'Post ID',
+							name: 'post_id',
+							type: 'string',
+							description: 'Existing DRAFT to publish/programme exactly as it is, with its media. Mutually exclusive with every composition field.',
+							default: '',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'Aurentia project uuid. Required to compose a new post; forbidden with `post_id`.',
+							default: '',
+						},
+						{
+							displayName: 'Text',
+							name: 'text',
+							type: 'string',
+							description: 'The post text. Required when `post_id` is absent.',
+							default: '',
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'When',
+							name: 'when',
+							type: 'string',
+							description: 'ISO 8601. ABSENT = publish NOW. PRESENT = programme AND arm (the post leaves on its own).',
+							default: '',
+						},
+					],
 				}
 			],
 		},
@@ -3408,6 +6092,61 @@ export const socialMediaResource: GeneratedResource = {
 					required: true,
 					description: 'The post ID for this operation',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'publishRedditReply',
+			name: 'Publish Reddit Reply',
+			action: 'Compatibility endpoint for a reviewed NATIVE Reddit post draft (kind=post) only',
+			description: 'Compatibility endpoint for a reviewed NATIVE Reddit post draft (kind=post) only. Watched conversation replies are copy-only and always rejected here. Requires explicit user approval and a connected account. Creates an idempotent native social post; returns publishing until provider confirmation, or scheduled. Never marks a watched thread responded. Quotas: 24 posts and 24 comments separately per real account per UTC day; first comments count as comments. Use the standard enterprise social-post workflow for enterprise destinations.',
+			routeSpec: {"method":"POST","path":"/api/social-media/reddit/replies/{reply_id}/publish","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Reply ID',
+					name: 'reply_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du brouillon de réponse',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet de veille (obligatoire)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Flair ID',
+							name: 'flairId',
+							type: 'string',
+							description: 'Flair Reddit — obligatoire si le subreddit l\'exige',
+							default: '',
+						},
+						{
+							displayName: 'Host Project ID',
+							name: 'hostProjectId',
+							type: 'string',
+							description: 'UUID du projet hôte du post publié, si différent',
+							default: '',
+						},
+						{
+							displayName: 'Scheduled At',
+							name: 'scheduledAt',
+							type: 'string',
+							description: 'Programme la publication à cette date ISO au lieu de publier maintenant',
+							default: '',
+						},
+					],
 				}
 			],
 		},
@@ -3537,7 +6276,7 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'refreshSocialAnalytics',
 			name: 'Refresh Social Analytics',
 			action: 'Force a fresh pull of engagement metrics from Bundle.social for all your published posts',
-			description: 'Force a fresh pull of engagement metrics from Bundle.social for all your published posts. Best-effort: returns counts of updated rows + errors. Use sparingly — costs Bundle.social API quota.',
+			description: 'Force a fresh pull of engagement metrics from Bundle.social for all your published posts. Best-effort: returns counts of updated rows + errors. Use sparingly — costs Bundle.social API quota. For a TARGETED paid force-refresh of one post or account (e.g. X/Twitter, manual-only at the provider), use `force_refresh_social_analytics` instead.',
 			routeSpec: {"method":"POST","path":"/api/social-media/analytics/fetch","queryParams":[]},
 			properties: [
 
@@ -3576,7 +6315,7 @@ export const socialMediaResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Image ID',
-					name: 'image_id',
+					name: 'imageId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -3595,6 +6334,146 @@ export const socialMediaResource: GeneratedResource = {
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'remixCommunityCarouselTemplate',
+			name: 'Remix Community Carousel Template',
+			action: 'Remixe un template de carrousel de la communauté : garde son design (layouts, thème de chaque slide) et réécrit tout le contenu selon un brief',
+			description: 'Remixe un template de carrousel de la communauté : garde son design (layouts, thème de chaque slide) et réécrit tout le contenu selon un brief. DÉBITE 5 CRÉDITS (le tarif de génération de carrousel, remboursés si l\'IA échoue). Appelle-le quand l\'utilisateur a choisi un template dans la galerie (« fais-moi le même que celui-ci mais sur mon offre ») — pas pour une création libre, qui est `generate_carousel`. `brief` : ce que le carrousel doit dire, ≥ 8 caractères (la route refuse en dessous). `targetNetworks` : au moins un réseau, sinon 400 ; seuls les réseaux qui supportent les carrousels comptent. `projectId` rattache le carrousel au projet (recommandé : c\'est ce qui permet ensuite `create_post_from_carousel`). `locale` : `fr` (défaut) ou `en`. Rend `{ carousel }` en cours de rendu — relis avec `get_carousel` pour l\'état `ready`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels/community-templates/{id}/remix","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du template communautaire',
+					default: '',
+				},
+				{
+					displayName: 'Brief',
+					name: 'brief',
+					type: 'string',
+					required: true,
+					description: 'Ce que le carrousel doit communiquer (≥ 8 caractères, exigé par la route)',
+					default: '',
+				},
+				{
+					displayName: 'Target Networks',
+					name: 'targetNetworks',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Locale',
+							name: 'locale',
+							type: 'options',
+							default: 'en',
+							options: [
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+							],
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'UUID du projet auquel rattacher le carrousel (recommandé)',
+							default: '',
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'removeRedditSubreddit',
+			name: 'Remove Reddit Subreddit',
+			action: 'Retire un subreddit de la veille d\'un projet : il ne sera plus scanné',
+			description: 'Retire un subreddit de la veille d\'un projet : il ne sera plus scanné. Les fils déjà collectés restent. `ID` est l\'UUID de la ligne de suivi (voir `list_reddit_veille_projects` / GET subreddits), pas le nom du subreddit. `projectId` obligatoire (query string). Appelle-le pour « arrête de suivre r/entrepreneur ».',
+			routeSpec: {"method":"DELETE","path":"/api/social-media/reddit/subreddits/{id}","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID de la ligne reddit_subreddits',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet de veille (query string)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'removeRedditWatchlistKeyword',
+			name: 'Remove Reddit Watchlist Keyword',
+			action: 'Retire un mot-clé de la watchlist Reddit d\'un projet',
+			description: 'Retire un mot-clé de la watchlist Reddit d\'un projet. `ID` est l\'UUID de la ligne de watchlist (pas le mot lui-même). `projectId` obligatoire (query string). Les fils déjà remontés grâce à ce mot restent. Appelle-le pour « ne surveille plus ce terme ».',
+			routeSpec: {"method":"DELETE","path":"/api/social-media/reddit/watchlist/{id}","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID de la ligne reddit_watchlist',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet de veille (query string)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'removeVideoFromYoutubePlaylist',
+			name: 'Remove Video From Youtube Playlist',
+			action: 'Retire une vidéo d\'une playlist YouTube (la vidéo reste publiée sur la chaîne, elle quitte seulement la playlist)',
+			description: 'Retire une vidéo d\'une playlist YouTube (la vidéo reste publiée sur la chaîne, elle quitte seulement la playlist). ATTENTION : `playlistItemId` est l\'identifiant de l\'ENTRÉE de playlist, rendu par la liste des vidéos de la playlist — ce n\'est ni l\'identifiant de la vidéo, ni le `postId` Bundle.social. Liste d\'abord les vidéos de la playlist pour l\'obtenir ; ne devine jamais cet identifiant. Impose un compte YouTube relié par Bundle.social.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/bundle-social/youtube/playlists/{playlistId}/videos/{playlistItemId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Playlist ID',
+					name: 'playlistId',
+					type: 'string',
+					required: true,
+					description: 'Identifiant YouTube de la playlist',
+					default: '',
+				},
+				{
+					displayName: 'Playlist Item ID',
+					name: 'playlistItemId',
+					type: 'string',
+					required: true,
+					description: 'Identifiant de l\'entrée de playlist (playlist ITEM ID), obtenu en listant les vidéos de la playlist',
+					default: '',
 				}
 			],
 		},
@@ -3631,7 +6510,7 @@ export const socialMediaResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Template ID',
-					name: 'template_id',
+					name: 'templateId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -3663,14 +6542,14 @@ export const socialMediaResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Post ID',
-					name: 'post_id',
+					name: 'postId',
 					type: 'string',
 					required: true,
 					default: '',
 				},
 				{
 					displayName: 'Media IDs',
-					name: 'media_ids',
+					name: 'mediaIds',
 					type: 'json',
 					required: true,
 					description: 'Provide a JSON array',
@@ -3698,6 +6577,39 @@ export const socialMediaResource: GeneratedResource = {
 					name: 'text',
 					type: 'string',
 					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'replyToFacebookRecommendation',
+			name: 'Reply To Facebook Recommendation',
+			action: 'Publie la réponse du propriétaire de la Page à une RECOMMANDATION Facebook (les « recommande / ne recommande pas » de la Page, qui arrivent dans l\'inbox avec `metadata.source = \'facebook_recommendation\'`)',
+			description: 'Publie la réponse du propriétaire de la Page à une RECOMMANDATION Facebook (les « recommande / ne recommande pas » de la Page, qui arrivent dans l\'inbox avec `metadata.source = \'facebook_recommendation\'`). Appelle-le quand l\'utilisateur veut répondre publiquement à une recommandation. `item_id` est l\'identifiant de la LIGNE d\'inbox (pas l\'identifiant Facebook), `projectId` le projet de la Page. La réponse est UNIQUE côté Facebook : répondre une deuxième fois ÉCRASE la précédente, ça n\'empile pas — préviens l\'utilisateur si une réponse existe déjà. Ne l\'utilise ni pour un commentaire ordinaire (`reply_to_inbox_item`), ni pour un avis Google (`reply_to_review`) : un item qui n\'est pas une recommandation est refusé (400). `text` : le texte public, sans minimum de longueur mais non vide.',
+			routeSpec: {"method":"PUT","path":"/api/aurentia/social-media/inbox/facebook-recommendations/{item_id}/reply","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Item ID',
+					name: 'item_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de la ligne d\'inbox de la recommandation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet de la Page Facebook',
+					default: '',
+				},
+				{
+					displayName: 'Text',
+					name: 'text',
+					type: 'string',
+					required: true,
+					description: 'Réponse publique du propriétaire de la Page',
 					default: '',
 				}
 			],
@@ -3748,6 +6660,109 @@ export const socialMediaResource: GeneratedResource = {
 					required: true,
 					description: 'The public reply to post on the review',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'repurposeYoutubeVideo',
+			name: 'Repurpose Youtube Video',
+			action: 'Transforme une vidéo YouTube PUBLIQUE en posts natifs pour plusieurs réseaux, à partir de sa transcription automatique',
+			description: 'Transforme une vidéo YouTube PUBLIQUE en posts natifs pour plusieurs réseaux, à partir de sa transcription automatique. N\'écrit RIEN : rend `{ video_title, video_id, transcript_length, posts: [...] }` ; montre les posts à l\'utilisateur et crée ceux qu\'il garde avec `create_posts_batch` ou `generate_post`. Appelle-le pour « fais-moi des posts à partir de cette vidéo », « recycle mon dernier YouTube ». `URL` : l\'URL YouTube ; `platforms` : 1 à 8 réseaux (clés minuscules) ; `count` : 1 à 5 posts par réseau ; `tone` : `professional`, `conversational`, `inspirational`, `analytical`, `humorous` ; `locale` : `fr`/`en`. Refusé (400, message clair à relayer) si la vidéo n\'a pas de sous-titres publics ou si la transcription est trop courte — dans ce cas ne réessaie pas, demande une autre source.',
+			routeSpec: {"method":"POST","path":"/api/social-media/repurpose/youtube","queryParams":[]},
+			properties: [
+				{
+					displayName: 'URL',
+					name: 'url',
+					type: 'string',
+					required: true,
+					description: 'URL de la vidéo YouTube',
+					default: '',
+				},
+				{
+					displayName: 'Platforms',
+					name: 'platforms',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Count',
+							name: 'count',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Locale',
+							name: 'locale',
+							type: 'options',
+							default: 'en',
+							options: [
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+							],
+						},
+						{
+							displayName: 'Tone',
+							name: 'tone',
+							type: 'options',
+							default: 'analytical',
+							options: [
+								{ name: 'Analytical', value: 'analytical' },
+								{ name: 'Conversational', value: 'conversational' },
+								{ name: 'Humorous', value: 'humorous' },
+								{ name: 'Inspirational', value: 'inspirational' },
+								{ name: 'Professional', value: 'professional' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'rescanGeoQueryEngine',
+			name: 'Rescan Geo Query Engine',
+			action: 'Re-mesure UN moteur pour UNE requête GEO — plus précis et bien moins cher qu\'un scan complet (`run_geo_scan`)',
+			description: 'Re-mesure UN moteur pour UNE requête GEO — plus précis et bien moins cher qu\'un scan complet (`run_geo_scan`). Appelle-le quand un moteur a raté, a été rate-limité ou a rendu une réponse aberrante sur une seule question : « relance Perplexity sur cette requête ». DÉBITE 3 CRÉDITS (1 unité de scan), remboursés si le moteur est en erreur. `engine` : `openai`, `perplexity`, `gemini`, `claude`, `grok` ou `exa` — tout autre nom est refusé. Les agrégats du jour sont recalculés côté serveur, donc un re-run isolé ne fausse jamais le score global. Rate-limité (preset `ai`) : n\'enchaîne pas les six moteurs en boucle, c\'est le rôle de `run_geo_scan`. 402 = crédits insuffisants.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/geo/queries/{id}/rescan","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID de la requête GEO',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet (obligatoire)',
+					default: '',
+				},
+				{
+					displayName: 'Engine',
+					name: 'engine',
+					type: 'options',
+					required: true,
+					default: 'claude',
+					options: [
+						{ name: 'Claude', value: 'claude' },
+						{ name: 'Exa', value: 'exa' },
+						{ name: 'Gemini', value: 'gemini' },
+						{ name: 'Grok', value: 'grok' },
+						{ name: 'Openai', value: 'openai' },
+						{ name: 'Perplexity', value: 'perplexity' },
+					],
 				}
 			],
 		},
@@ -3807,15 +6822,32 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'resizeImage',
 			name: 'Resize Image',
-			action: 'Resize an image',
-			description: 'Resize an image',
+			action: 'Re-cut an already generated social image for another platform',
+			description: 'Re-cut an already generated social image for another platform. `targetPlatform` is what the route works from — it applies that platform\'s expected format; explicit dimensions or a ratio only override it when the person asked for something specific.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/images/resize","queryParams":[]},
 			properties: [
 				{
-					displayName: 'Image ID',
-					name: 'image_id',
+					displayName: 'Project ID',
+					name: 'projectId',
 					type: 'string',
 					required: true,
+					description: 'Project UUID (injected from the session when you have one)',
+					default: '',
+				},
+				{
+					displayName: 'Image ID',
+					name: 'imageId',
+					type: 'string',
+					required: true,
+					description: 'UUID of the image to re-cut, as returned by generate_social_image or carried by the post media',
+					default: '',
+				},
+				{
+					displayName: 'Target Platform',
+					name: 'targetPlatform',
+					type: 'string',
+					required: true,
+					description: 'Lowercase platform ID the image is being re-cut for (instagram, linkedin, tiktok…). Required: it is what decides the output format when no explicit size is given.',
 					default: '',
 				},
 				{
@@ -3826,18 +6858,44 @@ export const socialMediaResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Height',
-							name: 'height',
-							type: 'number',
-							default: 0,
+							displayName: 'Target Aspect Ratio',
+							name: 'targetAspectRatio',
+							type: 'options',
+							description: 'Aspect ratio to force, as an alternative to exact dimensions',
+							default: '1:1',
+							options: [
+								{ name: '1:1', value: '1:1' },
+								{ name: '16:9', value: '16:9' },
+								{ name: '2:3', value: '2:3' },
+								{ name: '21:9', value: '21:9' },
+								{ name: '3:2', value: '3:2' },
+							],
 						},
 						{
-							displayName: 'Width',
-							name: 'width',
-							type: 'number',
-							default: 0,
+							displayName: 'Target Dimensions',
+							name: 'targetDimensions',
+							type: 'json',
+							description: 'Exact output size, when the person named one. Omit it to let the platform format decide. (provide a JSON object)',
+							default: '{}',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'retryMediaGeneration',
+			name: 'Retry Media Generation',
+			action: 'Relance une génération d\'image/vidéo IA qui a ÉCHOUÉ ou été ANNULÉE, avec le même prompt, le même mode et le même palier : un NOUVEAU job est soumis et les CRÉDITS SONT DÉBITÉS À NOUVEAU (même tarif que la génération d\'origine — annonce-le)',
+			description: 'Relance une génération d\'image/vidéo IA qui a ÉCHOUÉ ou été ANNULÉE, avec le même prompt, le même mode et le même palier : un NOUVEAU job est soumis et les CRÉDITS SONT DÉBITÉS À NOUVEAU (même tarif que la génération d\'origine — annonce-le). Appelle-le pour « réessaie la génération ». Refusé (400) si le job n\'est ni `failed` ni `cancelled`, ou si le job d\'origine ne porte plus assez d\'informations pour être resoumis fidèlement (la route l\'explique dans le message : dans ce cas, relance avec `generate_social_image` / `generate_social_video` en redonnant le prompt). Rend le résultat de soumission avec le nouveau `jobId`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/media/jobs/{jobId}/retry","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Job ID',
+					name: 'jobId',
+					type: 'string',
+					required: true,
+					description: 'UUID du job échoué/annulé à relancer',
+					default: '',
 				}
 			],
 		},
@@ -3859,10 +6917,96 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'retryPostHistoryImport',
+			name: 'Retry Post History Import',
+			action: 'Relance un import d\'historique de posts qui a échoué ou s\'est arrêté à mi-chemin (`partial`/`failed`)',
+			description: 'Relance un import d\'historique de posts qui a échoué ou s\'est arrêté à mi-chemin (`partial`/`failed`). Ce n\'est pas une reprise en place : un NOUVEAU job est lancé sur le même compte source, la même période et le même plafond, et rend un nouveau `jobId`. L\'ingestion est idempotente — les posts déjà importés sont ignorés, jamais dupliqués. Gratuit. Ne l\'appelle pas si un import est déjà en cours sur ce compte (409 « Un import est déjà en cours pour ce compte »). Suis ensuite le NOUVEAU job avec `get_post_history_import_status`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/history-import/{id}/retry","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du job d\'import d\'origine',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'reviewGeoQueryCandidate',
+			name: 'Review Geo Query Candidate',
+			action: 'Accept or dismiss one discovered GEO query after reading get_geo_visibility_signals',
+			description: 'Accept or dismiss one discovered GEO query after reading get_geo_visibility_signals. Accepting creates the query once, for free; it never starts a paid scan.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/geo/signals","queryParams":[],"body":{"kind":"candidate"}},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Status',
+					name: 'status',
+					type: 'options',
+					required: true,
+					default: 'accepted',
+					options: [
+						{ name: 'Accepted', value: 'accepted' },
+						{ name: 'Dismissed', value: 'dismissed' },
+					],
+				}
+			],
+		},
+		{
+			value: 'reviewGeoTruthFinding',
+			name: 'Review Geo Truth Finding',
+			action: 'Record the human decision on one GEO brand-truth finding',
+			description: 'Record the human decision on one GEO brand-truth finding. confirmed means the engine claim is genuinely wrong; dismissed means the detected mismatch is not useful; resolved means the public information has been corrected. Never changes brand DNA automatically.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/geo/signals","queryParams":[],"body":{"kind":"truth"}},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Status',
+					name: 'status',
+					type: 'options',
+					required: true,
+					default: 'confirmed',
+					options: [
+						{ name: 'Confirmed', value: 'confirmed' },
+						{ name: 'Dismissed', value: 'dismissed' },
+						{ name: 'Resolved', value: 'resolved' },
+					],
+				}
+			],
+		},
+		{
 			value: 'reviewPost',
 			name: 'Review Post',
-			action: 'Review a post',
-			description: 'Review a post',
+			action: 'Approve or reject a post that is waiting for validation',
+			description: 'Approve or reject a post that is waiting for validation. Rejecting REQUIRES the reason: the route refuses a rejection with an empty `review_notes` (400), and the author only sees what you write there.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/posts/{post_id}/review","queryParams":[]},
 			properties: [
 				{
@@ -3870,15 +7014,20 @@ export const socialMediaResource: GeneratedResource = {
 					name: 'post_id',
 					type: 'string',
 					required: true,
-					description: 'The post ID for this operation',
+					description: 'UUID of the post under review',
 					default: '',
 				},
 				{
-					displayName: 'Status',
-					name: 'status',
-					type: 'string',
+					displayName: 'Action',
+					name: 'action',
+					type: 'options',
 					required: true,
-					default: '',
+					description: 'The decision. \'approve\' clears the post for scheduling; \'reject\' sends it back to its author and demands review_notes.',
+					default: 'approve',
+					options: [
+						{ name: 'Approve', value: 'approve' },
+						{ name: 'Reject', value: 'reject' },
+					],
 				},
 				{
 					displayName: 'Additional Fields',
@@ -3888,9 +7037,10 @@ export const socialMediaResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Feedback',
-							name: 'feedback',
+							displayName: 'Review Notes',
+							name: 'review_notes',
 							type: 'string',
+							description: 'Why. MANDATORY when action is reject — an empty note makes the whole call fail. Optional on an approval, where it is simply passed on as a comment.',
 							default: '',
 						},
 					],
@@ -3918,6 +7068,78 @@ export const socialMediaResource: GeneratedResource = {
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'saveRedditConversationDraft',
+			name: 'Save Reddit Conversation Draft',
+			action: 'Save the exact edited response to a watched conversation, ready to copy manually to Reddit',
+			description: 'Save the exact edited response to a watched conversation, ready to copy manually to Reddit. Does not send, charge credits, or mark responded.',
+			routeSpec: {"method":"PATCH","path":"/api/social-media/reddit/threads/{thread_id}/draft","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Thread ID',
+					name: 'thread_id',
+					type: 'string',
+					required: true,
+					description: 'The thread ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Text',
+					name: 'text',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'scanRedditNow',
+			name: 'Scan Reddit Now',
+			action: 'Lance TOUT DE SUITE un scan Reddit pour un projet, sans attendre le cron (toutes les 6 h) : parcourt les subreddits suivis, cherche les mots-clés de la watchlist, crée les nouveaux fils et lance le scoring d\'intention d\'achat (1 crédit par lot de ≤ 25 fils, best-effort : un échec de scoring ne fait pas échouer le scan)',
+			description: 'Lance TOUT DE SUITE un scan Reddit pour un projet, sans attendre le cron (toutes les 6 h) : parcourt les subreddits suivis, cherche les mots-clés de la watchlist, crée les nouveaux fils et lance le scoring d\'intention d\'achat (1 crédit par lot de ≤ 25 fils, best-effort : un échec de scoring ne fait pas échouer le scan). Si le projet n\'a NI subreddit NI mot-clé configuré, la route les DÉDUIT du projet et les enregistre (auto-seed) — dis-le à l\'utilisateur et propose de vérifier `list_reddit_veille_projects`. Appelle-le pour « scanne Reddit maintenant », « y a-t-il du nouveau ? ». Rend des statistiques (fils trouvés, scorés, `autoSeeded` le cas échéant). Ne l\'enchaîne pas plusieurs fois de suite : les résultats n\'auront pas changé.',
+			routeSpec: {"method":"POST","path":"/api/social-media/reddit/scan","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet de veille (obligatoire)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'scorePostVirality',
+			name: 'Score Post Virality',
+			action: 'Donne un score de potentiel viral à un texte pour UN réseau — heuristique pure (accroche, longueur, structure, CTA…), sans IA, sans base, gratuit et instantané',
+			description: 'Donne un score de potentiel viral à un texte pour UN réseau — heuristique pure (accroche, longueur, structure, CTA…), sans IA, sans base, gratuit et instantané. Appelle-le pour comparer deux versions d\'un post, ou quand l\'utilisateur demande « lequel marchera le mieux ? ». Rend le score et ses composantes. Ce n\'est pas une vérification de conformité (limites de caractères, hashtags interdits) : c\'est `check_post_draft` / `validate_post`. Ne persiste rien.',
+			routeSpec: {"method":"POST","path":"/api/social-media/virality/score","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Text',
+					name: 'text',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Platform',
+					name: 'platform',
+					type: 'string',
+					required: true,
+					description: 'Clé minuscule du réseau (linkedin, instagram, …)',
+					default: '',
 				}
 			],
 		},
@@ -4046,7 +7268,7 @@ export const socialMediaResource: GeneratedResource = {
 							name: 'limit',
 							type: 'number',
 							description: 'Max number of results to return',
-							typeOptions: {"minValue":1},
+							typeOptions: { minValue: 1 },
 							default: 50,
 						},
 						{
@@ -4093,6 +7315,57 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'seedGeoQueries',
+			name: 'Seed Geo Queries',
+			action: 'Bootstrap the project\'s GEO watch: when it has NO active query yet, the server proposes and saves a starter set of prospect questions from the brand profile (value proposition, keywords, audience)',
+			description: 'Bootstrap the project\'s GEO watch: when it has NO active query yet, the server proposes and saves a starter set of prospect questions from the brand profile (value proposition, keywords, audience). Idempotent and free — if active queries already exist it returns them unchanged, so it is safe to call before a first `run_geo_scan`. Requires the social brand profile (« Configure d\'abord ta marque »). It creates queries only; it does not scan. Review the returned list with the person and prune with `update_geo_query` / `delete_geo_query`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/geo/queries/seed","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'setDefaultSocialChannel',
+			name: 'Set Default Social Channel',
+			action: 'Set the DEFAULT channel where the project\'s Discord or Slack posts will be published',
+			description: 'Set the DEFAULT channel where the project\'s Discord or Slack posts will be published. Until a default channel is set, Discord/Slack are not publishable for the project and the composer has nothing to pre-fill. `channelId` is NOT guessable: call `list_social_channels` for the platform first — it asks the provider for the channels the Aurentia bot was invited to — and pass one of the returned IDs exactly. If the list is empty, the bot is not in the server/workspace yet: send the person to connect it, do not invent an ID. Setting a channel is not a publication; it only decides where future posts go. Replaces the previous default; `clear_default_social_channel` removes it.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/bundle-social/channels","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Platform',
+					name: 'platform',
+					type: 'options',
+					required: true,
+					default: 'discord',
+					options: [
+						{ name: 'Discord', value: 'discord' },
+						{ name: 'Slack', value: 'slack' },
+					],
+				},
+				{
+					displayName: 'Channel ID',
+					name: 'channelId',
+					type: 'string',
+					required: true,
+					description: 'An ID returned by list_social_channels',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'setRedditThreadTags',
 			name: 'Set Reddit Thread Tags',
 			action: 'Set the manual tags of a Reddit veille entry (thread or brand mention — same table)',
@@ -4122,6 +7395,31 @@ export const socialMediaResource: GeneratedResource = {
 					required: true,
 					description: 'Full list of tag IDs the entry should carry (max 20). Use list_reddit_tags. (provide a JSON array)',
 					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'setYoutubeThumbnail',
+			name: 'Set Youtube Thumbnail',
+			action: 'Set (replace) the thumbnail of a YouTube video that Aurentia published, from an image URL',
+			description: 'Set (replace) the thumbnail of a YouTube video that Aurentia published, from an image URL. `postId` is the Bundle.social post ID of the PUBLISHED YouTube post (the platform post ID returned in `get_post` for the youtube platform row), not the Aurentia post UUID. `URL` must be a publicly reachable image (a storage URL from `generate_site_image`, the media library, or a studio result). Changes the live video immediately and cannot be undone by Aurentia — confirm with the person. Requires a connected YouTube account.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/bundle-social/youtube/thumbnail","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Post ID',
+					name: 'postId',
+					type: 'string',
+					required: true,
+					description: 'Bundle.social post ID of the published YouTube post',
+					default: '',
+				},
+				{
+					displayName: 'URL',
+					name: 'url',
+					type: 'string',
+					required: true,
+					description: 'Public image URL',
+					default: '',
 				}
 			],
 		},
@@ -4624,6 +7922,73 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'startGeoAction',
+			name: 'Start Geo Action',
+			action: 'Start tracking an action from a measured GEO recommendation',
+			description: 'Start tracking an action from a measured GEO recommendation. Pass the exact evidence query IDs and engine scope returned by get_geo_recommendations. This records work; it does not publish content.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/geo/actions","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Recommendation ID',
+					name: 'recommendationId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Idempotency Key',
+					name: 'idempotencyKey',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Query IDs',
+					name: 'queryIds',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				},
+				{
+					displayName: 'Engine Scope',
+					name: 'engineScope',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				},
+				{
+					displayName: 'Destination',
+					name: 'destination',
+					type: 'options',
+					required: true,
+					default: 'associe',
+					options: [
+						{ name: 'Associe', value: 'associe' },
+						{ name: 'Brand DNA', value: 'brand_dna' },
+						{ name: 'External', value: 'external' },
+						{ name: 'Site Web', value: 'site_web' },
+						{ name: 'Tasks', value: 'tasks' },
+					],
+				}
+			],
+		},
+		{
 			value: 'studioGenerateVideo',
 			name: 'Studio Generate Video',
 			action: 'PRD-STUDIO-1 — Génère une vidéo avec une opération studio SPÉCIALISÉE (fal.ai)',
@@ -4872,18 +8237,43 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
-			value: 'suggestHashtags',
-			name: 'Suggest Hashtags',
-			action: 'AI-powered hashtag suggestions',
-			description: 'AI-powered hashtag suggestions',
-			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/generate/hashtag-suggestions","queryParams":[]},
+			value: 'suggestGeoQueries',
+			name: 'Suggest Geo Queries',
+			action: 'Ask the AI for NEW GEO query ideas for the project (questions prospects might ask answer engines), based on the brand profile and the queries already tracked',
+			description: 'Ask the AI for NEW GEO query ideas for the project (questions prospects might ask answer engines), based on the brand profile and the queries already tracked. COSTS 1 CREDIT per call — say so. Returns suggestions only: nothing is saved until you call `create_geo_query` for the ones the person keeps. Use `seed_geo_queries` (free) for the very first set; this tool is for growing an existing watch. Requires the social brand profile.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/geo/suggest-queries","queryParams":[]},
 			properties: [
 				{
-					displayName: 'Content',
-					name: 'content',
+					displayName: 'Project ID',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'suggestHashtags',
+			name: 'Suggest Hashtags',
+			action: 'Suggest hashtags for a post, from the post TEXT and the platforms it targets',
+			description: 'Suggest hashtags for a post, from the post TEXT and the platforms it targets. Read-only — it returns suggestions, it does not attach them to anything: put them into the post with update_post if the person keeps them.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/generate/hashtag-suggestions","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Post Content',
+					name: 'postContent',
+					type: 'string',
+					required: true,
+					description: 'The post text the hashtags must fit. Paste the actual copy (get_post if it already exists) — a subject line alone gives generic tags.',
+					default: '',
+				},
+				{
+					displayName: 'Platforms',
+					name: 'platforms',
+					type: 'json',
+					required: true,
+					description: 'Lowercase platform IDs the hashtags are for, at least one (instagram, linkedin, twitter…). Conventions differ per platform, so send the ones the post will actually go out on. (provide a JSON array)',
+					default: '[]',
 				},
 				{
 					displayName: 'Additional Fields',
@@ -4893,8 +8283,97 @@ export const socialMediaResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Platform',
-							name: 'platform',
+							displayName: 'Max Hashtags',
+							name: 'maxHashtags',
+							type: 'number',
+							description: 'Cap the number of suggestions returned',
+							default: 0,
+						},
+						{
+							displayName: 'Niche',
+							name: 'niche',
+							type: 'string',
+							description: 'Sector or niche of the account, when it is not obvious from the text (e.g. "coaching sportif", "SaaS RH")',
+							default: '',
+						},
+						{
+							displayName: 'Target Audience',
+							name: 'targetAudience',
+							type: 'string',
+							description: 'Who the post is aimed at, if the person said it',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'suggestRedditWatchlistKeywords',
+			name: 'Suggest Reddit Watchlist Keywords',
+			action: 'Propose des mots-clés de watchlist Reddit pour un projet (IA) — n\'enregistre RIEN, chaque mot retenu passe ensuite par `add_reddit_watchlist_keyword`',
+			description: 'Propose des mots-clés de watchlist Reddit pour un projet (IA) — n\'enregistre RIEN, chaque mot retenu passe ensuite par `add_reddit_watchlist_keyword`. Donne `projectId` (le contexte marque/offre est lu dans le projet) et/ou `refinement` (≤ 500 car.) pour orienter (« mots-clés d\'intention d\'achat », « en anglais ») ; au moins l\'un des deux. Appelle-le au démarrage d\'une veille ou quand la watchlist ne remonte rien.',
+			routeSpec: {"method":"POST","path":"/api/social-media/reddit/watchlist/suggest","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'UUID du projet (contexte auto-rempli)',
+							default: '',
+						},
+						{
+							displayName: 'Refinement',
+							name: 'refinement',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'suggestSubreddits',
+			name: 'Suggest Subreddits',
+			action: 'Propose des subreddits pertinents pour un projet (IA) — n\'enregistre RIEN : montre la liste à l\'utilisateur, puis enregistre ce qu\'il retient avec `add_reddit_subreddit`',
+			description: 'Propose des subreddits pertinents pour un projet (IA) — n\'enregistre RIEN : montre la liste à l\'utilisateur, puis enregistre ce qu\'il retient avec `add_reddit_subreddit`. Donne SOIT `projectId` (le secteur et la cible sont lus dans le projet — préfère ça, ne redemande pas ce qu\'on sait), SOIT `sector` + `target` explicites (≥ 2 car. chacun). `refinement` (≤ 500 car.) affine : « plutôt francophones », « côté B2B ». Appelle-le au démarrage d\'une veille Reddit ou quand l\'utilisateur dit « quelles communautés je devrais suivre ? ».',
+			routeSpec: {"method":"POST","path":"/api/social-media/reddit/suggest","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'UUID du projet (contexte auto-rempli)',
+							default: '',
+						},
+						{
+							displayName: 'Refinement',
+							name: 'refinement',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Sector',
+							name: 'sector',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Target',
+							name: 'target',
 							type: 'string',
 							default: '',
 						},
@@ -5001,6 +8480,80 @@ export const socialMediaResource: GeneratedResource = {
 					required: true,
 					description: 'Whether to enable active',
 					default: false,
+				}
+			],
+		},
+		{
+			value: 'transitionGeoAction',
+			name: 'Transition Geo Action',
+			action: 'Record an explicit human confirmation on a tracked GEO action',
+			description: 'Record an explicit human confirmation on a tracked GEO action. System, scan and product-integration events are server-only.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/geo/actions/{actionId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Action ID',
+					name: 'actionId',
+					type: 'string',
+					required: true,
+					description: 'The action ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Status',
+					name: 'status',
+					type: 'options',
+					required: true,
+					default: 'closed',
+					options: [
+						{ name: 'Closed', value: 'closed' },
+						{ name: 'Dismissed', value: 'dismissed' },
+						{ name: 'Published', value: 'published' },
+					],
+				},
+				{
+					displayName: 'Idempotency Key',
+					name: 'idempotencyKey',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Source',
+					name: 'source',
+					type: 'options',
+					required: true,
+					default: 'user',
+					options: [
+						{ name: 'User', value: 'user' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Linked Entity ID',
+							name: 'linkedEntityId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Linked Entity Type',
+							name: 'linkedEntityType',
+							type: 'string',
+							default: '',
+						},
+					],
 				}
 			],
 		},
@@ -5215,6 +8768,195 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'updateCarouselDesigns',
+			name: 'Update Carousel Designs',
+			action: 'Sauvegarde des slides éditées d\'un carrousel et le RE-REND immédiatement (statut `rendering` puis `ready`, ou `failed` avec `status_error`)',
+			description: 'Sauvegarde des slides éditées d\'un carrousel et le RE-REND immédiatement (statut `rendering` puis `ready`, ou `failed` avec `status_error`). Appelle-le pour corriger un texte de slide, changer un titre, retirer une slide, après avoir lu le carrousel avec `get_carousel`. `designs` est le tableau COMPLET des slides, dans la forme exacte rendue par `get_carousel` (`designs`), modifié — ne renvoie pas un sous-ensemble, tout ce qui manque est perdu. `theme` (facultatif) remplace le thème visuel ; omis, le thème courant est conservé. Gratuit (aucun crédit, aucun appel IA), mais soumis au rate-limit `ai` : n\'enchaîne pas les sauvegardes slide par slide, regroupe les corrections en un appel. Ne l\'utilise pas pour changer le brief ou les réseaux cibles : c\'est une nouvelle génération.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/carousels/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du carrousel',
+					default: '',
+				},
+				{
+					displayName: 'Designs',
+					name: 'designs',
+					type: 'json',
+					required: true,
+					description: 'Tableau complet des slides, même forme que `designs` rendu par get_carousel. (provide a JSON array).',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Theme',
+							name: 'theme',
+							type: 'json',
+							description: 'Thème visuel (facultatif, même forme que `theme` de get_carousel). (provide a JSON object).',
+							default: '{}',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateGbpActionLink',
+			name: 'Update Gbp Action Link',
+			action: 'Modifie un bouton d\'action existant de la fiche Google Business Profile (nouvelle URL, autre type, autre langue)',
+			description: 'Modifie un bouton d\'action existant de la fiche Google Business Profile (nouvelle URL, autre type, autre langue). `name` est l\'identifiant Google du lien tel que rendu par la liste des liens ou par `create_gbp_action_link` — ce n\'est pas un libellé libre. Appelle-le pour « change l\'URL du bouton Réserver ». Ne passe que les champs qui changent. `projectId` obligatoire.',
+			routeSpec: {"method":"PATCH","path":"/api/social-media/gbp/action-links","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					description: 'Identifiant Google du lien (champ `name` de la liste)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Language',
+							name: 'language',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Type',
+							name: 'type',
+							type: 'options',
+							default: 'BOOK',
+							options: [
+								{ name: 'BOOK', value: 'BOOK' },
+								{ name: 'BUY', value: 'BUY' },
+								{ name: 'CALL', value: 'CALL' },
+								{ name: 'LEARN MORE', value: 'LEARN_MORE' },
+								{ name: 'ORDER', value: 'ORDER' },
+								{ name: 'SIGN UP', value: 'SIGN_UP' },
+							],
+						},
+						{
+							displayName: 'URL',
+							name: 'url',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateGbpAttributes',
+			name: 'Update Gbp Attributes',
+			action: 'REMPLACE les attributs de la fiche Google Business Profile (accès PMR, wifi, terrasse, paiement sans contact, options de livraison…)',
+			description: 'REMPLACE les attributs de la fiche Google Business Profile (accès PMR, wifi, terrasse, paiement sans contact, options de livraison…). Appelle-le pour « indique qu\'on a une terrasse », « on n\'accepte plus les chèques ». Les identifiants d\'attributs sont ceux du catalogue Google pour la catégorie de la fiche — lis-les d\'abord (GET attributes avec `available=1`) : n\'invente jamais un `attributeId`, la fiche le refuse. Remplacement complet : renvoie la liste entière des attributs voulus, pas seulement celui qui change. `values` : tableau de chaînes/booléens/nombres selon le `valueType` du catalogue. `projectId` obligatoire.',
+			routeSpec: {"method":"PATCH","path":"/api/social-media/gbp/attributes","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Attributes',
+					name: 'attributes',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'updateGbpHours',
+			name: 'Update Gbp Hours',
+			action: 'REMPLACE les horaires d\'ouverture de la fiche Google Business Profile du projet (ce que voient les clients sur Google Maps/Search), en direct via Bundle.social',
+			description: 'REMPLACE les horaires d\'ouverture de la fiche Google Business Profile du projet (ce que voient les clients sur Google Maps/Search), en direct via Bundle.social. Appelle-le pour « on ouvre maintenant le samedi », « fermé le 25 décembre », « nouveaux horaires d\'été ». C\'est un remplacement complet : lis d\'abord les horaires actuels (GET hours) et renvoie la liste ENTIÈRE modifiée, sinon les jours omis disparaissent. `regularHours` : une entrée par plage `{ openDay, openTime, closeDay, closeTime }` (jours en anglais majuscules, heures `HH:MM`) — un jour sans entrée = fermé. `specialHours` (facultatif) : exceptions datées `{ date: \'AAAA-MM-JJ\', closed, openTime?, closeTime? }`. `projectId` obligatoire (Aurentia). Impose une fiche GBP reliée par Bundle.social.',
+			routeSpec: {"method":"PATCH","path":"/api/social-media/gbp/hours","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet portant la fiche GBP',
+					default: '',
+				},
+				{
+					displayName: 'Regular Hours',
+					name: 'regularHours',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Special Hours',
+							name: 'specialHours',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateGbpMenus',
+			name: 'Update Gbp Menus',
+			action: 'REMPLACE les menus (restauration) de la fiche Google Business Profile : menus → sections → plats avec description et prix',
+			description: 'REMPLACE les menus (restauration) de la fiche Google Business Profile : menus → sections → plats avec description et prix. Appelle-le pour un restaurant/café/traiteur : « mets à jour la carte du midi », « ajoute le plat du jour ». Remplacement complet : relis d\'abord (GET menus) et renvoie TOUS les menus, pas seulement la section modifiée. `priceCents` en centimes. `projectId` obligatoire. Ne l\'utilise pas pour une entreprise de services : `update_gbp_services`.',
+			routeSpec: {"method":"PATCH","path":"/api/social-media/gbp/menus","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Menus',
+					name: 'menus',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				}
+			],
+		},
+		{
 			value: 'updateGbpProfile',
 			name: 'Update Gbp Profile',
 			action: 'Update editable Google Business Profile fields (title, description, phone, website, primaryCategory)',
@@ -5271,6 +9013,110 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'updateGbpServices',
+			name: 'Update Gbp Services',
+			action: 'REMPLACE la liste des prestations affichées sur la fiche Google Business Profile (nom, description courte, prix)',
+			description: 'REMPLACE la liste des prestations affichées sur la fiche Google Business Profile (nom, description courte, prix). Appelle-le pour « ajoute la prestation Coaching 1h à 90 € », « retire le service X ». Remplacement complet : lis d\'abord les services actuels (GET services) et renvoie la liste entière. `priceCents` est en CENTIMES (90 € = 9000), `priceCurrency` en code ISO à 3 lettres (`EUR`). `description` ≤ 300 caractères. `projectId` obligatoire. Pour les menus de restaurant, c\'est `update_gbp_menus`.',
+			routeSpec: {"method":"PATCH","path":"/api/social-media/gbp/services","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Services',
+					name: 'services',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'updateGeoQuery',
+			name: 'Update Geo Query',
+			action: 'Modifie une requête de visibilité IA (GEO) suivie pour un projet : texte, langue, région/segment, importance business (3 haute, 2 moyenne, 1 basse) ou activation',
+			description: 'Modifie une requête de visibilité IA (GEO) suivie pour un projet : texte, langue, région/segment, importance business (3 haute, 2 moyenne, 1 basse) ou activation. L’importance ordonne les recommandations à preuve égale mais ne change jamais le score mesuré. `projectId` est obligatoire. Envoie au moins un champ. Un changement ne relance pas de scan.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/geo/queries/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID de la requête GEO',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet (obligatoire)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Business Priority',
+							name: 'businessPriority',
+							type: 'options',
+							default: '1',
+							options: [
+								{ name: '1', value: '1' },
+								{ name: '2', value: '2' },
+								{ name: '3', value: '3' },
+							],
+						},
+						{
+							displayName: 'Is Active',
+							name: 'isActive',
+							type: 'boolean',
+							description: 'Whether to enable is active',
+							default: false,
+						},
+						{
+							displayName: 'Language',
+							name: 'language',
+							type: 'options',
+							default: 'en',
+							options: [
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+							],
+						},
+						{
+							displayName: 'Query Text',
+							name: 'queryText',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Region',
+							name: 'region',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Segment',
+							name: 'segment',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'updateHashtagGroup',
 			name: 'Update Hashtag Group',
 			action: 'Update a hashtag group',
@@ -5304,6 +9150,108 @@ export const socialMediaResource: GeneratedResource = {
 							name: 'name',
 							type: 'string',
 							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateInboxItem',
+			name: 'Update Inbox Item',
+			action: 'Change l\'état de lecture et/ou la priorité d\'UN item d\'inbox social (commentaire, avis, mention)',
+			description: 'Change l\'état de lecture et/ou la priorité d\'UN item d\'inbox social (commentaire, avis, mention). Appelle-le pour « marque celui-ci comme lu », « mets ce commentaire en urgent », « repasse-le en non lu ». `state` : `unread`, `read`, `replied`, `archived`. `priority` : `low`, `normal`, `high`, `urgent`. Envoie au moins l\'un des deux, sinon 400. Pour changer l\'état de PLUSIEURS items d\'un coup, utilise `mark_inbox_read` ; pour archiver un item, `archive_inbox_item` fait la même chose que `state: \'archived\'`. Cet outil est le seul qui touche la priorité. Ne répond pas au message : c\'est `reply_to_inbox_item`.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/inbox/{item_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Item ID',
+					name: 'item_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de l\'item d\'inbox (voir list_inbox)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Priority',
+							name: 'priority',
+							type: 'options',
+							default: 'high',
+							options: [
+								{ name: 'High', value: 'high' },
+								{ name: 'Low', value: 'low' },
+								{ name: 'Normal', value: 'normal' },
+								{ name: 'Urgent', value: 'urgent' },
+							],
+						},
+						{
+							displayName: 'State',
+							name: 'state',
+							type: 'options',
+							default: 'archived',
+							options: [
+								{ name: 'Archived', value: 'archived' },
+								{ name: 'Read', value: 'read' },
+								{ name: 'Replied', value: 'replied' },
+								{ name: 'Unread', value: 'unread' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateMediaLibraryAsset',
+			name: 'Update Media Library Asset',
+			action: 'Modifie les métadonnées d\'un média de la médiathèque : nom, texte alternatif (accessibilité), tags, dossier',
+			description: 'Modifie les métadonnées d\'un média de la médiathèque : nom, texte alternatif (accessibilité), tags, dossier. Appelle-le pour « renomme cette image », « ajoute l\'alt text », « range-la dans le dossier Produits ». `tags` remplace la liste existante. `folder_id: null` sort le média de son dossier. Ne remplace pas le fichier lui-même (pour ça : nouvel upload via `create_media_library_asset`) et ne touche pas aux posts qui l\'utilisent.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/library/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du média (voir list_media_library)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Alt Text',
+							name: 'alt_text',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Folder ID',
+							name: 'folder_id',
+							type: 'string',
+							description: 'UUID du dossier, ou null pour sortir du dossier',
+							default: '',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Tags',
+							name: 'tags',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
 						},
 					],
 				}
@@ -5370,8 +9318,8 @@ export const socialMediaResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Username',
-							name: 'username',
+							displayName: 'Account Name',
+							name: 'account_name',
 							type: 'string',
 							default: '',
 						},
@@ -5412,6 +9360,95 @@ export const socialMediaResource: GeneratedResource = {
 							name: 'username',
 							type: 'string',
 							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateRedditReplyDraft',
+			name: 'Update Reddit Reply Draft',
+			action: 'Retouche ou écarte un brouillon de réponse Reddit généré par `generate_reddit_reply`',
+			description: 'Retouche ou écarte un brouillon de réponse Reddit généré par `generate_reddit_reply`. `reply_text` (≤ 8000 car.) remplace le texte proposé — le statut passe à `edited` ; `status: \'discarded\'` jette le brouillon sans publier. Fournis l\'un ou l\'autre (ou les deux), sinon 400. `projectId` (obligatoire) est le projet de VEILLE qui porte le fil. Appelle-le quand l\'utilisateur dit « change la fin de la réponse », « non, laisse tomber celle-là ». Ne publie rien : `publish_reddit_reply`.',
+			routeSpec: {"method":"PATCH","path":"/api/social-media/reddit/replies/{reply_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Reply ID',
+					name: 'reply_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du brouillon (reddit_replies), rendu par generate_reddit_reply',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet de veille (obligatoire)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Reply Text',
+							name: 'reply_text',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Status',
+							name: 'status',
+							type: 'options',
+							default: 'discarded',
+							options: [
+								{ name: 'Discarded', value: 'discarded' },
+								{ name: 'Edited', value: 'edited' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateRedditStudio',
+			name: 'Update Reddit Studio',
+			action: 'Save exactly one of personal Reddit guide progression or shared watch pause/exclusions',
+			description: 'Save exactly one of personal Reddit guide progression or shared watch pause/exclusions. Does not reset Marketing onboarding; does not send or generate a reply.',
+			routeSpec: {"method":"PATCH","path":"/api/social-media/reddit/studio","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Guide',
+							name: 'guide',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Watch',
+							name: 'watch',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
 						},
 					],
 				}
@@ -5459,6 +9496,108 @@ export const socialMediaResource: GeneratedResource = {
 							name: 'name',
 							type: 'string',
 							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateRedditThreadStatus',
+			name: 'Update Reddit Thread Status',
+			action: 'Change le statut de traitement d\'un fil Reddit de veille : `new` (à traiter), `reviewed` (vu), `responded` (on a répondu), `ignored` (pas pertinent)',
+			description: 'Change le statut de traitement d\'un fil Reddit de veille : `new` (à traiter), `reviewed` (vu), `responded` (on a répondu), `ignored` (pas pertinent). Appelle-le pour tenir la file à jour quand l\'utilisateur dit « celui-là, ignore », « je l\'ai lu », « j\'ai répondu à la main ». `projectId` (projet de veille) obligatoire. `publish_reddit_reply` passe déjà le fil en `responded` tout seul — n\'y touche pas après une publication. Pour taguer un fil, `set_reddit_thread_tags`.',
+			routeSpec: {"method":"PUT","path":"/api/social-media/reddit/threads/{thread_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Thread ID',
+					name: 'thread_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du fil (reddit_threads)',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet de veille (obligatoire)',
+					default: '',
+				},
+				{
+					displayName: 'Status',
+					name: 'status',
+					type: 'options',
+					required: true,
+					default: 'ignored',
+					options: [
+						{ name: 'Ignored', value: 'ignored' },
+						{ name: 'New', value: 'new' },
+						{ name: 'Responded', value: 'responded' },
+						{ name: 'Reviewed', value: 'reviewed' },
+					],
+				}
+			],
+		},
+		{
+			value: 'updateRssFeed',
+			name: 'Update Rss Feed',
+			action: 'Modifie un abonnement RSS → posts : le titre affiché, les comptes de destination, le gabarit de post, le statut donné aux posts créés, ou l\'activation',
+			description: 'Modifie un abonnement RSS → posts : le titre affiché, les comptes de destination, le gabarit de post, le statut donné aux posts créés, ou l\'activation. Appelle-le pour « mets le flux en pause » (`active: false`), « publie les brouillons RSS aussi sur Instagram », « change le modèle de texte ». `post_template` accepte les variables `{{title}}`, `{{summary}}`, `{{link}}`, `{{author}}`. `post_status` : `draft`, `pending_review`, `approved`, `scheduled` — ne mets pas `scheduled` sans que l\'utilisateur ait explicitement voulu que le flux publie tout seul. `target_account_ids` remplace la liste (≥ 1 compte). L\'URL du flux ne se change pas : désabonne (`unsubscribe_rss_feed`) et réabonne (`subscribe_rss_feed`).',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/rss-feeds/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du flux (voir list_rss_feeds)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Active',
+							name: 'active',
+							type: 'boolean',
+							description: 'Whether to enable active',
+							default: false,
+						},
+						{
+							displayName: 'Feed Title',
+							name: 'feed_title',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Post Status',
+							name: 'post_status',
+							type: 'options',
+							default: 'approved',
+							options: [
+								{ name: 'Approved', value: 'approved' },
+								{ name: 'Draft', value: 'draft' },
+								{ name: 'Pending Review', value: 'pending_review' },
+								{ name: 'Scheduled', value: 'scheduled' },
+							],
+						},
+						{
+							displayName: 'Post Template',
+							name: 'post_template',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Target Account IDs',
+							name: 'target_account_ids',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
 						},
 					],
 				}
@@ -5535,6 +9674,228 @@ export const socialMediaResource: GeneratedResource = {
 							name: 'name',
 							type: 'string',
 							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateSocialAccountSettings',
+			name: 'Update Social Account Settings',
+			action: 'Renomme un compte social relié (étiquette lisible, ex',
+			description: 'Renomme un compte social relié (étiquette lisible, ex. « Compte perso », « Page boutique ») et/ou en fait le compte PAR DÉFAUT du projet pour sa plateforme. Appelle-le quand l\'utilisateur a plusieurs comptes d\'une même plateforme : « appelle celui-là Page pro », « publie par défaut depuis ce compte LinkedIn ». `is_default: true` retire le défaut aux autres comptes de la même plateforme dans le projet — c\'est ce qui le distingue de `update_platform_account`, qui écrit les champs bruts sans repointer le défaut ; passe ici pour tout changement de défaut. `is_default: false` est ignoré (on désigne un nouveau défaut, on n\'en « retire » pas un). Au moins un des deux champs est requis. Ne connecte ni ne déconnecte rien : `connect_social_account` / `disconnect_social_account`.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/accounts/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du compte social (voir list_platform_accounts)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Is Default',
+							name: 'is_default',
+							type: 'boolean',
+							description: 'Whether true = devient le compte par défaut de sa plateforme dans le projet',
+							default: false,
+						},
+						{
+							displayName: 'Label',
+							name: 'label',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateSocialContact',
+			name: 'Update Social Contact',
+			action: 'Met à jour un contact du CRM social (les personnes qui interagissent avec les comptes : commentateurs récurrents, auteurs de DM, mentions) : son état, tes notes, ses tags',
+			description: 'Met à jour un contact du CRM social (les personnes qui interagissent avec les comptes : commentateurs récurrents, auteurs de DM, mentions) : son état, tes notes, ses tags. Appelle-le pour « ignore ce profil », « note qu\'il est intéressé par l\'offre pro », « tague-le ambassadeur ». `state` : `new`, `active`, `ignored`. `notes` (≤ 5000 car.) et `tags` (≤ 20 tags de ≤ 40 car.) REMPLACENT les valeurs existantes : relis le contact avant de réécrire les tags. Ce contact reste dans l\'univers social ; pour le faire entrer dans le CRM commercial du projet, utilise `promote_social_contact_to_crm`.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/contacts/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID du contact social',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Notes',
+							name: 'notes',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'State',
+							name: 'state',
+							type: 'options',
+							default: 'active',
+							options: [
+								{ name: 'Active', value: 'active' },
+								{ name: 'Ignored', value: 'ignored' },
+								{ name: 'New', value: 'new' },
+							],
+						},
+						{
+							displayName: 'Tags',
+							name: 'tags',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateWorkflowStage',
+			name: 'Update Workflow Stage',
+			action: 'Modifie une colonne du tableau de production des posts (les étapes « IDée → À rédiger → Rédigé → Approbation → Prêt » d\'un projet) : nom, couleur, position, ou son rôle',
+			description: 'Modifie une colonne du tableau de production des posts (les étapes « IDée → À rédiger → Rédigé → Approbation → Prêt » d\'un projet) : nom, couleur, position, ou son rôle. Appelle-le pour « renomme la colonne Approbation en Relecture », « mets Prêt en vert ». `projectId` est obligatoire. Les drapeaux de rôle sont EXCLUSIFS par projet : passer `is_default_entry: true` (colonne d\'arrivée des nouveaux posts), `is_terminal: true` (colonne « prêt à publier ») ou `is_written: true` (colonne « rédigé ») retire ce rôle à la colonne qui le portait — il y en a toujours exactement une. `is_approval` marque la colonne de validation. Ne passe pas un drapeau à `false` pour « retirer » un rôle : donne-le à une autre colonne. Pour réordonner toutes les colonnes d\'un coup, c\'est la route `reorder` (front) — ici, `position` déplace une seule colonne.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/workflow-stages/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'UUID de l\'étape',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'UUID du projet (obligatoire)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color',
+							name: 'color',
+							type: 'color',
+							description: 'Hex #rrggbb',
+							default: '',
+						},
+						{
+							displayName: 'Is Approval',
+							name: 'is_approval',
+							type: 'boolean',
+							description: 'Whether to enable is approval',
+							default: false,
+						},
+						{
+							displayName: 'Is Default Entry',
+							name: 'is_default_entry',
+							type: 'boolean',
+							description: 'Whether to enable is default entry',
+							default: false,
+						},
+						{
+							displayName: 'Is Terminal',
+							name: 'is_terminal',
+							type: 'boolean',
+							description: 'Whether to enable is terminal',
+							default: false,
+						},
+						{
+							displayName: 'Is Written',
+							name: 'is_written',
+							type: 'boolean',
+							description: 'Whether to enable is written',
+							default: false,
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Position',
+							name: 'position',
+							type: 'number',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateYoutubePlaylist',
+			name: 'Update Youtube Playlist',
+			action: 'Renomme, redécrit ou change la visibilité d\'une playlist YouTube de la chaîne connectée, en direct via Bundle.social',
+			description: 'Renomme, redécrit ou change la visibilité d\'une playlist YouTube de la chaîne connectée, en direct via Bundle.social. Appelle-le quand l\'utilisateur dit « renomme ma playlist », « passe-la en privé », « mets une description à la playlist ». `playlistId` est l\'identifiant YouTube de la playlist (celui que rend la liste des playlists). `title` est OBLIGATOIRE et REMPLACE l\'ancien titre — ne l\'omets pas même si l\'utilisateur ne veut changer que la visibilité : relis d\'abord la playlist et renvoie le titre existant. `description` remplace la description (chaîne vide = efface). `privacyStatus` : `public`, `unlisted` ou `private` ; ne passe pas `public` sans que l\'utilisateur l\'ait demandé. Impose un compte YouTube relié par Bundle.social (sinon 400 « Bundle.social non configuré »). Ne crée pas de playlist : si elle n\'existe pas, la route échoue.',
+			routeSpec: {"method":"PUT","path":"/api/aurentia/social-media/bundle-social/youtube/playlists/{playlistId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Playlist ID',
+					name: 'playlistId',
+					type: 'string',
+					required: true,
+					description: 'Identifiant YouTube de la playlist',
+					default: '',
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					description: 'Nouveau titre — remplace l\'ancien, obligatoire même si inchangé',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							description: 'Nouvelle description (chaîne vide pour effacer)',
+							default: '',
+						},
+						{
+							displayName: 'Privacy Status',
+							name: 'privacyStatus',
+							type: 'options',
+							default: 'private',
+							options: [
+								{ name: 'Private', value: 'private' },
+								{ name: 'Public', value: 'public' },
+								{ name: 'Unlisted', value: 'unlisted' },
+							],
 						},
 					],
 				}

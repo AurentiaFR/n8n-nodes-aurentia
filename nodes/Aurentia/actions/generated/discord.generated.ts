@@ -24,6 +24,33 @@ export const discordResource: GeneratedResource = {
 			properties: [
 
 			],
+		},
+		{
+			value: 'unlinkDiscord',
+			name: 'Unlink Discord',
+			action: 'Unlink the person\'s Discord account: the bot sends them one last private message to say so, the link is revoked and the revocation is written to the audit log; they stop receiving any Discord notification and the AI chat from Discord no longer recognises them',
+			description: 'Unlink the person\'s Discord account: the bot sends them one last private message to say so, the link is revoked and the revocation is written to the audit log; they stop receiving any Discord notification and the AI chat from Discord no longer recognises them. It is only reversible by running `/link` again from Discord (`link_discord` mints the code). Only call it on an explicit request (« disconnect Discord »). Returns `unlinked: false` when there was no link. This is the COMMUNITY bot, not a personal Telegram bot (`disconnect_telegram_bot`).',
+			routeSpec: {"method":"DELETE","path":"/api/discord/link","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'updateDiscordNotificationPrefs',
+			name: 'Update Discord Notification Prefs',
+			action: 'Set, key by key, what the Discord bot sends the person in a private message: `daily_report`, `agent_alerts`, `automation_alerts`, `credit_low`, `announcements`, `other_alerts`, `incubator` (opt-in per category), `response_public` (AI chat answers visible in a server rather than in DM) and `dm_muted` (kills ALL non-transactional notifications)',
+			description: 'Set, key by key, what the Discord bot sends the person in a private message: `daily_report`, `agent_alerts`, `automation_alerts`, `credit_low`, `announcements`, `other_alerts`, `incubator` (opt-in per category), `response_public` (AI chat answers visible in a server rather than in DM) and `dm_muted` (kills ALL non-transactional notifications). It MERGES onto the existing preferences: only pass the keys to change, never a whole rebuilt object. It requires a linked and verified Discord account (`get_discord_connection`) — otherwise the route answers `updated: true` without writing anything, so check the connection first. Call it on « stop the daily report on Discord », « send me agent alerts on Discord ».',
+			routeSpec: {"method":"PATCH","path":"/api/discord/link","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Notification Prefs',
+					name: 'notification_prefs',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
+				}
+			],
 		}
 	],
 };

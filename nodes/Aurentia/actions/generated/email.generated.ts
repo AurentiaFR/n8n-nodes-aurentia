@@ -66,6 +66,124 @@ export const emailResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'categorizeEmailsWithAi',
+			name: 'Categorize Emails With AI',
+			action: 'Classify a BATCH of emails by category (invoice, newsletter, client, urgent…) from their metadata only (subject, snippet, sender — never the body)',
+			description: 'Classify a BATCH of emails by category (invoice, newsletter, client, urgent…) from their metadata only (subject, snippet, sender — never the body). Costs 1 credit per batch whatever its size: group them, never call it message by message. `items` is a list of `{ ID, subject?, snippet?, from? }` built from `list_email_messages`. AI consent gate (403 without). The returned categories then feed the mailbox views (`filter_type: \'ai_category\'` of `create_email_view`).',
+			routeSpec: {"method":"POST","path":"/api/email/ai/categorize","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Connection ID',
+					name: 'connectionId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Items',
+					name: 'items',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'createEmailView',
+			name: 'Create Email View',
+			action: 'Create a custom view of the mailbox (a filtered tab): `name` (1-50), `emoji` (defaults to 📬), `filter_type` either `label` (a Gmail/Outlook label — `connection_id` is then REQUIRED) or `ai_category` (a category set by `categorize_emails_with_ai` — `connection_id` must then be null), `filter_value` the filtered value, `connection_id` the mailbox concerned or `null` for all of them',
+			description: 'Create a custom view of the mailbox (a filtered tab): `name` (1-50), `emoji` (defaults to 📬), `filter_type` either `label` (a Gmail/Outlook label — `connection_id` is then REQUIRED) or `ai_category` (a category set by `categorize_emails_with_ai` — `connection_id` must then be null), `filter_value` the filtered value, `connection_id` the mailbox concerned or `null` for all of them. Purely local, nothing leaves. Call it on « make me an Invoices tab ».',
+			routeSpec: {"method":"POST","path":"/api/email/views","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Filter Type',
+					name: 'filter_type',
+					type: 'options',
+					required: true,
+					default: 'ai_category',
+					options: [
+						{ name: 'AI Category', value: 'ai_category' },
+						{ name: 'Label', value: 'label' },
+					],
+				},
+				{
+					displayName: 'Filter Value',
+					name: 'filter_value',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Connection ID',
+					name: 'connection_id',
+					type: 'string',
+					required: true,
+					description: 'Mailbox UUID, or null for all mailboxes',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Emoji',
+							name: 'emoji',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createMailboxTemplate',
+			name: 'Create Mailbox Template',
+			action: 'Save a personal MAILBOX template (name + subject + body) reusable in the composer',
+			description: 'Save a personal MAILBOX template (name + subject + body) reusable in the composer. `name` (1-120) is required; `subject` (500 max) and `body` (20 000 max) are optional. Sends nothing. Call it on « keep this answer as a template ». Read `list_mailbox_templates` first to avoid duplicating a name. This is the mailbox template, not the CRM one — for a CRM email template it is `create_email_template`.',
+			routeSpec: {"method":"POST","path":"/api/email/templates","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Body',
+							name: 'body',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Subject',
+							name: 'subject',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'deleteEmailConnection',
 			name: 'Delete Email Connection',
 			action: 'Delete an email connection',
@@ -79,6 +197,77 @@ export const emailResource: GeneratedResource = {
 					required: true,
 					description: 'The ID for this operation',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteEmailView',
+			name: 'Delete Email View',
+			action: 'Delete a custom mailbox view (the tab disappears; no email is touched)',
+			description: 'Delete a custom mailbox view (the tab disappears; no email is touched). Owner only, no trash — but recreating the view is trivial, so do not make the person confirm.',
+			routeSpec: {"method":"DELETE","path":"/api/email/views/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'View UUID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteMailboxTemplate',
+			name: 'Delete Mailbox Template',
+			action: 'Permanently delete a personal mailbox template',
+			description: 'Permanently delete a personal mailbox template. No trash. `ID` comes from `list_mailbox_templates`. Only call it on a template the person named. This is the mailbox template, not the CRM one (`delete_email_template`).',
+			routeSpec: {"method":"DELETE","path":"/api/email/templates/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Mailbox template UUID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'detectMeetingsInInbox',
+			name: 'Detect Meetings In Inbox',
+			action: 'Look for appointments in recent emails and/or in-app messages, and CREATE recommended events in the calendar — `confirmed` when the slot is settled, `tentative` (« under discussion ») otherwise, labelled « suggéré par un agent »',
+			description: 'Look for appointments in recent emails and/or in-app messages, and CREATE recommended events in the calendar — `confirmed` when the slot is settled, `tentative` (« under discussion ») otherwise, labelled « suggéré par un agent ». Costs 1 credit. `source`: `email` (requires `connectionId`), `message` (internal messaging only), `both` (default, merges the two). AI consent gate on at least one mailbox (403 without). Returns `{ created, events[] }`: list them to the person and offer `confirm_suggested_calendar_event` or `delete_calendar_event` on each one — never confirm them yourself. Do not loop: a second call creates suggestions again.',
+			routeSpec: {"method":"POST","path":"/api/email/ai/detect-meetings","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Connection ID',
+							name: 'connectionId',
+							type: 'string',
+							description: 'Mailbox UUID — required when source = email',
+							default: '',
+						},
+						{
+							displayName: 'Source',
+							name: 'source',
+							type: 'options',
+							description: 'Defaults to \'both\'',
+							default: 'both',
+							options: [
+								{ name: 'Both', value: 'both' },
+								{ name: 'Email', value: 'email' },
+								{ name: 'Message', value: 'message' },
+							],
+						},
+					],
 				}
 			],
 		},
@@ -136,10 +325,18 @@ export const emailResource: GeneratedResource = {
 		{
 			value: 'listEmailMessages',
 			name: 'List Email Messages',
-			action: 'Synced email messages',
-			description: 'Synced email messages',
-			routeSpec: {"method":"GET","path":"/api/email/messages","queryParams":["folder","search"]},
+			action: 'Messages of ONE connected mailbox',
+			description: 'Messages of ONE connected mailbox. `connectionId` is required — the route reads a single account, there is no « all my mailboxes » mode: call list_email_connections first and pick the one the person means (ask when they have several).',
+			routeSpec: {"method":"GET","path":"/api/email/messages","queryParams":["connectionId","search","folder:label","limit","offset"]},
 			properties: [
+				{
+					displayName: 'Connection ID',
+					name: 'connectionId',
+					type: 'string',
+					required: true,
+					description: 'UUID of the email connection to read, from list_email_connections. Required.',
+					default: '',
+				},
 				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
@@ -151,15 +348,69 @@ export const emailResource: GeneratedResource = {
 							displayName: 'Folder',
 							name: 'folder',
 							type: 'string',
+							description: 'Mailbox label / folder to restrict to, as the provider names it (INBOX, SENT, a Gmail label). Omit it for the inbox.',
 							default: '',
+						},
+						{
+							displayName: 'Limit',
+							name: 'limit',
+							type: 'number',
+							description: 'Max number of results to return',
+							typeOptions: { minValue: 1 },
+							default: 50,
+						},
+						{
+							displayName: 'Offset',
+							name: 'offset',
+							type: 'number',
+							description: 'How many messages to skip, for paging. Default 0.',
+							default: 0,
 						},
 						{
 							displayName: 'Search',
 							name: 'search',
 							type: 'string',
+							description: 'Full-text search over the synced messages',
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'listEmailViews',
+			name: 'List Email Views',
+			action: 'List the person\'s custom mailbox views (ID, name, emoji, filter, mailbox, order)',
+			description: 'List the person\'s custom mailbox views (ID, name, emoji, filter, mailbox, order). It is the only source of the `ID` that `update_email_view` and `delete_email_view` need, and the way to avoid creating a view that already exists.',
+			routeSpec: {"method":"GET","path":"/api/email/views","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'listMailboxTemplates',
+			name: 'List Mailbox Templates',
+			action: 'List the person\'s personal MAILBOX templates (ID, name, subject, body)',
+			description: 'List the person\'s personal MAILBOX templates (ID, name, subject, body). It is the only source of the `ID` that `delete_mailbox_template` needs, and the way to check a name is not already taken before `create_mailbox_template`. Distinct from the CRM email templates (`list_email_templates`).',
+			routeSpec: {"method":"GET","path":"/api/email/templates","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'revokeEmailAiConsent',
+			name: 'Revoke Email AI Consent',
+			action: 'Withdraw the person\'s consent to AI processing of a mailbox\'s content (sets `ai_consent_at` back to null)',
+			description: 'Withdraw the person\'s consent to AI processing of a mailbox\'s content (sets `ai_consent_at` back to null). From then on `summarize_email_thread`, `suggest_email_replies`, `categorize_emails_with_ai` and `detect_meetings_in_inbox` answer 403 on that mailbox, until the person grants it again FROM THE APP — granting it is not tooled, and must not be: it is an explicit GDPR consent. Call it on « stop the AI on my work mailbox », « I withdraw my consent ». `connectionId` is the mailbox (from `list_email_connections`) and travels in the JSON body of the DELETE request. No effect if the consent was not set.',
+			routeSpec: {"method":"DELETE","path":"/api/email/ai/consent","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Connection ID',
+					name: 'connectionId',
+					type: 'string',
+					required: true,
+					description: 'Email connection UUID',
+					default: '',
 				}
 			],
 		},
@@ -276,8 +527,8 @@ export const emailResource: GeneratedResource = {
 		{
 			value: 'shareEmailConnection',
 			name: 'Share Email Connection',
-			action: 'Share or revoke shared access to an email connection (agency or org)',
-			description: 'Share or revoke shared access to an email connection (agency or org)',
+			action: 'Give a team access to one of the user\'s connected mailboxes',
+			description: 'Give a team access to one of the user\'s connected mailboxes. `permissions` says HOW MUCH access and it is not optional — sharing without saying what is allowed is refused (400). This hands other people the ability to read, and possibly send from, a personal mailbox: state exactly what is being granted and get an explicit go-ahead first.',
 			routeSpec: {"method":"POST","path":"/api/email/connections/{id}/share","queryParams":[]},
 			properties: [
 				{
@@ -285,16 +536,244 @@ export const emailResource: GeneratedResource = {
 					name: 'id',
 					type: 'string',
 					required: true,
-					description: 'The ID for this operation',
+					description: 'UUID of the email connection to share (list_email_connections)',
 					default: '',
 				},
 				{
-					displayName: 'Shared With',
-					name: 'sharedWith',
+					displayName: 'Permissions',
+					name: 'permissions',
 					type: 'json',
 					required: true,
-					description: 'Provide a JSON array',
+					description: 'What is granted, at least one: \'read\' (see the messages), \'send\' (write FROM this mailbox, under the owner\'s identity), \'delete\' (remove messages). Grant the narrowest set the person asked for — \'read\' alone when in doubt, never the three by default. (provide a JSON array)',
 					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Shared With Role ID',
+							name: 'shared_with_role_id',
+							type: 'string',
+							description: 'UUID of the role the access is granted to, when it must be limited to one role rather than the whole agency (list_roles). Omit it to share with everyone in the agency.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'snoozeEmailMessage',
+			name: 'Snooze Email Message',
+			action: 'Snooze an email: it disappears from the Aurentia mailbox until `until` (ISO 8601 with offset, in the future) and comes back then',
+			description: 'Snooze an email: it disappears from the Aurentia mailbox until `until` (ISO 8601 with offset, in the future) and comes back then. Purely local — nothing changes at Gmail/Outlook. `until: null` cancels the snooze. Call it on « remind me about this email on Monday », « put it back tomorrow at 9 ». `connectionId` is required (from `list_email_connections`).',
+			routeSpec: {"method":"POST","path":"/api/email/messages/{id}/snooze","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Provider message ID',
+					default: '',
+				},
+				{
+					displayName: 'Connection ID',
+					name: 'connectionId',
+					type: 'string',
+					required: true,
+					description: 'Email connection UUID',
+					default: '',
+				},
+				{
+					displayName: 'Until',
+					name: 'until',
+					type: 'string',
+					required: true,
+					description: 'ISO 8601 with offset, or null to cancel',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'suggestEmailReplies',
+			name: 'Suggest Email Replies',
+			action: 'Propose 3 short replies with distinct intents (accept / ask for more / decline…) to an email',
+			description: 'Propose 3 short replies with distinct intents (accept / ask for more / decline…) to an email. Costs 1 credit. It SENDS NOTHING: present the proposals, let the person choose and rework, then send with `send_email_message`. Same AI consent gate as `summarize_email_thread` (403 without the consent set from the app). `connectionId` + `messageId` are required.',
+			routeSpec: {"method":"POST","path":"/api/email/ai/smart-reply","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Connection ID',
+					name: 'connectionId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Message ID',
+					name: 'messageId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'From',
+							name: 'from',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Subject',
+							name: 'subject',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'summarizeEmailThread',
+			name: 'Summarize Email Thread',
+			action: 'Summarize an email thread (TL;DR, key points, actions) with AI',
+			description: 'Summarize an email thread (TL;DR, key points, actions) with AI. Costs 1 credit per call. It requires the person to have given, FROM THE APP, their consent to AI processing of that mailbox (GDPR art. 6.1.a): without it the route answers 403 — tell them and do not try to grant it yourself, that consent is deliberately not tooled. `connectionId` (the mailbox) and `messageId` (the provider message ID, from `list_email_messages`) are required; `subject` and `from` help the model, pass them when you have them. The content is re-read on demand at the provider, nothing is stored.',
+			routeSpec: {"method":"POST","path":"/api/email/ai/summarize","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Connection ID',
+					name: 'connectionId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Message ID',
+					name: 'messageId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'From',
+							name: 'from',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Subject',
+							name: 'subject',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'trashEmailMessage',
+			name: 'Trash Email Message',
+			action: 'Move an email to the PROVIDER\'s trash (Gmail `trash`, Outlook `deleteditems`, IMAP Trash folder) and drop it from the Aurentia cache',
+			description: 'Move an email to the PROVIDER\'s trash (Gmail `trash`, Outlook `deleteditems`, IMAP Trash folder) and drop it from the Aurentia cache. This acts on the person\'s real mailbox and is visible from Gmail/Outlook: only touch a message they designated precisely (« bin this morning\'s newsletter ») after identifying it with `list_email_messages`. `ID` is the PROVIDER message ID (the one the list returns), `connectionId` the mailbox (from `list_email_connections`), passed as a QUERY parameter. There is no restore tool: tell the person the trash empties according to their provider\'s own rules.',
+			routeSpec: {"method":"DELETE","path":"/api/email/messages/{id}","queryParams":["connectionId"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Provider message ID',
+					default: '',
+				},
+				{
+					displayName: 'Connection ID',
+					name: 'connectionId',
+					type: 'string',
+					required: true,
+					description: 'Email connection UUID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'updateEmailView',
+			name: 'Update Email View',
+			action: 'Change a custom mailbox view (name, emoji, filter, mailbox, order)',
+			description: 'Change a custom mailbox view (name, emoji, filter, mailbox, order). Pass ONLY the fields to change — the schema is strict: any unknown field fails the call (400). `ID` comes from `list_email_views`. Owner only.',
+			routeSpec: {"method":"PATCH","path":"/api/email/views/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'View UUID',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Connection ID',
+							name: 'connection_id',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Emoji',
+							name: 'emoji',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Filter Type',
+							name: 'filter_type',
+							type: 'options',
+							default: 'ai_category',
+							options: [
+								{ name: 'AI Category', value: 'ai_category' },
+								{ name: 'Label', value: 'label' },
+							],
+						},
+						{
+							displayName: 'Filter Value',
+							name: 'filter_value',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Sort Order',
+							name: 'sort_order',
+							type: 'number',
+							default: 0,
+						},
+					],
 				}
 			],
 		}

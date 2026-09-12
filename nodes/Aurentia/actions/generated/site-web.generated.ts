@@ -7,6 +7,243 @@ export const siteWebResource: GeneratedResource = {
 	displayName: 'Site Builder',
 	operations: [
 		{
+			value: 'applySiteCharter',
+			name: 'Apply Site Charter',
+			action: 'Apply a new brand charter (colours, optionally fonts) to an EXISTING generated website: the values are saved on the website profile AND every already-generated page is re-skinned in place — old hex values and font names are swapped for the new ones, deterministically, with no AI pass and no credit',
+			description: 'Apply a new brand charter (colours, optionally fonts) to an EXISTING generated website: the values are saved on the website profile AND every already-generated page is re-skinned in place — old hex values and font names are swapped for the new ones, deterministically, with no AI pass and no credit. Use it when the person changed their brand colours (in the brand kit or by telling you) and wants the site to follow. `projectId` identifies the project; the site is resolved from it, and only its owner may call this. `brand_colors.primary`, `secondary` and `accent` are REQUIRED hex strings (#rgb, #rrggbb or #rrggbbaa); `background` and `text` are optional. `brand_fonts` is optional but if given needs BOTH `headings` and `body` (font family names, e.g. Inter). Send the COMPLETE set of colours you want on the site, not a diff: what you send replaces what was stored. The response tells how many files were rewritten (`filesUpdated`); 0 means the site had nothing generated yet, in which case the charter is simply stored for the next generation. This does not publish anything — the live site changes only after the next `publish_website`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/charter/apply","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project whose website receives the charter (owner only)',
+					default: '',
+				},
+				{
+					displayName: 'Brand Colors',
+					name: 'brand_colors',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Brand Fonts',
+							name: 'brand_fonts',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'applyWebsiteSectionOperation',
+			name: 'Apply Website Section Operation',
+			action: 'Move, duplicate, remove or insert a native draft section',
+			description: 'Move, duplicate, remove or insert a native draft section. For add_after, blockId is required (choose a listed native block); it inserts editable starter content using the saved charter, without an AI call. Only existing structured pages and FR/EN locales support native insertion. Read get_website_draft_file first: pass its exact updated_at as expectedUpdatedAt and the displayed data-au-sec index. Every matching locale and the structured content are committed atomically; mismatched translations or stale revisions return 409. Connected modules can be moved; edit/remove them with module tools. Does not publish or spend credits.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/sections-ops/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'The site ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Page Path',
+					name: 'pagePath',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Expected Updated At',
+					name: 'expectedUpdatedAt',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Op',
+					name: 'op',
+					type: 'options',
+					required: true,
+					default: 'add_after',
+					options: [
+						{ name: 'Add After', value: 'add_after' },
+						{ name: 'Duplicate', value: 'duplicate' },
+						{ name: 'Move Down', value: 'move_down' },
+						{ name: 'Move Up', value: 'move_up' },
+						{ name: 'Remove', value: 'remove' },
+					],
+				},
+				{
+					displayName: 'Section Index',
+					name: 'sectionIndex',
+					type: 'number',
+					required: true,
+					default: 0,
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Block ID',
+							name: 'blockId',
+							type: 'options',
+							description: 'Required for add_after; omit for other operations',
+							default: 'about_manifesto',
+							options: [
+								{ name: 'About Manifesto', value: 'about_manifesto' },
+								{ name: 'About Story', value: 'about_story' },
+								{ name: 'About Values', value: 'about_values' },
+								{ name: 'Contact Cards', value: 'contact_cards' },
+								{ name: 'Contact Compact', value: 'contact_compact' },
+								{ name: 'Contact Split', value: 'contact_split' },
+								{ name: 'Content Media Band', value: 'content_media_band' },
+								{ name: 'Content Richtext', value: 'content_richtext' },
+								{ name: 'Content Two Columns', value: 'content_two_columns' },
+								{ name: 'Cta Centered Button', value: 'cta_centered_button' },
+								{ name: 'Cta Compact Banner', value: 'cta_compact_banner' },
+								{ name: 'Cta Split Statement', value: 'cta_split_statement' },
+								{ name: 'Faq Accordion', value: 'faq_accordion' },
+								{ name: 'Faq Cards', value: 'faq_cards' },
+								{ name: 'Faq Editorial', value: 'faq_editorial' },
+								{ name: 'Faq Split', value: 'faq_split' },
+								{ name: 'Features Alternating', value: 'features_alternating' },
+								{ name: 'Features Grid 3col', value: 'features_grid_3col' },
+								{ name: 'Features Icon List', value: 'features_icon_list' },
+								{ name: 'Hero Centered', value: 'hero_centered' },
+								{ name: 'Hero Gradient Minimal', value: 'hero_gradient_minimal' },
+								{ name: 'Hero Split Image Right', value: 'hero_split_image_right' },
+								{ name: 'Hero Video Bg', value: 'hero_video_bg' },
+								{ name: 'Portfolio Case Studies', value: 'portfolio_case_studies' },
+								{ name: 'Portfolio Gallery', value: 'portfolio_gallery' },
+								{ name: 'Portfolio Index', value: 'portfolio_index' },
+								{ name: 'Pricing 3tier', value: 'pricing_3tier' },
+								{ name: 'Pricing Compare Table', value: 'pricing_compare_table' },
+								{ name: 'Pricing Tier Rows', value: 'pricing_tier_rows' },
+								{ name: 'Services Cards', value: 'services_cards' },
+								{ name: 'Services Disclosure', value: 'services_disclosure' },
+								{ name: 'Services List', value: 'services_list' },
+								{ name: 'Team Directory', value: 'team_directory' },
+								{ name: 'Team Portraits', value: 'team_portraits' },
+								{ name: 'Team Spotlight', value: 'team_spotlight' },
+								{ name: 'Testimonials Carousel', value: 'testimonials_carousel' },
+								{ name: 'Testimonials Grid', value: 'testimonials_grid' },
+								{ name: 'Testimonials Spotlight', value: 'testimonials_spotlight' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'assembleWebsitePreparation',
+			name: 'Assemble Website Preparation',
+			action: 'Assemble the saved page and block choices into an editable website without AI calls or credit charges',
+			description: 'Assemble the saved page and block choices into an editable website without AI calls or credit charges. Reuses an already assembled preparation; refuses to replace an existing site. Use the contentRevision just read. Currently requires one language (fr or en). Starter text must be personalised before publication. Does not publish.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/draft/{draftId}/assemble","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Draft ID',
+					name: 'draftId',
+					type: 'string',
+					required: true,
+					description: 'Saved website preparation UUID',
+					default: '',
+				},
+				{
+					displayName: 'Expected Revision',
+					name: 'expectedRevision',
+					type: 'number',
+					required: true,
+					default: 0,
+				}
+			],
+		},
+		{
+			value: 'checkSiteSlugAvailability',
+			name: 'Check Site Slug Availability',
+			action: 'Check whether a website slug (the `&lt;slug&gt;.aurentia.site` address) is free BEFORE proposing it or writing it with `update_website_profile`',
+			description: 'Check whether a website slug (the `&lt;slug&gt;.aurentia.site` address) is free BEFORE proposing it or writing it with `update_website_profile`. Returns `available:true`, or `available:false` with a `reason`: \'shape\' (2-31 chars, lowercase letters, digits and hyphens only — reformulate), \'reserved\' (a name Aurentia keeps: pick another), \'taken\' (another site uses it). Pass `exceptWebsiteProfileId` when checking the slug of a site that may already own it, otherwise its current slug reads as \'taken\'. Read-only: it changes nothing and costs nothing, so call it freely, but never announce a slug as available without having called it.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/check-slug-availability","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Slug',
+					name: 'slug',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Except Website Profile ID',
+							name: 'exceptWebsiteProfileId',
+							type: 'string',
+							description: 'The site whose own slug must not count as taken',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'checkoutNativeWebsiteTemplate',
+			name: 'Checkout Native Website Template',
+			action: 'Prepare Stripe payment for one native template instance',
+			description: 'Prepare Stripe payment for one native template instance. Charges EUR, never credits. Read server price and obtain explicit purchase approval first. A checkout return is not proof of payment.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/templates/{slug}/checkout","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Slug',
+					name: 'slug',
+					type: 'string',
+					required: true,
+					description: 'The slug for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Request Key',
+					name: 'requestKey',
+					type: 'string',
+					required: true,
+					description: 'Stable request UUID; reuse for retry',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'connectCustomDomain',
 			name: 'Connect Custom Domain',
 			action: 'Aurentia (PRD-204): attach an existing custom domain the user owns to their Vercel-deployed site',
@@ -32,6 +269,31 @@ export const siteWebResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'connectSiteCustomDomain',
+			name: 'Connect Site Custom Domain',
+			action: 'Rattache un domaine que l\'utilisateur POSSÈDE à son site HÉBERGÉ PAR AURENTIA (celui publié par `publish_website` sur `&lt;slug&gt;.aurentia.site`)',
+			description: 'Rattache un domaine que l\'utilisateur POSSÈDE à son site HÉBERGÉ PAR AURENTIA (celui publié par `publish_website` sur `&lt;slug&gt;.aurentia.site`). Ne confonds pas avec `connect_custom_domain`, qui vise un site déployé sur le PROPRE compte Vercel de l\'utilisateur (`deploy_website_to_vercel`) — deux hébergements, deux outils. La réponse rend `dnsRecords` : les enregistrements exacts à poser chez le registrar, par l\'utilisateur, jamais par toi. Relaie-les verbatim et dis-lui d\'appeler `verify_site_custom_domain` une fois posés. Palier Pro/Scale exigé — résolu sur le PROPRIÉTAIRE du site, pas sur l\'acteur : un collaborateur d\'un site dont le propriétaire est en gratuit est refusé (403) même s\'il est lui-même Pro. Domaine déjà pris ailleurs = conflit ; second domaine sur le même site = remplace le premier.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/custom-domain/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site (website_profiles.ID, rendu par create_website / get_website_status)',
+					default: '',
+				},
+				{
+					displayName: 'Domain',
+					name: 'domain',
+					type: 'string',
+					required: true,
+					description: 'Domaine possédé, ex. www.monentreprise.fr — sans http://.',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'createBlogArticle',
 			name: 'Create Blog Article',
 			action: 'Create a blog article',
@@ -40,7 +302,7 @@ export const siteWebResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -51,21 +313,6 @@ export const siteWebResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					default: '',
-				},
-				{
-					displayName: 'Additional Fields',
-					name: 'additionalFields',
-					type: 'collection',
-					placeholder: 'Add Field',
-					default: {},
-					options: [
-						{
-							displayName: 'Content',
-							name: 'content',
-							type: 'string',
-							default: '',
-						},
-					],
 				}
 			],
 		},
@@ -78,7 +325,107 @@ export const siteWebResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project UUID (injected from the session when you have one)',
+					default: '',
+				},
+				{
+					displayName: 'Magnet Type',
+					name: 'magnet_type',
+					type: 'options',
+					required: true,
+					description: 'What the freebie IS — it decides the outline the AI writes and how the landing page presents it. Map the words used: « un guide PDF » → guide or ebook, « une liste à cocher » → checklist, « un modèle à remplir » → template, « un simulateur » → calculator. A value outside the list is refused.',
+					default: 'calculator',
+					options: [
+						{ name: 'Calculator', value: 'calculator' },
+						{ name: 'Cheatsheet', value: 'cheatsheet' },
+						{ name: 'Checklist', value: 'checklist' },
+						{ name: 'Ebook', value: 'ebook' },
+						{ name: 'Guide', value: 'guide' },
+						{ name: 'Infographic', value: 'infographic' },
+						{ name: 'Quiz', value: 'quiz' },
+						{ name: 'Template', value: 'template' },
+						{ name: 'Toolkit', value: 'toolkit' },
+						{ name: 'Webinar', value: 'webinar' },
+					],
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					description: 'Title of the lead magnet as visitors will read it on the page, max 200 characters',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							description: 'What the visitor gets and why it is worth an email address (max 2000)',
+							default: '',
+						},
+						{
+							displayName: 'Target Audience',
+							name: 'target_audience',
+							type: 'string',
+							description: 'Who the freebie is for — it steers the whole outline (max 500)',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createManualWebsitePreparation',
+			name: 'Create Manual Website Preparation',
+			action: 'Create a saved manual website preparation with one editable page, without AI calls or credit charges',
+			description: 'Create a saved manual website preparation with one editable page, without AI calls or credit charges. Returns draftId; read it with get_website_preparation before assembling. Does not publish. Starting from a project or agency requires write permissions at assembly time.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/draft","queryParams":[],"body":{"creationMode":"manual"}},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Initial Prompt',
+							name: 'initialPrompt',
+							type: 'string',
+							description: 'Optional context saved for later editing',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createPage',
+			name: 'Create Page',
+			action: 'Add a page to the person\'s website: the server creates it, positions it after the existing pages and GENERATES its content with AI from the site\'s brief — COSTS 3 CREDITS, say so first',
+			description: 'Add a page to the person\'s website: the server creates it, positions it after the existing pages and GENERATES its content with AI from the site\'s brief — COSTS 3 CREDITS, say so first. `title` is required; `slug` is derived from it when omitted; `page_type` is a free label (\'services\', \'about\', \'contact\', \'landing\'…). `sections` lets you fix the structure — an ordered list of `{ section_type, title? }` using the builder\'s section types (hero, features, how_it_works, testimonials, faq, cta, social_proof, pricing, team, about_story, values, services_list, service_detail, portfolio, contact_form…); omit it to let the generator pick. Check `list_pages` first so you do not create a page that already exists under another title. The page is added to the draft site; it goes live with the next `publish_website`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/pages","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -98,8 +445,21 @@ export const siteWebResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Type',
-							name: 'type',
+							displayName: 'Page Type',
+							name: 'page_type',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Sections',
+							name: 'sections',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Slug',
+							name: 'slug',
 							type: 'string',
 							default: '',
 						},
@@ -110,8 +470,8 @@ export const siteWebResource: GeneratedResource = {
 		{
 			value: 'createSection',
 			name: 'Create Section',
-			action: 'Add a section to a page',
-			description: 'Add a section to a page',
+			action: 'Add a section to a page of the website',
+			description: 'Add a section to a page of the website. `section_type` is a CLOSED list — it picks the block template that gets rendered, so choose the one that matches what the person described; an unknown value is refused (400).',
 			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/pages/{page_id}/sections","queryParams":[]},
 			properties: [
 				{
@@ -119,15 +479,42 @@ export const siteWebResource: GeneratedResource = {
 					name: 'page_id',
 					type: 'string',
 					required: true,
-					description: 'The page ID for this operation',
+					description: 'UUID of the page the section is added to (list_website_pages)',
 					default: '',
 				},
 				{
-					displayName: 'Type',
-					name: 'type',
-					type: 'string',
+					displayName: 'Section Type',
+					name: 'section_type',
+					type: 'options',
 					required: true,
-					default: '',
+					description: 'Which block to insert. Map the request to the closest one — « une section avis clients » → testimonials, « nos tarifs » → pricing, « un formulaire de contact » → contact_form. Use \'custom\' only when nothing fits.',
+					default: 'about_story',
+					options: [
+						{ name: 'About Story', value: 'about_story' },
+						{ name: 'Availability', value: 'availability' },
+						{ name: 'Booking Cta', value: 'booking_cta' },
+						{ name: 'Categories Grid', value: 'categories_grid' },
+						{ name: 'Comparison', value: 'comparison' },
+						{ name: 'Contact Form', value: 'contact_form' },
+						{ name: 'Cta', value: 'cta' },
+						{ name: 'Custom', value: 'custom' },
+						{ name: 'Faq', value: 'faq' },
+						{ name: 'Featured Products', value: 'featured_products' },
+						{ name: 'Features', value: 'features' },
+						{ name: 'Hero', value: 'hero' },
+						{ name: 'How It Works', value: 'how_it_works' },
+						{ name: 'Legal', value: 'legal' },
+						{ name: 'Newsletter Signup', value: 'newsletter_signup' },
+						{ name: 'Portfolio', value: 'portfolio' },
+						{ name: 'Pricing', value: 'pricing' },
+						{ name: 'Service Detail', value: 'service_detail' },
+						{ name: 'Services List', value: 'services_list' },
+						{ name: 'Social Proof', value: 'social_proof' },
+						{ name: 'Stats', value: 'stats' },
+						{ name: 'Team', value: 'team' },
+						{ name: 'Testimonials', value: 'testimonials' },
+						{ name: 'Values', value: 'values' },
+					],
 				},
 				{
 					displayName: 'Additional Fields',
@@ -140,23 +527,61 @@ export const siteWebResource: GeneratedResource = {
 							displayName: 'Content',
 							name: 'content',
 							type: 'json',
-							description: 'Provide a JSON object',
+							description: 'Section payload, shaped by section_type (items, columns, texts). Omit it to get the generated default content for that block. (provide a JSON object)',
 							default: '{}',
+						},
+						{
+							displayName: 'Position',
+							name: 'position',
+							type: 'number',
+							description: '0-based rank of the section in the page. Omit it to append at the end.',
+							default: 0,
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							description: 'Heading shown on the section, max 200 characters',
+							default: '',
 						},
 					],
 				}
 			],
 		},
 		{
-			value: 'createWebEmail',
-			name: 'Create Web Email',
-			action: 'Create a marketing email',
-			description: 'Create a marketing email',
-			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/emails","queryParams":[]},
+			value: 'createSiteEmbed',
+			name: 'Create Site Embed',
+			action: 'Add a module (« embed ») to the person\'s website: a lead magnet (a downloadable guide/checklist generated by AI, `lead_magnet_artifact`), an interactive lead-magnet flow (`lead_magnet_flow`), a booking link (`booking_link`), a form link (`form_link`), a newsletter box (`newsletter`), the blog feed (`blog_feed`), the site chatbot (`chatbot_widget`) or a media showcase (`media_showcase`)',
+			description: 'Add a module (« embed ») to the person\'s website: a lead magnet (a downloadable guide/checklist generated by AI, `lead_magnet_artifact`), an interactive lead-magnet flow (`lead_magnet_flow`), a booking link (`booking_link`), a form link (`form_link`), a newsletter box (`newsletter`), the blog feed (`blog_feed`), the site chatbot (`chatbot_widget`) or a media showcase (`media_showcase`). `title` is what the visitor sees. `config` depends on the kind: `booking_link` → `{ booking_page_id, display_mode? }`; `form_link` → `{ form_id, display_mode?, thank_you_message? }`; `newsletter` → `{ provider: \'mailto\'|\'webhook\', config_url? }`; `blog_feed` → `{ limit?, layout: \'grid\'|\'list\', show_categories? }`; `media_showcase` → `{ limit?, layout: \'cards\'|\'carousel\', min_rating? }`. For `lead_magnet_artifact` the server GENERATES the document from `brief` (`config.format` \'guide\' by default): THIS ONE COSTS 3 CREDITS, refunded if generation fails — say so before creating it. Get IDs for booking pages and forms from `list_booking_pages` and the forms tools; do not invent them. List existing modules first with `list_site_embeds` to avoid duplicates; edit later with `update_site_embed`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/embeds","queryParams":[]},
 			properties: [
 				{
-					displayName: 'Project ID',
-					name: 'project_id',
+					displayName: 'Website Profile ID',
+					name: 'websiteProfileId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Kind',
+					name: 'kind',
+					type: 'options',
+					required: true,
+					default: 'blog_feed',
+					options: [
+						{ name: 'Blog Feed', value: 'blog_feed' },
+						{ name: 'Booking Link', value: 'booking_link' },
+						{ name: 'Chatbot Widget', value: 'chatbot_widget' },
+						{ name: 'Form Link', value: 'form_link' },
+						{ name: 'Lead Magnet Artifact', value: 'lead_magnet_artifact' },
+						{ name: 'Lead Magnet Flow', value: 'lead_magnet_flow' },
+						{ name: 'Media Showcase', value: 'media_showcase' },
+						{ name: 'Newsletter', value: 'newsletter' },
+					],
+				},
+				{
+					displayName: 'Title',
+					name: 'title',
 					type: 'string',
 					required: true,
 					default: '',
@@ -169,15 +594,127 @@ export const siteWebResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Subject',
-							name: 'subject',
+							displayName: 'Brief',
+							name: 'brief',
+							type: 'string',
+							description: 'Lead_magnet_artifact only: what the generated document must cover',
+							default: '',
+						},
+						{
+							displayName: 'Config',
+							name: 'config',
+							type: 'json',
+							description: 'Kind-specific settings, see description. (provide a JSON object).',
+							default: '{}',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
 							type: 'string',
 							default: '',
 						},
 						{
-							displayName: 'Type',
-							name: 'type',
+							displayName: 'Vendor',
+							name: 'vendor',
+							type: 'options',
+							default: 'google',
+							options: [
+								{ name: 'Google', value: 'google' },
+								{ name: 'Mistral', value: 'mistral' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createSiteFunnel',
+			name: 'Create Site Funnel',
+			action: 'Define a conversion funnel on the person\'s website analytics: an ordered list of 2 to 10 steps, each one an analytics event (`event_name`, snake_case, e.g',
+			description: 'Define a conversion funnel on the person\'s website analytics: an ordered list of 2 to 10 steps, each one an analytics event (`event_name`, snake_case, e.g. `page_view`, `cta_click`, `form_submit`) with a human `label`, optionally restricted to a page (`filter.page_path`). The funnel then reports drop-off between steps in the analytics tab (`get_analytics_funnel`). PLAN GATE: funnels are advanced analytics, Pro and Scale only — the server answers 403 on other plans; tell the person rather than retrying. Use event names that the site actually emits; a funnel on events that never fire shows zeros forever. Edit with `update_site_funnel`, list with `list_site_funnels`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/funnels","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'websiteProfileId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Steps',
+					name: 'steps',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Description',
+							name: 'description',
 							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'createWebEmail',
+			name: 'Create Web Email',
+			action: 'Generate a marketing email for the project\'s website (welcome, newsletter, cart abandonment…)',
+			description: 'Generate a marketing email for the project\'s website (welcome, newsletter, cart abandonment…). The AI writes the subject and the body — do not try to pass them: what you choose is the KIND of email, and the sequence it belongs to. For a one-to-one follow-up on a CRM contact, use generate_email_template instead.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/emails","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project UUID (injected from the session when you have one)',
+					default: '',
+				},
+				{
+					displayName: 'Email Type',
+					name: 'email_type',
+					type: 'string',
+					required: true,
+					description: 'Which email to write. The screen offers: welcome, confirmation, newsletter, onboarding, onboarding_5, cart_abandonment, nurturing, reactivation, testimonial_request, product_launch. Free text is accepted but stay on that list — it is what the templates and the filters key on.',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Context',
+							name: 'context',
+							type: 'string',
+							description: 'What the email must say or sell, in the words of the person (max 600 characters)',
+							default: '',
+						},
+						{
+							displayName: 'Sequence Name',
+							name: 'sequence_name',
+							type: 'string',
+							description: 'Name of the sequence this email belongs to, when the person is building a series rather than a single message. Passing it generates the whole sequence around this type.',
 							default: '',
 						},
 					],
@@ -279,6 +816,57 @@ export const siteWebResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'deleteSiteAnnotation',
+			name: 'Delete Site Annotation',
+			action: 'Supprime un commentaire épinglé sur la preview d\'un site',
+			description: 'Supprime un commentaire épinglé sur la preview d\'un site. À réserver au bruit (doublon, commentaire vide, test) : pour une demande traitée, préfère `update_site_annotation` avec `status: resolved`, qui garde la trace de ce qui a été demandé et par qui. Seuls l\'auteur et le propriétaire du site y ont droit ; sinon la base refuse.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/site-web/annotations/{annotation_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Annotation ID',
+					name: 'annotation_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de l\'annotation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteSiteEmbed',
+			name: 'Delete Site Embed',
+			action: 'Supprime un module intégré au site (aimant à prospects, lien de réservation, newsletter, widget chatbot…)',
+			description: 'Supprime un module intégré au site (aimant à prospects, lien de réservation, newsletter, widget chatbot…). Le module disparaît du brouillon et de la navigation ; pour un aimant à prospects généré, son fichier n\'est plus servi. Pas de corbeille. Le formulaire, la page de réservation ou l\'article que le module LIAIT ne sont pas supprimés. Uniquement sur un module nommé (titre + type relus dans `list_site_embeds`) et confirmé ; pour le retirer du menu sans le perdre, `update_site_embed` avec `include_in_nav: false`.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/site-web/embeds/{embed_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Embed ID',
+					name: 'embed_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du module à supprimer',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteSiteFunnel',
+			name: 'Delete Site Funnel',
+			action: 'Supprime un entonnoir de conversion du site',
+			description: 'Supprime un entonnoir de conversion du site. Seule la DÉFINITION disparaît (ses étapes) : aucun événement analytics n\'est effacé, le site public n\'est pas touché. Pour arrêter de le calculer sans le perdre, `update_site_funnel` avec `is_active: false`. Sur un entonnoir nommé, relu dans `list_site_funnels`.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/site-web/funnels/{funnel_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Funnel ID',
+					name: 'funnel_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de l\'entonnoir',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'deployWebsiteToVercel',
 			name: 'Deploy Website To Vercel',
 			action: 'Aurentia (PRD-204): deploy the site to the user\'s OWN connected Vercel account (they own + pay for it)',
@@ -292,6 +880,113 @@ export const siteWebResource: GeneratedResource = {
 					required: true,
 					description: 'The site ID for this operation',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'disconnectWebsiteGithubRepo',
+			name: 'Disconnect Website Github Repo',
+			action: 'Coupe le lien entre un site et son dépôt GitHub',
+			description: 'Coupe le lien entre un site et son dépôt GitHub. Le dépôt DISTANT n\'est pas touché : rien n\'est supprimé chez GitHub, le code déjà poussé y reste. Seul le lien côté Aurentia disparaît : plus de push automatique à la publication, plus de `push_website_to_github`. Le site n\'est pas dépublié. Réversible en reliant à nouveau (`link_website_to_github_repo` crée alors un NOUVEAU dépôt — dis-le à l\'utilisateur avant de couper s\'il compte re-relier le même). Pour une pause temporaire, `set_website_github_sync`.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/site-web/github/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'editWebsitePageElement',
+			name: 'Edit Website Page Element',
+			action: 'Modifie UN élément d\'une page du brouillon directement dans son HTML, sans régénération ni crédit : remplacer un texte (même non unique, par index d\'occurrence), colorer/changer la police d\'un texte, remplacer l\'image dont on connaît l\'URL, retarger le lien qui entoure un texte, ou changer la couleur de fond d\'une section',
+			description: 'Modifie UN élément d\'une page du brouillon directement dans son HTML, sans régénération ni crédit : remplacer un texte (même non unique, par index d\'occurrence), colorer/changer la police d\'un texte, remplacer l\'image dont on connaît l\'URL, retarger le lien qui entoure un texte, ou changer la couleur de fond d\'une section. Une seule opération par appel, choisie par les champs envoyés : (1) texte → `oldText` + `newText` (+ `occurrenceIndex`, 0 par défaut, quand le texte apparaît plusieurs fois — `edit_website_text` exige l\'unicité, celui-ci non) ; (2) style → `oldText` + `style { color hex, fontKey }` (le texte est enveloppé dans un span ; `fontKey` est une clé fermée, jamais du CSS) ; (3) image → `imgSrc { oldSrc, newSrc }` ; (4) lien → `oldText` + `link { newHref }` (le texte doit être DANS un `<a>`) ; (5) fond de section → `sectionBg { sectionIndex, color }` (`color: ""` retire le fond ; `sectionIndex` = position de la section dans la page, la même que `apply_website_section_operation`). Relis la page avec `get_website_draft_file` avant et recopie son `updated_at` à l\'identique dans `expectedUpdatedAt` : aucune conversion Date, les microsecondes protègent contre l\'écrasement d\'une édition concurrente. `oldText` est le texte EXACT tel qu\'il est entre deux balises, `oldSrc` l\'URL exacte de l\'image. Un texte introuvable à cet index est refusé (400) — ne devine pas. `pageSlug` : `index`, `about`, `pricing`… URLs : http(s) ou chemin relatif seulement.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/site-web/files/{site_id}/inline-edit","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site',
+					default: '',
+				},
+				{
+					displayName: 'Page Slug',
+					name: 'pageSlug',
+					type: 'string',
+					required: true,
+					description: 'Slug de la page, ex. index, about.',
+					default: '',
+				},
+				{
+					displayName: 'Expected Updated At',
+					name: 'expectedUpdatedAt',
+					type: 'string',
+					required: true,
+					description: 'Valeur `updated_at` brute renvoyée par get_website_draft_file, microsecondes conservées',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Img Src',
+							name: 'imgSrc',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Link',
+							name: 'link',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'New Text',
+							name: 'newText',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Occurrence Index',
+							name: 'occurrenceIndex',
+							type: 'number',
+							description: '0-based ; défaut 0',
+							default: 0,
+						},
+						{
+							displayName: 'Old Text',
+							name: 'oldText',
+							type: 'string',
+							description: 'Texte exact à cibler (ops texte / style / lien)',
+							default: '',
+						},
+						{
+							displayName: 'Section Bg',
+							name: 'sectionBg',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Style',
+							name: 'style',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+					],
 				}
 			],
 		},
@@ -343,7 +1038,23 @@ export const siteWebResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'generateBlogStrategy',
+			name: 'Generate Blog Strategy',
+			action: 'Generate the blog strategy of a project\'s website with AI — editorial themes, pillar strategy, publishing calendar and lead-magnet ideas — and write it into the blog config',
+			description: 'Generate the blog strategy of a project\'s website with AI — editorial themes, pillar strategy, publishing calendar and lead-magnet ideas — and write it into the blog config. It OVERWRITES the existing strategy (read it first with `get_blog_config`; if the person only wants to tweak a theme, `update_blog_config` is the right tool). Takes up to two minutes. Use it when the site has no blog strategy yet, or when the positioning changed enough that the old one is obsolete. Returns `{ success: true }`; read the result with `get_blog_config`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/blog/config/generate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -363,6 +1074,146 @@ export const siteWebResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The email ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'generateSiteFromBrief',
+			name: 'Generate Site From Brief',
+			action: 'Start the generation of the person\'s website from a structured brief — the same data the onboarding chat collects, but supplied by you',
+			description: 'Start the generation of the person\'s website from a structured brief — the same data the onboarding chat collects, but supplied by you. COSTS 2 CREDITS and RESTARTS the site: the website profile is reset to \'preparing\', the brief you send becomes its onboarding data and every page is regenerated in the background — never call it on a site the person is happy with (use `edit_website_text`, `create_page` or `regenerate_website_page` instead), and say clearly that existing pages will be rebuilt. Fill `chatData` from what the project already knows (`resolveProjectBrief`, brand kit, modules) — never ask again for a fact Aurentia has: `site_type` (\'saas\',\'vitrine\',\'agence\',\'ecommerce\',\'reservation\',\'portfolio\',\'blog\'), `site_name`, `brand_tone`, vocabulary to use/avoid, `brand_colors`/`brand_fonts` (maps), `brand_image_style`, `target_audience_summary`, `inspiration_urls`, contact details (`business_address`, `business_phone`, `business_email`, `business_hours`), `social_links` (map), and `pages` (each `{ title, slug, page_type, sections: [{ section_type, title? }] }`; section types are the site builder\'s: hero, features, how_it_works, testimonials, faq, cta, social_proof, pricing, team, about_story, values, services_list, service_detail, portfolio, contact_form…). Omit `pages` to let the generator choose. The call returns immediately with `{ success: true }`; poll `get_website_status` for progress and failed pages (`retry_failed_site_pages`). Prefer `quick_generate_site` when the person just says « génère-moi un site » with no preferences.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/onboarding/generate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Chat Data',
+					name: 'chatData',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
+				}
+			],
+		},
+		{
+			value: 'generateSiteImage',
+			name: 'Generate Site Image',
+			action: 'Generate one image for the person\'s website (hero, section illustration, background) in the site\'s brand image style, and get back its public URL to place with `update_site_section_content` / `edit_website_text`',
+			description: 'Generate one image for the person\'s website (hero, section illustration, background) in the site\'s brand image style, and get back its public URL to place with `update_site_section_content` / `edit_website_text`. COSTS 63 CREDITS per image, debited up front and refunded automatically when the same prompt was already generated (cache) or when the provider returned a placeholder — tell the person the price before calling. `prompt` describes the picture (3-800 chars, no text in the image unless asked); the server appends the site\'s `brand_image_style` itself, do not repeat it. `aspect` must match where the image goes (\'16:9\' hero, \'1:1\' card, \'9:16\' mobile…). To refine an image you already generated, call this again with the instruction folded into the prompt (« same scene, warmer light ») — there is no separate edit route worth using. `vendor` \'mistral\' is the EU choice but has no image model: the server then serves the default provider.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/images/generate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'websiteProfileId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Prompt',
+					name: 'prompt',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Aspect',
+					name: 'aspect',
+					type: 'options',
+					required: true,
+					default: '1:1',
+					options: [
+						{ name: '1:1', value: '1:1' },
+						{ name: '16:9', value: '16:9' },
+						{ name: '21:9', value: '21:9' },
+						{ name: '3:4', value: '3:4' },
+						{ name: '4:3', value: '4:3' },
+						{ name: '9:16', value: '9:16' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Vendor',
+							name: 'vendor',
+							type: 'options',
+							default: 'google',
+							options: [
+								{ name: 'Google', value: 'google' },
+								{ name: 'Mistral', value: 'mistral' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'generateSiteSeo',
+			name: 'Generate Site SEO',
+			action: 'Generate the website\'s SEO/GEO assets with AI: page metadata (titles, descriptions), a keyword set, the sitemap and the GEO layer (how the site is described to AI answer engines)',
+			description: 'Generate the website\'s SEO/GEO assets with AI: page metadata (titles, descriptions), a keyword set, the sitemap and the GEO layer (how the site is described to AI answer engines). COSTS 2 CREDITS per call regardless of the targets — tell the person. `targets` restricts the work (\'metadata\', \'keywords\', \'sitemap\', \'geo\'); omit it for everything. The generated values are WRITTEN on the site\'s SEO settings, replacing what was there for the chosen targets — read `get_seo` first if the person wrote metadata by hand they want to keep, and use `update_seo` for a manual change instead of regenerating. Not a publish: the live site picks the new metadata up at the next `publish_website`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/seo/generate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'websiteProfileId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Targets',
+							name: 'targets',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Vendor',
+							name: 'vendor',
+							type: 'options',
+							default: 'google',
+							options: [
+								{ name: 'Google', value: 'google' },
+								{ name: 'Mistral', value: 'mistral' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'generateWebsitePreparation',
+			name: 'Generate Website Preparation',
+			action: 'Generate a website with AI from a saved preparation',
+			description: 'Generate a website with AI from a saved preparation. This charges credits: read generationCost from get_website_preparation and obtain approval first. Use assemble_website_preparation for the free manual route. Does not publish.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/draft/{draftId}/generate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Draft ID',
+					name: 'draftId',
+					type: 'string',
+					required: true,
+					description: 'The draft ID for this operation',
 					default: '',
 				}
 			],
@@ -401,6 +1252,56 @@ export const siteWebResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getChatbotWidgetConfig',
+			name: 'Get Chatbot Widget Config',
+			action: 'Read the configuration of the chatbot embedded on the person\'s website: welcome and teaser per language, suggested questions per language, theme, whether visitors may attach files and whether those files are kept',
+			description: 'Read the configuration of the chatbot embedded on the person\'s website: welcome and teaser per language, suggested questions per language, theme, whether visitors may attach files and whether those files are kept. Call it before `update_chatbot_widget_config` so you patch only what changes. Owner only (403 otherwise).',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/chatbot-widget/config","queryParams":["website_profile_id:websiteProfileId"]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'website_profile_id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getNativeWebsiteTemplate',
+			name: 'Get Native Website Template',
+			action: 'Read a native website template commercial detail without private HTML or CMS payload',
+			description: 'Read a native website template commercial detail without private HTML or CMS payload',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/templates/{slug}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Slug',
+					name: 'slug',
+					type: 'string',
+					required: true,
+					description: 'The slug for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getNativeWebsiteTemplateAcquisition',
+			name: 'Get Native Website Template Acquisition',
+			action: 'Read and reconcile the authenticated buyer acquisition against Stripe',
+			description: 'Read and reconcile the authenticated buyer acquisition against Stripe. Returns pending, paid, consumed, expired or refunded; no client paid flag accepted.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/template-acquisitions/{acquisitionId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Acquisition ID',
+					name: 'acquisitionId',
+					type: 'string',
+					required: true,
+					description: 'The acquisition ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'getPage',
 			name: 'Get Page',
 			action: 'Page details with its sections',
@@ -433,6 +1334,54 @@ export const siteWebResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getSiteBuilderPreferences',
+			name: 'Get Site Builder Preferences',
+			action: 'Read the website\'s builder preferences (site type, model vendor, images on/off, locales, colour mode, theme)',
+			description: 'Read the website\'s builder preferences (site type, model vendor, images on/off, locales, colour mode, theme). Returns `preferences: null` when never set. Call it before `update_site_builder_preferences`, which replaces the whole object.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/onboarding/preferences","queryParams":["website_profile_id:websiteProfileId"]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'website_profile_id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getSiteStripeAttributionCount',
+			name: 'Get Site Stripe Attribution Count',
+			action: 'Count confirmed live Stripe purchases for this exact Entrepreneurs website during the last 30 receipt days, from the private server ledger',
+			description: 'Count confirmed live Stripe purchases for this exact Entrepreneurs website during the last 30 receipt days, from the private server ledger. Does not trust public analytics properties. Refunds appear in net revenue separately.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/analytics/stripe-attribution/count","queryParams":["websiteProfileId"]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'websiteProfileId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getSiteStripeAttributionStatus',
+			name: 'Get Site Stripe Attribution Status',
+			action: 'Read the exact Entrepreneurs website project merchant account status and server-verified binding',
+			description: 'Read the exact Entrepreneurs website project merchant account status and server-verified binding. Includes can_manage for the project owner. This does not start personal Stripe Connect onboarding. Read payment counts with get_site_stripe_attribution_count.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/analytics/stripe-attribution/status","queryParams":["websiteProfileId"]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'websiteProfileId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'getVercelDeploymentStatus',
 			name: 'Get Vercel Deployment Status',
 			action: 'Aurentia (PRD-204): read the current Vercel deployment status (building/ready/error) + production URL for a site deployed on the user\'s own account',
@@ -445,6 +1394,124 @@ export const siteWebResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The site ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getVercelDomainStatus',
+			name: 'Get Vercel Domain Status',
+			action: 'Liste les domaines rattachés au projet Vercel de l\'utilisateur pour ce site (déployé par `deploy_website_to_vercel`), avec leur état de vérification',
+			description: 'Liste les domaines rattachés au projet Vercel de l\'utilisateur pour ce site (déployé par `deploy_website_to_vercel`), avec leur état de vérification. C\'est ce qui rend la chaîne EXACTE du domaine que `refresh_vercel_domain_status` et `remove_vercel_domain` exigent — ne la retape jamais de mémoire. Pour un site hébergé par Aurentia, ce n\'est pas ici : c\'est `get_website_status`.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/vercel-domain/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getWebsiteDraftFile',
+			name: 'Get Website Draft File',
+			action: 'Lit le brouillon d\'un site : sans `path`, rend la LISTE des fichiers (chemin, taille, type) ; avec `path`, rend le CONTENU et son `updated_at` brut',
+			description: 'Lit le brouillon d\'un site : sans `path`, rend la LISTE des fichiers (chemin, taille, type) ; avec `path`, rend le CONTENU et son `updated_at` brut. C\'est le préalable obligatoire de `write_website_draft_file` et `edit_website_page_element` : recopie ce jeton à l\'identique dans `expectedUpdatedAt`, sans conversion Date, puis envoie le fichier entier ou l\'élément ciblé. Il sert aussi à `apply_website_section_operation` pour compter les sections. Ne devine jamais un chemin : liste d\'abord.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/files/{site_id}","queryParams":["path"]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Path',
+							name: 'path',
+							type: 'string',
+							description: 'Chemin d\'un fichier du brouillon (ex. index.html) ; omis = la liste.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'getWebsiteEditableContent',
+			name: 'Get Website Editable Content',
+			action: 'Read editable website sections grouped by page, including UUIDs, block IDs, compatible variantIds, current fields and updatedAt',
+			description: 'Read editable website sections grouped by page, including UUIDs, block IDs, compatible variantIds, current fields and updatedAt. Read before update_site_section_content and pass the section updatedAt unchanged. Internal metadata is not returned.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/cms/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'The site ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getWebsiteGithubLink',
+			name: 'Get Website Github Link',
+			action: 'Rend le lien GitHub d\'un site : dépôt, branche, synchronisation active ou en pause, date et SHA du dernier push — ou `null` si le site n\'est relié à aucun dépôt',
+			description: 'Rend le lien GitHub d\'un site : dépôt, branche, synchronisation active ou en pause, date et SHA du dernier push — ou `null` si le site n\'est relié à aucun dépôt. Lis-le avant `set_website_github_sync`, `push_website_to_github` et `disconnect_website_github_repo` : les trois échouent (404, ou « Sync is disabled ») sur un site non relié ou en pause, et ce statut est la seule façon de le savoir.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/github/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getWebsiteHostingSync',
+			name: 'Get Website Hosting Sync',
+			action: 'Read the durable GitHub/Vercel synchronization attached to a site\'s latest publication: pending/running/failed/completed jobs, requested revision and previously confirmed live revision',
+			description: 'Read the durable GitHub/Vercel synchronization attached to a site\'s latest publication: pending/running/failed/completed jobs, requested revision and previously confirmed live revision. Use it after `publish_website` when the public snapshot is saved but an external mirror still appears pending or failed. It never contacts a provider or retries work. `site_id` is the website profile ID.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/hosting-sync/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'Website profile UUID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getWebsitePreparation',
+			name: 'Get Website Preparation',
+			action: 'Read a saved website preparation and its contentRevision before assembling',
+			description: 'Read a saved website preparation and its contentRevision before assembling. Does not generate content or charge credits.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/draft/{draftId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Draft ID',
+					name: 'draftId',
+					type: 'string',
+					required: true,
+					description: 'Saved website preparation UUID',
 					default: '',
 				}
 			],
@@ -475,6 +1542,23 @@ export const siteWebResource: GeneratedResource = {
 				{
 					displayName: 'Site ID',
 					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'The site ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getWebsiteStructureSettings',
+			name: 'Get Website Structure Settings',
+			action: 'Read the Entrepreneurs website header/footer choices, explicitly declared public contact/store destinations and current revision',
+			description: 'Read the Entrepreneurs website header/footer choices, explicitly declared public contact/store destinations and current revision. Requires site write access. Read before update_website_structure_settings.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/cms/{siteId}/settings","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'siteId',
 					type: 'string',
 					required: true,
 					description: 'The site ID for this operation',
@@ -569,6 +1653,16 @@ export const siteWebResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'listNativeWebsiteTemplates',
+			name: 'List Native Website Templates',
+			action: 'List official paid native website templates, server EUR prices, sales availability and personal acquisitions',
+			description: 'List official paid native website templates, server EUR prices, sales availability and personal acquisitions. Entrepreneurs only. Never promise purchase while salesOpen is false.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/templates","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
 			value: 'listPages',
 			name: 'List Pages',
 			action: 'List website pages',
@@ -580,6 +1674,84 @@ export const siteWebResource: GeneratedResource = {
 					name: 'project_id',
 					type: 'string',
 					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listSiteAnnotations',
+			name: 'List Site Annotations',
+			action: 'Liste les commentaires épinglés sur la preview d\'un site (texte, page, position, auteur, statut `open` | `resolved` | `orphaned`) et rend le rôle de l\'appelant',
+			description: 'Liste les commentaires épinglés sur la preview d\'un site (texte, page, position, auteur, statut `open` | `resolved` | `orphaned`) et rend le rôle de l\'appelant. C\'est la file de travail du site : lis-la avant de corriger, filtre sur `status: open`, corrige, puis clôture avec `update_site_annotation`. `page_slug` restreint à une page. Rend aussi l\'`annotation_id` dont `update_site_annotation` et `delete_site_annotation` ont besoin.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/annotations","queryParams":["website_profile_id:websiteProfileId","page_slug:pageSlug","status"]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'website_profile_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site — obligatoire',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Page Slug',
+							name: 'page_slug',
+							type: 'string',
+							description: 'Restreint à une page (ex. index).',
+							default: '',
+						},
+						{
+							displayName: 'Status',
+							name: 'status',
+							type: 'options',
+							default: 'open',
+							options: [
+								{ name: 'Open', value: 'open' },
+								{ name: 'Orphaned', value: 'orphaned' },
+								{ name: 'Resolved', value: 'resolved' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'listSiteEmbeds',
+			name: 'List Site Embeds',
+			action: 'Liste les modules intégrés au site de la personne (aimants à prospects, liens de réservation ou de formulaire, newsletter, flux de blog, chatbot, vitrine média) avec leur ID, leur type, leur titre, leur slug, leur config et leur place dans la navigation',
+			description: 'Liste les modules intégrés au site de la personne (aimants à prospects, liens de réservation ou de formulaire, newsletter, flux de blog, chatbot, vitrine média) avec leur ID, leur type, leur titre, leur slug, leur config et leur place dans la navigation. Nécessaire avant d\'en créer un (pour éviter le doublon) et pour trouver l\'ID de `update_site_embed` / `delete_site_embed` / `regenerate_site_lead_magnet_artifact`.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/embeds","queryParams":["website_profile_id:websiteProfileId"]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'website_profile_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site (website_profiles.ID) — obligatoire',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listSiteFunnels',
+			name: 'List Site Funnels',
+			action: 'Liste les entonnoirs de conversion définis sur le site de la personne (ID, nom, étapes, actif ou non)',
+			description: 'Liste les entonnoirs de conversion définis sur le site de la personne (ID, nom, étapes, actif ou non). Sert à trouver l\'ID de `update_site_funnel` / `delete_site_funnel` et à ne pas créer deux fois le même entonnoir. La lecture est libre sur tous les plans ; seule la création est réservée à Pro et Scale.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/funnels","queryParams":["website_profile_id:websiteProfileId"]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'website_profile_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site (website_profiles.ID) — obligatoire',
 					default: '',
 				}
 			],
@@ -603,9 +1775,9 @@ export const siteWebResource: GeneratedResource = {
 		{
 			value: 'listWebsiteVersions',
 			name: 'List Website Versions',
-			action: 'Aurentia: list version snapshots created at each publish',
-			description: 'Aurentia: list version snapshots created at each publish. Use the returned ID with rollback_website_to_version.',
-			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/versions/{site_id}","queryParams":[]},
+			action: 'Liste les versions du site, les copies avant restauration et les publications',
+			description: 'Liste les versions du site, les copies avant restauration et les publications. Pour restaurer le brouillon, demande draftInfo=1 : la réponse contient draft.revision à recopier dans expectedRevision et draft.contentHash pour identifier son état actuel. snapshot_data.format=1 signifie une sauvegarde complète ; les anciennes versions ne contiennent que les fichiers. reason=publish filtre les publications.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/versions/{site_id}","queryParams":["draftInfo","reason"]},
 			properties: [
 				{
 					displayName: 'Site ID',
@@ -614,14 +1786,63 @@ export const siteWebResource: GeneratedResource = {
 					required: true,
 					description: 'The site ID for this operation',
 					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Draft Info',
+							name: 'draftInfo',
+							type: 'options',
+							default: '1',
+							options: [
+								{ name: '1', value: '1' },
+							],
+						},
+						{
+							displayName: 'Reason',
+							name: 'reason',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'placeSiteEmbedOnPage',
+			name: 'Place Site Embed On Page',
+			action: 'Place an existing site module on exactly one draft HTML page',
+			description: 'Place an existing site module on exactly one draft HTML page. Read `list_site_embeds` for `embed_id` and `get_website_draft_file` without `path` for the exact `pagePath` (for example `index.html` or `contact.html`); never invent either. The server removes the module from its previous page, renders it on the chosen page, refreshes navigation when applicable and snapshots the draft before the change. The live site stays unchanged until `publish_website`. This is a visible structural edit, so the host must obtain approval.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/embeds/{embed_id}/placement","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Embed ID',
+					name: 'embed_id',
+					type: 'string',
+					required: true,
+					description: 'UUID from list_site_embeds',
+					default: '',
+				},
+				{
+					displayName: 'Page Path',
+					name: 'pagePath',
+					type: 'string',
+					required: true,
+					description: 'Exact draft HTML path from get_website_draft_file, such as contact.html',
+					default: '',
 				}
 			],
 		},
 		{
 			value: 'publishWebsite',
 			name: 'Publish Website',
-			action: 'Aurentia: publish the current draft of a site to a public subdomain &lt;slug&gt;.aurentia.site',
-			description: 'Aurentia: publish the current draft of a site to a public subdomain &lt;slug&gt;.aurentia.site. Slug is global (shared with Entreprises) — reserved system slugs cannot be used.',
+			action: 'Put the site ONLINE: publishes the current draft to the public subdomain &lt;slug&gt;.aurentia.site',
+			description: 'Put the site ONLINE: publishes the current draft to the public subdomain &lt;slug&gt;.aurentia.site. The site becomes PUBLIC in this call — that is what the approval is for. Slug is global (shared with Entreprises), kebab-case, and reserved system slugs are refused. PUBLISHING ALREADY REDEPLOYS the site on Vercel when it is connected there: do NOT call `deploy_website_to_vercel` afterwards, you would fire a second deployment and a second wait, and the status then looks stuck while both run. For a domain the person already owns, pass `custom_domain` HERE rather than chaining three tools: the domain is attached AFTER the site is live (attached before, it would point at nothing), and the answer carries the DNS records to hand over plus the verification state — read them out, verification is not instant. If the domain attachment fails, THE SITE IS STILL ONLINE on its subdomain and the answer says why in `customDomainError`. Say that, and do not republish to « retry » — retry the domain alone with `connect_custom_domain`.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/publish/{site_id}","queryParams":[]},
 			properties: [
 				{
@@ -638,6 +1859,113 @@ export const siteWebResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'Kebab-case, 2-31 chars, lowercase + digits + dashes',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Custom Domain',
+							name: 'custom_domain',
+							type: 'string',
+							description: 'A domain the person ALREADY OWNS (mondomaine.com — no scheme, no path). Given, it is attached to their Vercel-deployed site right after the site goes live, and the answer returns the DNS records to set. Requires their Vercel account to be connected; without it the site is published anyway and `customDomainError` says what is missing.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'pushWebsiteToGithub',
+			name: 'Push Website To Github',
+			action: 'Pousse le site sur son dépôt GitHub relié, en un commit sur le compte GitHub de l\'utilisateur',
+			description: 'Pousse le site sur son dépôt GitHub relié, en un commit sur le compte GitHub de l\'utilisateur. Sans `version_id` : pousse le BROUILLON courant (le bouton « Synchroniser ») — c\'est le geste pour « envoie l\'état actuel sur GitHub ». Avec `version_id` (un ID de `list_website_versions`) : pousse ce snapshot précis ; idempotent, si cette version est déjà la dernière poussée la route rend le SHA existant sans nouveau commit. Refusé si la synchronisation est en pause (`set_website_github_sync`) ou si le site n\'est pas relié (404). Deux pushes à moins de 2 secondes d\'intervalle sont refusés : n\'appelle pas deux fois. Rend `{ commitSha, filesCount }` — cite le SHA à l\'utilisateur.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/github/{site_id}/push","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site relié',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Version ID',
+							name: 'version_id',
+							type: 'string',
+							description: 'UUID d\'une version publiée (list_website_versions) ; omis = brouillon courant',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'quickGenerateSite',
+			name: 'Quick Generate Site',
+			action: 'One-shot website generation with NO brief: the server derives everything (site type, tone, pages) from the project itself and starts generating in the background',
+			description: 'One-shot website generation with NO brief: the server derives everything (site type, tone, pages) from the project itself and starts generating in the background. COSTS 2 CREDITS and REBUILDS the site (profile reset to \'preparing\', all pages regenerated) — only for a project that has no site yet or whose site the person wants thrown away; say so before calling. Only the project owner may call it (404 otherwise). Returns `{ success: true }` immediately; follow with `get_website_status`, then `retry_failed_site_pages` if some pages failed. When the person has preferences (type of site, pages, tone), use `generate_site_from_brief` instead so those are honoured.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/onboarding/generate-quick","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'refreshVercelDeploymentStatus',
+			name: 'Refresh Vercel Deployment Status',
+			action: 'Interroge Vercel EN DIRECT sur le dernier déploiement d\'un site déployé sur le compte Vercel de l\'utilisateur, synchronise l\'état stocké et rend `{ status, productionUrl }` (`building` | `ready` | `error`)',
+			description: 'Interroge Vercel EN DIRECT sur le dernier déploiement d\'un site déployé sur le compte Vercel de l\'utilisateur, synchronise l\'état stocké et rend `{ status, productionUrl }` (`building` | `ready` | `error`). Différent de `get_vercel_deployment_status`, qui ne relit que l\'état STOCKÉ (possiblement périmé) : appelle celui-ci après un `deploy_website_to_vercel` quand l\'utilisateur demande « c\'est en ligne ? ». Rend `null` si le site n\'a jamais été déployé. Pas de boucle serrée : un build prend quelques minutes, une relance par question de l\'utilisateur suffit.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/site-web/vercel-deploy/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'refreshVercelDomainStatus',
+			name: 'Refresh Vercel Domain Status',
+			action: 'Relit chez Vercel l\'état de vérification d\'un domaine rattaché par `connect_custom_domain` à un site déployé sur le PROPRE compte Vercel de l\'utilisateur, et rend `{ domain, verified }`',
+			description: 'Relit chez Vercel l\'état de vérification d\'un domaine rattaché par `connect_custom_domain` à un site déployé sur le PROPRE compte Vercel de l\'utilisateur, et rend `{ domain, verified }`. À appeler une fois quand l\'utilisateur dit avoir posé ses DNS ; jamais en boucle. Ne s\'applique pas aux sites hébergés par Aurentia : pour eux c\'est `verify_site_custom_domain`. `domain` doit être exactement celui rattaché — `get_vercel_domain_status` le rend.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/site-web/vercel-domain/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site déployé sur Vercel',
+					default: '',
+				},
+				{
+					displayName: 'Domain',
+					name: 'domain',
+					type: 'string',
+					required: true,
+					description: 'Le domaine rattaché, tel quel (get_vercel_domain_status)',
 					default: '',
 				}
 			],
@@ -697,7 +2025,7 @@ export const siteWebResource: GeneratedResource = {
 			value: 'regenerateSectionVariation',
 			name: 'Regenerate Section Variation',
 			action: 'REGENERATES a section as a new variation: archives the current version, overwrites the section in place and rebuilds the page HTML',
-			description: 'REGENERATES a section as a new variation: archives the current version, overwrites the section in place and rebuilds the page HTML. Billed on every call.',
+			description: 'REGENERATES a section as a new variation: archives the current version, overwrites the section in place and rebuilds the page HTML. `variation_type` is the direction of the rewrite and it is required — there is no neutral « regenerate ». Billed on every call.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/sections/{section_id}/variation","queryParams":[]},
 			properties: [
 				{
@@ -705,8 +2033,109 @@ export const siteWebResource: GeneratedResource = {
 					name: 'section_id',
 					type: 'string',
 					required: true,
-					description: 'The section ID for this operation',
+					description: 'UUID of the section to rewrite',
 					default: '',
+				},
+				{
+					displayName: 'Variation Type',
+					name: 'variation_type',
+					type: 'options',
+					required: true,
+					description: 'How the section should change: \'shorter\' (cut it down), \'formal\' (raise the register), \'punchy\' (shorter, harder-hitting copy), \'detailed\' (say more), \'emotional\' (play on feeling). Pick from what the person asked — « fais plus court » → shorter, « c\'est trop plat » → punchy. Any other value is refused.',
+					default: 'detailed',
+					options: [
+						{ name: 'Detailed', value: 'detailed' },
+						{ name: 'Emotional', value: 'emotional' },
+						{ name: 'Formal', value: 'formal' },
+						{ name: 'Punchy', value: 'punchy' },
+						{ name: 'Shorter', value: 'shorter' },
+					],
+				}
+			],
+		},
+		{
+			value: 'regenerateSiteCharter',
+			name: 'Regenerate Site Charter',
+			action: 'Let the AI (re)fill the website\'s brand charter — tone, colours, fonts, image style — from what the project already knows (brand kit, modules, brief)',
+			description: 'Let the AI (re)fill the website\'s brand charter — tone, colours, fonts, image style — from what the project already knows (brand kit, modules, brief). COSTS 1 CREDIT per call, debited before the model runs. `websiteProfileId` is the site\'s profile ID (from `get_website_profile`), not the project ID. `overwrite` defaults to true and REPLACES the charter fields that are already filled; pass false to only fill the blanks and keep what the person wrote by hand. `vendor` picks the model family (\'google\' default, \'mistral\' for the EU-only option the person may have chosen). Prefer `apply_site_charter` when the person already knows the colours they want — this tool is for « trouve-moi une charte » situations. It writes the charter only; it does not re-skin the generated pages (call `apply_site_charter` with the returned values if the site is already built).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/charter/regenerate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'websiteProfileId',
+					type: 'string',
+					required: true,
+					description: 'Website profile UUID (get_website_profile)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Overwrite',
+							name: 'overwrite',
+							type: 'boolean',
+							description: 'Whether true (default) replaces filled fields; false fills blanks only',
+							default: false,
+						},
+						{
+							displayName: 'Vendor',
+							name: 'vendor',
+							type: 'options',
+							default: 'google',
+							options: [
+								{ name: 'Google', value: 'google' },
+								{ name: 'Mistral', value: 'mistral' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'regenerateSiteLeadMagnetArtifact',
+			name: 'Regenerate Site Lead Magnet Artifact',
+			action: 'Refait générer par l\'IA le CONTENU d\'un aimant à prospects téléchargeable du site (module de type `lead_magnet_artifact` : guide, checklist, template de 1 à 3 000 mots) et écrase le fichier servi, le titre et la description',
+			description: 'Refait générer par l\'IA le CONTENU d\'un aimant à prospects téléchargeable du site (module de type `lead_magnet_artifact` : guide, checklist, template de 1 à 3 000 mots) et écrase le fichier servi, le titre et la description. COÛTE 3 crédits par appel, remboursés si la génération échoue. Ne marche QUE sur un module `lead_magnet_artifact` : tout autre type est refusé (400). `brief` (≤ 600 caractères) oriente la nouvelle version (« plus court, orienté freelances ») ; `vendor` choisit le fournisseur (`google` défaut | `mistral`). Un aimant régénéré remplace l\'ancien pour tous les futurs téléchargements ; les captures d\'e-mails passées ne bougent pas. Relis le module avec `list_site_embeds` avant, pour reprendre son titre dans le brief.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/embeds/{embed_id}/regenerate","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Embed ID',
+					name: 'embed_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du module, de type lead_magnet_artifact',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Brief',
+							name: 'brief',
+							type: 'string',
+							description: 'Ce qui doit changer dans la nouvelle version',
+							default: '',
+						},
+						{
+							displayName: 'Vendor',
+							name: 'vendor',
+							type: 'options',
+							default: 'google',
+							options: [
+								{ name: 'Google', value: 'google' },
+								{ name: 'Mistral', value: 'mistral' },
+							],
+						},
+					],
 				}
 			],
 		},
@@ -728,6 +2157,23 @@ export const siteWebResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'regenerateWebsiteFileTree',
+			name: 'Regenerate Website File Tree',
+			action: 'Reconstruit TOUT le brouillon du site (arborescence de fichiers) à partir de ses sections structurées, tout de suite, sans attendre la reconstruction différée qui suit normalement une modification de section',
+			description: 'Reconstruit TOUT le brouillon du site (arborescence de fichiers) à partir de ses sections structurées, tout de suite, sans attendre la reconstruction différée qui suit normalement une modification de section. Appelle-le après une série de `update_section` / `create_section` / `delete_section` quand l\'utilisateur veut voir le résultat maintenant. Il ÉCRASE les modifications faites à la main dans les fichiers du brouillon (`write_website_draft_file`, `edit_website_page_element`) qui ne sont pas reflétées dans les sections — préviens-le. Ne débite aucun crédit mais fait tourner le générateur complet : long (jusqu\'à plusieurs minutes), pas deux fois de suite. Pour repartir de zéro avec la passe design premium, c\'est `regenerate_website_page` (1 750 crédits). Rend `{ filesCreated, modelUsed, totalBytes }`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/regenerate-tree/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'regenerateWebsitePage',
 			name: 'Regenerate Website Page',
 			action: 'Aurentia: regenerate the entire site (all pages)',
@@ -740,22 +2186,48 @@ export const siteWebResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'removeSiteCustomDomain',
+			name: 'Remove Site Custom Domain',
+			action: 'Détache le domaine personnalisé d\'un site hébergé par Aurentia : l\'adresse `www.sondomaine.fr` cesse IMMÉDIATEMENT de servir le site (l\'adresse `&lt;slug&gt;.aurentia.site` continue)',
+			description: 'Détache le domaine personnalisé d\'un site hébergé par Aurentia : l\'adresse `www.sondomaine.fr` cesse IMMÉDIATEMENT de servir le site (l\'adresse `&lt;slug&gt;.aurentia.site` continue). Irréversible pour les visiteurs, référencement compris. Uniquement sur demande explicite et nommée ; jamais pour « nettoyer » ou en réponse à une phrase ambiguë. Les DNS chez le registrar ne sont pas touchés.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/site-web/custom-domain/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'removeVercelDomain',
+			name: 'Remove Vercel Domain',
+			action: 'Retire un domaine personnalisé du projet Vercel de l\'utilisateur (site déployé par `deploy_website_to_vercel`) : Vercel cesse de le servir immédiatement',
+			description: 'Retire un domaine personnalisé du projet Vercel de l\'utilisateur (site déployé par `deploy_website_to_vercel`) : Vercel cesse de le servir immédiatement. Irréversible pour les visiteurs ; les DNS chez le registrar ne sont pas touchés. Uniquement sur demande explicite, domaine nommé — relis-le avec `get_vercel_domain_status`. Ne confonds pas avec `remove_site_custom_domain` (site hébergé par Aurentia).',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/site-web/vercel-domain/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site',
+					default: '',
 				},
 				{
-					displayName: 'Additional Fields',
-					name: 'additionalFields',
-					type: 'collection',
-					placeholder: 'Add Field',
-					default: {},
-					options: [
-						{
-							displayName: 'Instructions',
-							name: 'instructions',
-							type: 'string',
-							description: 'Optional context about what should change',
-							default: '',
-						},
-					],
+					displayName: 'Domain',
+					name: 'domain',
+					type: 'string',
+					required: true,
+					description: 'Le domaine à retirer, tel quel',
+					default: '',
 				}
 			],
 		},
@@ -785,15 +2257,89 @@ export const siteWebResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'resetSiteWeb',
+			name: 'Reset Site Web',
+			action: 'Reset the person\'s website module',
+			description: 'Reset the person\'s website module. THREE MODES, increasingly destructive and NONE reversible — name the mode and its effect and get an explicit yes before calling. `modify`: only re-opens the onboarding (status back to \'not_started\'); pages, files and settings are kept — use it when the person wants to answer the brief again. `content_reset`: deletes the generated content (pages, sections, files, publications) but keeps the profile and its charter. `full_reset`: wipes the whole site module for the project, profile included — the person starts from nothing. There is no trash and no undo: when in doubt, choose the lighter mode or do nothing. Requires write access to the project\'s site.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/onboarding/reset","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Mode',
+					name: 'mode',
+					type: 'options',
+					required: true,
+					default: 'content_reset',
+					options: [
+						{ name: 'Content Reset', value: 'content_reset' },
+						{ name: 'Full Reset', value: 'full_reset' },
+						{ name: 'Modify', value: 'modify' },
+					],
+				}
+			],
+		},
+		{
 			value: 'restoreVersion',
 			name: 'Restore Version',
-			action: 'Restore a website version',
-			description: 'Restore a website version',
+			action: 'Restore the LATEST archived version of ONE website object — a section, a blog article, an email or a lead magnet',
+			description: 'Restore the LATEST archived version of ONE website object — a section, a blog article, an email or a lead magnet. It is not a version picker: you name the object, the route brings back its most recent archived state and overwrites what is there now. There is no undo, so confirm with the person before firing it.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/versions/restore","queryParams":[]},
 			properties: [
 				{
+					displayName: 'Entity Type',
+					name: 'entity_type',
+					type: 'options',
+					required: true,
+					description: 'What kind of object is being rolled back. It must match the ID below — a section ID with entity_type=article finds nothing (404).',
+					default: 'article',
+					options: [
+						{ name: 'Article', value: 'article' },
+						{ name: 'Email', value: 'email' },
+						{ name: 'Lead Magnet', value: 'lead_magnet' },
+						{ name: 'Section', value: 'section' },
+					],
+				},
+				{
+					displayName: 'Entity ID',
+					name: 'entity_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of the object itself: the section, the blog article, the website email or the lead magnet. List it first (list_website_pages / list_blog_articles / list_web_emails / list_lead_magnets) rather than guessing.',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'restoreWebsiteDraftFromVersion',
+			name: 'Restore Website Draft From Version',
+			action: 'Restaure le brouillon depuis une version de ce site',
+			description: 'Restaure le brouillon depuis une version de ce site. Lis list_website_versions avec draftInfo=1 et recopie draft.revision dans expectedRevision ; une révision périmée est refusée. Les versions format=1 restaurent fichiers, champs, pages, marque et modules ensemble. Une sauvegarde complète de sécurité est créée et reste accessible dans cet historique. Pour une ancienne version, allowLegacyRestore=true exige que la personne ait accepté de perdre les champs Contenu : seuls les fichiers sont restaurés, les réglages actuels du site et des modules sont conservés. Ne publie pas automatiquement. Rend restoredFiles, structuredRestored, safetyVersionId, revision et contentHash.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/versions/{site_id}/restore-draft","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'The site ID for this operation',
+					default: '',
+				},
+				{
 					displayName: 'Version ID',
-					name: 'version_id',
+					name: 'versionId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Expected Revision',
+					name: 'expectedRevision',
 					type: 'string',
 					required: true,
 					default: '',
@@ -806,12 +2352,69 @@ export const siteWebResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Project ID',
-							name: 'project_id',
+							displayName: 'Allow Legacy Restore',
+							name: 'allowLegacyRestore',
+							type: 'boolean',
+							description: 'Whether to enable allow legacy restore',
+							default: false,
+						},
+						{
+							displayName: 'Safety Label',
+							name: 'safetyLabel',
 							type: 'string',
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'resumeNativeWebsiteTemplateCheckout',
+			name: 'Resume Native Website Template Checkout',
+			action: 'Resume the existing owner-bound pending Stripe session for this exact acquisition/version',
+			description: 'Resume the existing owner-bound pending Stripe session for this exact acquisition/version. No new session, price, project or version. Requires salesOpen and explicit purchase approval. Paid or consumed acquisitions use status/use instead.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/template-acquisitions/{acquisitionId}/checkout","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Acquisition ID',
+					name: 'acquisitionId',
+					type: 'string',
+					required: true,
+					description: 'The acquisition ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'retryFailedSitePages',
+			name: 'Retry Failed Site Pages',
+			action: 'Re-run generation ONLY for the pages that failed during the last website generation (those listed under `generation_errors` in `get_website_status`)',
+			description: 'Re-run generation ONLY for the pages that failed during the last website generation (those listed under `generation_errors` in `get_website_status`). Safe and free: pages that succeeded are untouched, and the call is a no-op when nothing failed. Use it right after a generation reports errors, before suggesting a full regeneration. Requires the site\'s onboarding data to still be present (a 400 « onboarding data missing » means the site must be generated again with `generate_site_from_brief`). Synchronous, up to 2 minutes.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/onboarding/retry-failed","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'retryWebsiteHostingSync',
+			name: 'Retry Website Hosting Sync',
+			action: 'Retry the immutable GitHub/Vercel synchronization jobs of the site\'s current publication after `get_website_hosting_sync` reports an explicit failure',
+			description: 'Retry the immutable GitHub/Vercel synchronization jobs of the site\'s current publication after `get_website_hosting_sync` reports an explicit failure. This can write to the user\'s connected providers, so state which provider jobs failed and obtain approval. It reuses the recorded publication snapshot and revision; it does not republish the draft, create a new version or switch providers. Active/completed jobs are not duplicated.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/hosting-sync/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'Website profile UUID',
+					default: '',
 				}
 			],
 		},
@@ -840,6 +2443,143 @@ export const siteWebResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'runSiteDesignPass',
+			name: 'Run Site Design Pass',
+			action: 'Run the from-scratch, pixel-perfect DESIGN PASS on an already composed website: every HTML page is rewritten by the design model',
+			description: 'Run the from-scratch, pixel-perfect DESIGN PASS on an already composed website: every HTML page is rewritten by the design model. THIS COSTS 1750 CREDITS, a flat fee debited before the pass starts and refunded only if the pass fails — it is the single most expensive action of the product, so state the price explicitly and get a clear yes before calling. Prerequisite: the site must already have composed pages (the server refuses with « Aucune page à générer » otherwise — use `get_website_status` first). Use it once, when the person wants the finished look, not for a text fix (`edit_website_text`) or a colour change (`apply_site_charter`). Synchronous: the call returns when the pass is done with `pagesEnhanced`. It does not publish.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/design-pass","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'websiteProfileId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'setWebsiteAppearance',
+			name: 'Set Website Appearance',
+			action: 'Re-skin a generated website deterministically (no AI, no credits): `themeName` picks one of the six visual themes — `bold`, `editorial`, `soft`, `tech`, `corporate`, `luxury` — and `colorMode` sets `light`, `dark` or `auto` (follows the visitor\'s system)',
+			description: 'Re-skin a generated website deterministically (no AI, no credits): `themeName` picks one of the six visual themes — `bold`, `editorial`, `soft`, `tech`, `corporate`, `luxury` — and `colorMode` sets `light`, `dark` or `auto` (follows the visitor\'s system). Send only what changes; at least one of the two. This changes the rendering NOW, on the whole draft site: it rewrites the styling of EVERY page at once, which is why it asks for approval. The site\'s onboarding preferences screen holds the theme used for the NEXT generation — a different setting, not this one. The live site is untouched until `publish_website`, so the person can review in the app first. `websiteProfileId` is the site\'s profile ID (`update_website_profile` and the other site tools take the same ID).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/charter/appearance","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'websiteProfileId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Color Mode',
+							name: 'colorMode',
+							type: 'options',
+							default: 'auto',
+							options: [
+								{ name: 'Auto', value: 'auto' },
+								{ name: 'Dark', value: 'dark' },
+								{ name: 'Light', value: 'light' },
+							],
+						},
+						{
+							displayName: 'Theme Name',
+							name: 'themeName',
+							type: 'options',
+							default: 'bold',
+							options: [
+								{ name: 'Bold', value: 'bold' },
+								{ name: 'Corporate', value: 'corporate' },
+								{ name: 'Editorial', value: 'editorial' },
+								{ name: 'Luxury', value: 'luxury' },
+								{ name: 'Soft', value: 'soft' },
+								{ name: 'Tech', value: 'tech' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'setWebsiteConstructionMode',
+			name: 'Set Website Construction Mode',
+			action: 'Active ou désactive la page « site en construction » d\'un site PUBLIÉ : `enabled: true` fait voir à tous les visiteurs une page d\'attente à la place du site (avec `title` et `message` optionnels, ≤ 120 et ≤ 500 caractères), `enabled: false` remet le site',
+			description: 'Active ou désactive la page « site en construction » d\'un site PUBLIÉ : `enabled: true` fait voir à tous les visiteurs une page d\'attente à la place du site (avec `title` et `message` optionnels, ≤ 120 et ≤ 500 caractères), `enabled: false` remet le site. Effet IMMÉDIAT sur l\'adresse publique. Ce n\'est pas `unpublish_website` : le slug reste servi, seul le contenu est masqué — c\'est le bon outil pour « cache le site le temps que je corrige ». `title`/`message` à `null` reviennent au texte par défaut. Seul le PROPRIÉTAIRE du site peut l\'appeler (un collaborateur reçoit 404). Rend l\'état de publication.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/construction-mode/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site',
+					default: '',
+				},
+				{
+					displayName: 'Enabled',
+					name: 'enabled',
+					type: 'boolean',
+					required: true,
+					description: 'Whether to enable enabled',
+					default: false,
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Message',
+							name: 'message',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'setWebsiteGithubSync',
+			name: 'Set Website Github Sync',
+			action: 'Met en pause ou reprend la synchronisation GitHub d\'un site relié par `link_website_to_github_repo`',
+			description: 'Met en pause ou reprend la synchronisation GitHub d\'un site relié par `link_website_to_github_repo`. `sync_enabled: true` : chaque `publish_website` et chaque `rollback_website_to_version` pousse automatiquement la version publiée sur le dépôt, et `push_website_to_github` est permis. `sync_enabled: false` : plus aucun push automatique, et `push_website_to_github` est refusé (« Sync is disabled »). Ne déconnecte rien : le dépôt et le lien restent — pour couper le lien, `disconnect_website_github_repo`. Rend l\'état du lien (dépôt, branche, dernier push), le même que `get_website_github_link`.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/site-web/github/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site relié à GitHub',
+					default: '',
+				},
+				{
+					displayName: 'Sync Enabled',
+					name: 'sync_enabled',
+					type: 'boolean',
+					required: true,
+					description: 'Whether to enable sync enabled',
+					default: false,
+				}
+			],
+		},
+		{
 			value: 'unpublishWebsite',
 			name: 'Unpublish Website',
 			action: 'Aurentia: take the site offline',
@@ -859,8 +2599,8 @@ export const siteWebResource: GeneratedResource = {
 		{
 			value: 'updateBlogArticle',
 			name: 'Update Blog Article',
-			action: 'Update a blog article',
-			description: 'Update a blog article',
+			action: 'Save article edits as a private draft without changing the published copy',
+			description: 'Save article edits as a private draft without changing the published copy. Explicit status=published captures these edits for visitors and requires a live site; only publish after the user requests publication. status=draft withdraws the public article and cancels its schedule. Scheduling applies to drafts only: provide future scheduled_at and scheduled_locale (fr/en); processing normally occurs within five minutes. scheduled_at=null cancels. Pass the exact raw updated_at from get_blog_article as expected_updated_at, including microseconds. On 409 compare remote and local edits with the user before adopting a new revision. Never infer permission to publish from a request to write or regenerate.',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/site-web/blog/articles/{article_id}","queryParams":[]},
 			properties: [
 				{
@@ -869,6 +2609,14 @@ export const siteWebResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The article ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Expected Updated At',
+					name: 'expected_updated_at',
+					type: 'string',
+					required: true,
+					description: 'Exact unmodified updated_at of the version being edited',
 					default: '',
 				},
 				{
@@ -883,6 +2631,60 @@ export const siteWebResource: GeneratedResource = {
 							name: 'content',
 							type: 'string',
 							default: '',
+						},
+						{
+							displayName: 'Excerpt',
+							name: 'excerpt',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Meta Description',
+							name: 'meta_description',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Meta Title',
+							name: 'meta_title',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Scheduled At',
+							name: 'scheduled_at',
+							type: 'string',
+							description: 'Future ISO 8601 instant with offset, or null to cancel',
+							default: '',
+						},
+						{
+							displayName: 'Scheduled Locale',
+							name: 'scheduled_locale',
+							type: 'options',
+							default: 'en',
+							options: [
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+								{ name: 'Null', value: 'null' },
+							],
+						},
+						{
+							displayName: 'Slug',
+							name: 'slug',
+							type: 'string',
+							description: 'Lowercase URL slug with hyphens; changes reach visitors only when published',
+							default: '',
+						},
+						{
+							displayName: 'Status',
+							name: 'status',
+							type: 'options',
+							default: 'archived',
+							options: [
+								{ name: 'Archived', value: 'archived' },
+								{ name: 'Draft', value: 'draft' },
+								{ name: 'Published', value: 'published' },
+							],
 						},
 						{
 							displayName: 'Title',
@@ -903,7 +2705,7 @@ export const siteWebResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -916,16 +2718,95 @@ export const siteWebResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Description',
-							name: 'description',
+							displayName: 'Internal Links Strategy',
+							name: 'internal_links_strategy',
+							type: 'string',
+							description: 'How articles should link to each other',
+							default: '',
+						},
+						{
+							displayName: 'Site URL',
+							name: 'site_url',
 							type: 'string',
 							default: '',
 						},
 						{
-							displayName: 'Title',
-							name: 'title',
+							displayName: 'Writing Style',
+							name: 'writing_style',
 							type: 'string',
+							description: 'How articles should be written (tone, person, length of paragraphs)',
 							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateChatbotWidgetConfig',
+			name: 'Update Chatbot Widget Config',
+			action: 'Configure the chatbot embedded on the person\'s website (the visitor-facing widget): welcome message and teaser PER LANGUAGE, suggested questions PER LANGUAGE, theme, whether visitors may attach files, and whether those files are KEPT',
+			description: 'Configure the chatbot embedded on the person\'s website (the visitor-facing widget): welcome message and teaser PER LANGUAGE, suggested questions PER LANGUAGE, theme, whether visitors may attach files, and whether those files are KEPT. Read the current values first with `get_chatbot_widget_config` and send ONLY the fields you change — the server merges and refuses an empty patch. `chatbot_welcome_i18n` and `chatbot_teaser` are `{ fr, en }` objects; `chatbot_suggested_questions` is `{ fr: string[], en: string[] }` (no minimum length on any text). `chatbot_theme` is \'auto\' | \'light\' | \'dark\'. `chatbot_save_visitor_files` is a GDPR choice (data minimisation, art. 5.1.c): default OFF means a visitor\'s file is read to answer then discarded. Never turn it on unless the person explicitly asks to keep visitor files; and note the server forces it OFF whenever attachments are disabled. Changes are live on the widget at once — there is nothing to publish.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/site-web/chatbot-widget/config","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'websiteProfileId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Chatbot Allow Attachments',
+							name: 'chatbot_allow_attachments',
+							type: 'boolean',
+							description: 'Whether to enable chatbot allow attachments',
+							default: false,
+						},
+						{
+							displayName: 'Chatbot Save Visitor Files',
+							name: 'chatbot_save_visitor_files',
+							type: 'boolean',
+							description: 'Whether to enable chatbot save visitor files',
+							default: false,
+						},
+						{
+							displayName: 'Chatbot Suggested Questions',
+							name: 'chatbot_suggested_questions',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Chatbot Teaser',
+							name: 'chatbot_teaser',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Chatbot Theme',
+							name: 'chatbot_theme',
+							type: 'options',
+							default: 'auto',
+							options: [
+								{ name: 'Auto', value: 'auto' },
+								{ name: 'Dark', value: 'dark' },
+								{ name: 'Light', value: 'light' },
+							],
+						},
+						{
+							displayName: 'Chatbot Welcome I18n',
+							name: 'chatbot_welcome_i18n',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
 						},
 					],
 				}
@@ -953,12 +2834,6 @@ export const siteWebResource: GeneratedResource = {
 					placeholder: 'Add Field',
 					default: {},
 					options: [
-						{
-							displayName: 'Content',
-							name: 'content',
-							type: 'string',
-							default: '',
-						},
 						{
 							displayName: 'Title',
 							name: 'title',
@@ -1049,9 +2924,167 @@ export const siteWebResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Primary Keywords',
+							name: 'primary_keywords',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateSiteAnnotation',
+			name: 'Update Site Annotation',
+			action: 'Modifie un commentaire épinglé sur la preview d\'un site (les annotations que l\'utilisateur ou ses collaborateurs laissent sur une page pour demander une correction) : son texte, ou son statut',
+			description: 'Modifie un commentaire épinglé sur la preview d\'un site (les annotations que l\'utilisateur ou ses collaborateurs laissent sur une page pour demander une correction) : son texte, ou son statut. C\'est l\'outil qui CLÔT une demande une fois traitée : après avoir fait la modification demandée (`edit_website_text`, `update_site_section_content`…), passe `status: resolved` — la route horodate la résolution et t\'en attribue l\'auteur. `status: open` rouvre, `orphaned` marque un commentaire dont l\'élément visé n\'existe plus. `content_text` : 1-2 000 caractères, seulement pour reformuler un commentaire, pas pour y répondre. Seuls l\'auteur du commentaire et le propriétaire du site peuvent modifier (la base refuse le reste). Ne crée pas d\'annotation : l\'épinglage (position x/y sur la preview) est un geste d\'écran. `annotation_id` vient de `list_site_annotations`.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/site-web/annotations/{annotation_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Annotation ID',
+					name: 'annotation_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de l\'annotation (list_site_annotations)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Content Text',
+							name: 'content_text',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Status',
+							name: 'status',
+							type: 'options',
+							default: 'open',
+							options: [
+								{ name: 'Open', value: 'open' },
+								{ name: 'Orphaned', value: 'orphaned' },
+								{ name: 'Resolved', value: 'resolved' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateSiteBuilderPreferences',
+			name: 'Update Site Builder Preferences',
+			action: 'Save the builder preferences of a website: `site_type`, model `vendor` (\'google\' | \'mistral\' — the EU choice), `images_enabled`, `input_mode` (\'assistant\' | \'form\'), `locale`/`locales` (primary + additional, fr/en), `color_mode` (\'light\' | \'dark\' | \'auto\') and `theme_name` (\'bold\',\'editorial\',\'soft\',\'tech\',\'corporate\',\'luxury\')',
+			description: 'Save the builder preferences of a website: `site_type`, model `vendor` (\'google\' | \'mistral\' — the EU choice), `images_enabled`, `input_mode` (\'assistant\' | \'form\'), `locale`/`locales` (primary + additional, fr/en), `color_mode` (\'light\' | \'dark\' | \'auto\') and `theme_name` (\'bold\',\'editorial\',\'soft\',\'tech\',\'corporate\',\'luxury\'). These drive the NEXT generation or design pass; they do not restyle pages already generated (that is `apply_site_charter` for colours, `set_website_appearance` to change the rendering right now, `run_site_design_pass` for the layout). `site_type`, `vendor` and `images_enabled` are REQUIRED by the server, so read the current values with `get_site_builder_preferences` and send them back with your change — this is a full replace of the preferences object, not a merge. `onboardingData` (optional map) stores raw onboarding answers alongside; leave it out unless the person gave you form answers to keep.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/onboarding/preferences","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Website Profile ID',
+					name: 'websiteProfileId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Preferences',
+					name: 'preferences',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
+				}
+			],
+		},
+		{
+			value: 'updateSiteEmbed',
+			name: 'Update Site Embed',
+			action: 'Modifie un module intégré au site (les « embeds » : aimant à prospects PDF/Markdown, page interactive, lien de réservation, lien de formulaire, newsletter, flux de blog, widget chatbot, vitrine média) : titre, description, présence dans la navigation du site, ordre, et sa configuration',
+			description: 'Modifie un module intégré au site (les « embeds » : aimant à prospects PDF/Markdown, page interactive, lien de réservation, lien de formulaire, newsletter, flux de blog, widget chatbot, vitrine média) : titre, description, présence dans la navigation du site, ordre, et sa configuration. `config` est FUSIONNÉ clé par clé dans la config existante, jamais remplacé : n\'envoie que les clés à changer. `include_in_nav: false` retire le module du menu sans le supprimer. `display_order` : entier ≥ 0. Les changements sont dans le BROUILLON du site : ils ne sont visibles en ligne qu\'au prochain `publish_website`. `embed_id` vient de `list_site_embeds` — ne le devine pas.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/site-web/embeds/{embed_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Embed ID',
+					name: 'embed_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du module (website_embeds.ID, list_site_embeds)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Config',
+							name: 'config',
+							type: 'json',
+							description: 'Clés fusionnées dans la config existante. (provide a JSON object).',
+							default: '{}',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Display Order',
+							name: 'display_order',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Include In Nav',
+							name: 'include_in_nav',
+							type: 'boolean',
+							description: 'Whether to enable include in nav',
+							default: false,
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateSiteFunnel',
+			name: 'Update Site Funnel',
+			action: 'Modifie un entonnoir de conversion du site (analytics : suite d\'événements dont on mesure le taux de passage) : nom, description, étapes, activation',
+			description: 'Modifie un entonnoir de conversion du site (analytics : suite d\'événements dont on mesure le taux de passage) : nom, description, étapes, activation. `steps` REMPLACE la liste entière : 2 à 10 étapes, chacune `{ event_name, label, filter?: { page_path } }` ; relis l\'entonnoir avec `list_site_funnels` avant et renvoie toutes les étapes, pas seulement celle qui change. `event_name` doit être un nom d\'événement du site (`page_view`, `cta_click`… ceux que le site émet réellement) — un entonnoir sur un événement jamais émis rend 0 partout, ce n\'est pas une erreur, c\'est un mauvais nom. `is_active: false` suspend le calcul sans supprimer. Aucun effet sur le site public : c\'est de la mesure.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/site-web/funnels/{funnel_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Funnel ID',
+					name: 'funnel_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de l\'entonnoir (list_site_funnels)',
 					default: '',
 				},
 				{
@@ -1068,16 +3101,80 @@ export const siteWebResource: GeneratedResource = {
 							default: '',
 						},
 						{
-							displayName: 'Keywords',
-							name: 'keywords',
-							type: 'json',
-							description: 'Provide a JSON array',
-							default: '[]',
+							displayName: 'Is Active',
+							name: 'is_active',
+							type: 'boolean',
+							description: 'Whether to enable is active',
+							default: false,
 						},
 						{
-							displayName: 'Title',
-							name: 'title',
+							displayName: 'Name',
+							name: 'name',
 							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Steps',
+							name: 'steps',
+							type: 'json',
+							description: 'Liste complète des étapes, dans l\'ordre. (provide a JSON array).',
+							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateSiteSectionContent',
+			name: 'Update Site Section Content',
+			action: 'Édite les CHAMPS de contenu d\'une section du site (titre, sous-titre, texte du bouton, éléments d\'une liste…) et re-rend cette seule section dans le brouillon, de façon déterministe : pas de LLM, pas de crédit, mise en page conservée par défaut',
+			description: 'Édite les CHAMPS de contenu d\'une section du site (titre, sous-titre, texte du bouton, éléments d\'une liste…) et re-rend cette seule section dans le brouillon, de façon déterministe : pas de LLM, pas de crédit, mise en page conservée par défaut. Pour changer sa présentation sans perdre de contenu, fournis un `blockId` différent pris dans `variantIds` de `get_website_editable_content`, avec `content: {}`. Seules les variantes compatibles sont acceptées. C\'est l\'outil « mode CMS » : préfère-le à `edit_website_text` quand tu changes un champ structuré (une liste de 3 avantages, le libellé d\'un CTA), et à la régénération pour tout ce qui n\'est pas un changement de structure. `content` est FUSIONNÉ sur le contenu actuel de la section : envoie seulement les champs à changer, avec leurs clés telles que la section les porte (`get_website_editable_content` les montre, avec `updatedAt` obligatoire pour enregistrer). `sectionId` est l\'UUID de la section (`website_sections`), pas son index. Seule la page en langue principale est patchée ; les traductions se rafraîchissent à leur prochaine régénération. Brouillon uniquement : `publish_website` pour mettre en ligne.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/site-web/cms/{site_id}/content","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site',
+					default: '',
+				},
+				{
+					displayName: 'Section ID',
+					name: 'sectionId',
+					type: 'string',
+					required: true,
+					description: 'UUID de la section (website_sections.ID)',
+					default: '',
+				},
+				{
+					displayName: 'Expected Updated At',
+					name: 'expectedUpdatedAt',
+					type: 'string',
+					required: true,
+					description: 'Copy the section updatedAt returned by get_website_editable_content. Never invent a timestamp; a stale revision is refused.',
+					default: '',
+				},
+				{
+					displayName: 'Content',
+					name: 'content',
+					type: 'json',
+					required: true,
+					description: 'Champs à modifier, fusionnés sur le contenu actuel. (provide a JSON object).',
+					default: '{}',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Block ID',
+							name: 'blockId',
+							type: 'string',
+							description: 'Optional compatible layout ID from variantIds. Preserves every content field; primary language only. Omit to keep the current layout.',
 							default: '',
 						},
 					],
@@ -1107,14 +3204,111 @@ export const siteWebResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Content',
-							name: 'content',
+							displayName: 'Content Text',
+							name: 'content_text',
 							type: 'string',
 							default: '',
 						},
 						{
 							displayName: 'Subject',
 							name: 'subject',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateWebsitePreparation',
+			name: 'Update Website Preparation',
+			action: 'Edit a saved preparation',
+			description: 'Edit a saved preparation. Read it first; preserve page and block instance IDs and any fields not being changed. Send at least one field. This saves choices only: no AI call, credit charge or publication. The page section enum lists the supported original blocks.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/site-web/draft/{draftId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Draft ID',
+					name: 'draftId',
+					type: 'string',
+					required: true,
+					description: 'The draft ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Appearance',
+							name: 'appearance',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Audience',
+							name: 'audience',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Creation Mode',
+							name: 'creationMode',
+							type: 'options',
+							default: 'ai',
+							options: [
+								{ name: 'AI', value: 'ai' },
+								{ name: 'Manual', value: 'manual' },
+							],
+						},
+						{
+							displayName: 'Destinations',
+							name: 'destinations',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Goal',
+							name: 'goal',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '',
+						},
+						{
+							displayName: 'Locales',
+							name: 'locales',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Pages',
+							name: 'pages',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Shell',
+							name: 'shell',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Site Type',
+							name: 'siteType',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '',
+						},
+						{
+							displayName: 'Tagline',
+							name: 'tagline',
 							type: 'string',
 							default: '',
 						},
@@ -1131,7 +3325,7 @@ export const siteWebResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
@@ -1144,18 +3338,151 @@ export const siteWebResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
-							displayName: 'Description',
-							name: 'description',
-							type: 'string',
-							default: '',
-						},
-						{
-							displayName: 'Name',
-							name: 'name',
+							displayName: 'Site Name',
+							name: 'site_name',
 							type: 'string',
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'updateWebsiteStructureSettings',
+			name: 'Update Website Structure Settings',
+			action: 'Save a website draft header/footer and declared destinations without AI or publication',
+			description: 'Save a website draft header/footer and declared destinations without AI or publication. Read settings first and preserve unchanged choices. Only use public contact links explicitly supplied by the user, never infer an email from the account. Conflicts preserve existing custom code and require re-reading. Shopify accepts a real custom HTTPS storefront. This does not publish the site.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/site-web/cms/{siteId}/settings","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'siteId',
+					type: 'string',
+					required: true,
+					description: 'The site ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Expected Updated At',
+					name: 'expectedUpdatedAt',
+					type: 'string',
+					required: true,
+					description: 'Exact revision returned by get_website_structure_settings',
+					default: '',
+				},
+				{
+					displayName: 'Shell',
+					name: 'shell',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
+				},
+				{
+					displayName: 'Destinations',
+					name: 'destinations',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Destinations Confirmed',
+							name: 'destinationsConfirmed',
+							type: 'boolean',
+							description: 'Whether only true after the user explicitly declares the complete destinations for unknown_legacy history. Never silently adopt recent onboarding contacts.',
+							default: false,
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'useNativeWebsiteTemplate',
+			name: 'Use Native Website Template',
+			action: 'Consume one paid personal acquisition to create exactly one persisted editable site in an accessible project, with the exact purchased version',
+			description: 'Consume one paid personal acquisition to create exactly one persisted editable site in an accessible project, with the exact purchased version. No AI or credit charge. Retry returns the same site without overwriting edits. Deleted instances cannot be recreated. Does not publish.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/template-acquisitions/{acquisitionId}/use","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Acquisition ID',
+					name: 'acquisitionId',
+					type: 'string',
+					required: true,
+					description: 'The acquisition ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'verifySiteCustomDomain',
+			name: 'Verify Site Custom Domain',
+			action: 'Demande la vérification DNS du domaine personnalisé rattaché à un site hébergé par Aurentia et rend `{ verified }`',
+			description: 'Demande la vérification DNS du domaine personnalisé rattaché à un site hébergé par Aurentia et rend `{ verified }`. Une fois, quand l\'utilisateur dit avoir posé les enregistrements — jamais en boucle, la propagation est chez le registrar. `false` = pas encore visible : fais-lui vérifier la saisie et réessayer plus tard. Sans domaine rattaché → 404 : passe d\'abord par `connect_site_custom_domain`. Pour un site sur le compte Vercel de l\'utilisateur, c\'est `refresh_vercel_domain_status`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/custom-domain/{site_id}/verify","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'writeWebsiteDraftFile',
+			name: 'Write Website Draft File',
+			action: 'Écrase le contenu COMPLET d\'un fichier texte du brouillon du site (le mode « éditeur de code ») : HTML d\'une page, CSS, JS',
+			description: 'Écrase le contenu COMPLET d\'un fichier texte du brouillon du site (le mode « éditeur de code ») : HTML d\'une page, CSS, JS. Le fichier doit déjà exister à ce `path` (404 sinon — cet outil ne crée pas de fichier) et être textuel (un binaire est refusé). `content` remplace tout : relis le fichier avec `get_website_draft_file` avant et renvoie-le entier modifié, jamais un fragment. Un instantané de sécurité du brouillon est pris avant l\'écriture (visible dans `list_website_versions`, restaurable avec `restore_website_draft_from_version`), mais ce n\'est pas une raison pour être imprécis : une page cassée reste cassée jusqu\'à restauration. Pour un changement ciblé, préfère `edit_website_text`, `edit_website_page_element` ou `update_site_section_content`. Brouillon uniquement ; `publish_website` pour mettre en ligne. 2 Mo max.',
+			routeSpec: {"method":"PUT","path":"/api/aurentia/site-web/files/{site_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Site ID',
+					name: 'site_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du site',
+					default: '',
+				},
+				{
+					displayName: 'Path',
+					name: 'path',
+					type: 'string',
+					required: true,
+					description: 'Chemin du fichier dans le brouillon, tel que listé (ex. index.html).',
+					default: '',
+				},
+				{
+					displayName: 'Content',
+					name: 'content',
+					type: 'string',
+					required: true,
+					description: 'Nouveau contenu intégral',
+					default: '',
+				},
+				{
+					displayName: 'Expected Updated At',
+					name: 'expectedUpdatedAt',
+					type: 'string',
+					required: true,
+					description: 'Verrou optimiste OBLIGATOIRE : la date `updated_at` du fichier telle que `get_website_draft_file` vient de te la rendre, au format ISO 8601 avec fuseau (2026-09-07T10:12:33.000Z). Elle prouve que tu écris par-dessus la version que tu as lue ; si quelqu\'un a modifié le fichier entre-temps, l\'écriture est refusée au lieu d\'écraser son travail. Ne l\'invente pas et ne renvoie pas l\'heure courante : relis le fichier et recopie la sienne.',
+					default: '',
 				}
 			],
 		}

@@ -67,6 +67,31 @@ export const importResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'correctImportTarget',
+			name: 'Correct Import Target',
+			action: 'Tell the import engine it guessed the wrong destination, IN PLAIN WORDS (« non, c\'est pour les réseaux sociaux », « ce sont des tâches, pas des contacts »)',
+			description: 'Tell the import engine it guessed the wrong destination, IN PLAIN WORDS (« non, c\'est pour les réseaux sociaux », « ce sont des tâches, pas des contacts »). It re-classifies on the headers/sample already extracted (no re-upload), re-maps the columns and returns the job back in `mapping_pending` — NOTHING is written until `commit_import`. `ID` from `start_import` / `get_import_status`. When you already know the exact target, `retarget_import` is more precise.',
+			routeSpec: {"method":"POST","path":"/api/import/{id}/correct","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Import job ID',
+					default: '',
+				},
+				{
+					displayName: 'Correction Text',
+					name: 'correctionText',
+					type: 'string',
+					required: true,
+					description: 'Natural-language correction, 1-2000 chars',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'getImportStatus',
 			name: 'Get Import Status',
 			action: 'Get an import job status + suggested mapping + counts',
@@ -143,6 +168,31 @@ export const importResource: GeneratedResource = {
 			routeSpec: {"method":"GET","path":"/api/import/targets","queryParams":[]},
 			properties: [
 
+			],
+		},
+		{
+			value: 'retargetImport',
+			name: 'Retarget Import',
+			action: 'Point an import job at an EXPLICIT destination domain (a slug from `list_import_targets`), without re-classifying: only the column mapping is redone on the extracted sample, and the job comes back in `mapping_pending` for `commit_import`',
+			description: 'Point an import job at an EXPLICIT destination domain (a slug from `list_import_targets`), without re-classifying: only the column mapping is redone on the extracted sample, and the job comes back in `mapping_pending` for `commit_import`. Use it when the person picked among ambiguous options; use `correct_import_target` when they describe it in words.',
+			routeSpec: {"method":"POST","path":"/api/import/{id}/retarget","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Import job ID',
+					default: '',
+				},
+				{
+					displayName: 'Target Domain',
+					name: 'targetDomain',
+					type: 'string',
+					required: true,
+					description: 'Target slug, from list_import_targets',
+					default: '',
+				}
 			],
 		},
 		{

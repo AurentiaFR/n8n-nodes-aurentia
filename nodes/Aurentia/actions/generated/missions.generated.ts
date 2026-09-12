@@ -30,6 +30,23 @@ export const missionsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'discloseMissionSubprocessors',
+			name: 'Disclose Mission Subprocessors',
+			action: 'RGPD Art',
+			description: 'RGPD Art. 28 §3.h: as the CLIENT of a marketplace mission, obtain the nominative list of the sub-providers (partner agencies) the primary agency brought onto the mission — `agency_id`, `agency_name`, generic role, grant date. Nothing is modified, but the request is written to the audit log (the disclosure is a legal act, not a browse): only call it when the person asks who works on their mission. Works only for the mission\'s client (403 for the agency side, 404 if the mission does not exist). Use the ID of a mission the person is the client of.',
+			routeSpec: {"method":"POST","path":"/api/missions/{id}/subprocessors/disclose","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Mission ID (the person must be its client)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'listMissionCollaborators',
 			name: 'List Mission Collaborators',
 			action: 'PRD-117 — List collaborators on a mission (workspace team)',

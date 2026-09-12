@@ -6,6 +6,23 @@ export const decisionsResource: GeneratedResource = {
 	displayName: 'Decisions',
 	operations: [
 		{
+			value: 'archiveDecision',
+			name: 'Archive Decision',
+			action: 'Archive a decision: it leaves the active journal (status `archived`, `archived_at` set) and becomes read-only — `update_decision` will refuse it with 409 from then on, and NO route un-archives it today',
+			description: 'Archive a decision: it leaves the active journal (status `archived`, `archived_at` set) and becomes read-only — `update_decision` will refuse it with 409 from then on, and NO route un-archives it today. Idempotent: archiving twice returns the decision unchanged. This is the ONLY way to remove a decision from the journal: there is no delete, and that is deliberate (a decision log is an audit trail). Because nothing brings it back, name the decision to the person before calling this. If they only want to hide a closed decision from the default list, `list_decisions` already filters by `status` — no need to archive.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/decisions/{id}/archive","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Decision ID',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'chooseDecisionOption',
 			name: 'Choose Decision Option',
 			action: 'Choose one of a decision\'s existing options — a distinct step from creating the decision',
@@ -133,6 +150,82 @@ export const decisionsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getDecision',
+			name: 'Get Decision',
+			action: 'Read ONE decision of the log in full: title, context, the complete list of `options` with their pros and cons, the chosen option, the outcome, tags, linked project and module',
+			description: 'Read ONE decision of the log in full: title, context, the complete list of `options` with their pros and cons, the chosen option, the outcome, tags, linked project and module. Read it BEFORE `update_decision`: that tool REPLACES the whole `options` array, so you must send back the ones you are not changing. 404 when the decision is not the person\'s. IDs come from `list_decisions`.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/decisions/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Decision ID (from list_decisions)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'linkDecision',
+			name: 'Link Decision',
+			action: 'Attach an existing object to a decision so the journal shows what it touched: a note, a task (kanban card), a module completion, a CRM contact, a deal, a routine, or another decision',
+			description: 'Attach an existing object to a decision so the journal shows what it touched: a note, a task (kanban card), a module completion, a CRM contact, a deal, a routine, or another decision. Both objects must already exist and belong to the person — this creates a LINK, never the target. Get `link_id` from the matching reader (`get_note`/`list_notes`, `list_cards`, `list_completed_modules`, CRM readers, `list_decisions`). Returns the link (201) with its own `ID`, which is what `unlink_decision` needs later. Linking the same pair twice is refused by the links service — read `list_decision_links` first when unsure.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/decisions/{id}/links","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Decision ID',
+					default: '',
+				},
+				{
+					displayName: 'Link Type',
+					name: 'link_type',
+					type: 'options',
+					required: true,
+					description: 'Kind of object being attached',
+					default: 'contact',
+					options: [
+						{ name: 'Contact', value: 'contact' },
+						{ name: 'Deal', value: 'deal' },
+						{ name: 'Decision', value: 'decision' },
+						{ name: 'Module', value: 'module' },
+						{ name: 'Note', value: 'note' },
+						{ name: 'Routine', value: 'routine' },
+						{ name: 'Task', value: 'task' },
+					],
+				},
+				{
+					displayName: 'Link ID',
+					name: 'link_id',
+					type: 'string',
+					required: true,
+					description: 'UUID of that object',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listDecisionLinks',
+			name: 'List Decision Links',
+			action: 'List everything attached to a decision — notes, kanban cards, module completions, CRM contacts, deals, other decisions — each with its own LINK ID and a readable label',
+			description: 'List everything attached to a decision — notes, kanban cards, module completions, CRM contacts, deals, other decisions — each with its own LINK ID and a readable label. That link ID is what `unlink_decision` needs: the ID of the link row, never the ID of the linked object. Read it before linking too, since the same pair twice is refused.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/decisions/{id}/links","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Decision ID',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'listDecisions',
 			name: 'List Decisions',
 			action: 'List the user\'s Aurentia decision log entries',
@@ -180,6 +273,99 @@ export const decisionsResource: GeneratedResource = {
 							type: 'json',
 							description: 'Provide a JSON array',
 							default: '[]',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'unlinkDecision',
+			name: 'Unlink Decision',
+			action: 'Remove ONE link from a decision',
+			description: 'Remove ONE link from a decision. Only the link goes: the decision and the linked object (note, task, contact…) are untouched. `linkId` is the ID of the LINK ROW, not the ID of the linked object — read it with `list_decision_links` (or keep it from `link_decision` in the same conversation). The route ignores which decision you name in the path: the link ID alone is what is deleted, so double-check it.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/decisions/{id}/links/{linkId}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Decision ID (path only)',
+					default: '',
+				},
+				{
+					displayName: 'Link ID',
+					name: 'linkId',
+					type: 'string',
+					required: true,
+					description: 'Link row ID (from list_decision_links)',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'updateDecision',
+			name: 'Update Decision',
+			action: 'Edit a decision that is still OPEN (or has an option chosen but is not closed): title, context, options, tags, project, linked module',
+			description: 'Edit a decision that is still OPEN (or has an option chosen but is not closed): title, context, options, tags, project, linked module. A closed or archived decision is immutable — the server answers 409 having changed nothing (`update_decision` is not how you reopen anything). Send ONLY the fields you change. `options` is a FULL REPLACEMENT, never a merge: read them first with `get_decision` and send them all back, or the ones you leave out disappear; do not touch the options of a decision on which `choose_decision_option` has already been called unless the person asks — the chosen option is one of them. `projectId: null` detaches the decision from its project, `linkedModuleId: null` unlinks the module. Choosing an option or recording the outcome are OTHER tools (`choose_decision_option`, `fill_decision_outcome`), never fields here.',
+			routeSpec: {"method":"PUT","path":"/api/aurentia/decisions/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Decision ID (from list_decisions / get_decision)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Context',
+							name: 'context',
+							type: 'string',
+							description: 'Why the decision is on the table. null clears it.',
+							default: '',
+						},
+						{
+							displayName: 'Linked Module ID',
+							name: 'linkedModuleId',
+							type: 'string',
+							description: 'Module completion this decision comes from. null unlinks.',
+							default: '',
+						},
+						{
+							displayName: 'Options',
+							name: 'options',
+							type: 'json',
+							description: 'FULL replacement of the options. Omit to leave them untouched. (provide a JSON array)',
+							default: '[]',
+						},
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							description: 'Project to attach the decision to. null detaches.',
+							default: '',
+						},
+						{
+							displayName: 'Tags',
+							name: 'tags',
+							type: 'json',
+							description: 'Full replacement of the tags. (provide a JSON array).',
+							default: '[]',
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							description: 'New title',
+							default: '',
 						},
 					],
 				}

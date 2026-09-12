@@ -6,6 +6,63 @@ export const linkInBioResource: GeneratedResource = {
 	displayName: 'Link in Bio',
 	operations: [
 		{
+			value: 'connectLinkInBioCustomDomain',
+			name: 'Connect Link In Bio Custom Domain',
+			action: 'Rattache un nom de domaine que l\'utilisateur POSSÈDE déjà (chez OVH, Gandi, Cloudflare…) à sa page Link-in-bio, pour la servir sur `bio.sondomaine.fr` au lieu de `bio.aurentia.fr/&lt;slug&gt;`',
+			description: 'Rattache un nom de domaine que l\'utilisateur POSSÈDE déjà (chez OVH, Gandi, Cloudflare…) à sa page Link-in-bio, pour la servir sur `bio.sondomaine.fr` au lieu de `bio.aurentia.fr/&lt;slug&gt;`. La réponse rend `dnsRecords` : les enregistrements exacts (type, nom, valeur) que l\'utilisateur doit poser LUI-MÊME chez son registrar — Aurentia ne touche jamais à sa zone DNS. Relaie-les verbatim, puis dis-lui d\'appeler `verify_link_in_bio_custom_domain` une fois les DNS posés (propagation : minutes à quelques heures). Réservé aux paliers Pro et Scale : en dessous la route refuse (403) et tu n\'as rien d\'autre à proposer qu\'un changement de plan. Un domaine déjà rattaché à une autre page est refusé en conflit ; un second domaine sur la même page REMPLACE le premier. Page d\'agence refusée. N\'appelle pas ceci pour un site complet : c\'est `connect_site_custom_domain`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/link-in-bio/{website_id}/custom-domain","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Website ID',
+					name: 'website_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de la page bio',
+					default: '',
+				},
+				{
+					displayName: 'Domain',
+					name: 'domain',
+					type: 'string',
+					required: true,
+					description: 'Nom de domaine possédé par l\'utilisateur, ex. bio.mondomaine.fr (sans http://).',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'createLinkInBioFolder',
+			name: 'Create Link In Bio Folder',
+			action: 'Create a folder to organise the person\'s link-in-bio pages — at the root, or inside another of their folders with `parentFolderId`',
+			description: 'Create a folder to organise the person\'s link-in-bio pages — at the root, or inside another of their folders with `parentFolderId`. Folders are personal (no agency scope on Aurentia). Read `list_link_in_bio_folders` first to reuse an existing one. Note: `create_link_in_bio_page` does not expose a `folder_id` yet, so a page created through MCP lands at the root; the folder is used when the person files pages from the app.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/link-in-bio/folders","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Parent Folder ID',
+							name: 'parentFolderId',
+							type: 'string',
+							description: 'Parent folder ID for a sub-folder. Omit for root.',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createLinkInBioLink',
 			name: 'Create Link In Bio Link',
 			action: 'Add a new link block (block_type=link) on a Link-in-bio page — PRD-186',
@@ -105,6 +162,158 @@ export const linkInBioResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'customizeLinkInBioQrCode',
+			name: 'Customize Link In Bio Qr Code',
+			action: 'Enregistre la personnalisation du QR code d\'une page bio (motif des points, coins, logo au centre, couleur, format d\'export)',
+			description: 'Enregistre la personnalisation du QR code d\'une page bio (motif des points, coins, logo au centre, couleur, format d\'export). DÉBITE 10 crédits À CHAQUE ENREGISTREMENT : envoie la configuration complète en UN appel, ne fais pas d\'essais successifs — tu ne vois pas le rendu, c\'est l\'utilisateur qui le juge à l\'écran. Utilise-le pour un geste déterministe : « mets mon QR aux couleurs de ma marque » (couleur = hex 6 chiffres, prends-la dans `get_brand_identity`), « avec mon logo au centre » (`logoMode: default` = le logo de la page, `custom` = une `logoUrl` http(s) fournie). Tous les champs de style sont OBLIGATOIRES : relis la config actuelle de la page et renvoie les valeurs inchangées. `format` : `png` | `jpeg` (jamais `jpg`) | `svg`. Page d\'agence refusée (404) ; solde insuffisant = refus AVANT toute écriture.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/link-in-bio/{website_id}/qr-code","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Website ID',
+					name: 'website_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de la page bio',
+					default: '',
+				},
+				{
+					displayName: 'Dots Style',
+					name: 'dotsStyle',
+					type: 'options',
+					required: true,
+					default: 'dots',
+					options: [
+						{ name: 'Dots', value: 'dots' },
+						{ name: 'Rounded', value: 'rounded' },
+						{ name: 'Square', value: 'square' },
+					],
+				},
+				{
+					displayName: 'Corners Square Style',
+					name: 'cornersSquareStyle',
+					type: 'options',
+					required: true,
+					default: 'dot',
+					options: [
+						{ name: 'Dot', value: 'dot' },
+						{ name: 'Extra Rounded', value: 'extra-rounded' },
+						{ name: 'Square', value: 'square' },
+					],
+				},
+				{
+					displayName: 'Corners Dot Style',
+					name: 'cornersDotStyle',
+					type: 'options',
+					required: true,
+					default: 'classy',
+					options: [
+						{ name: 'Classy', value: 'classy' },
+						{ name: 'Dot', value: 'dot' },
+						{ name: 'Square', value: 'square' },
+					],
+				},
+				{
+					displayName: 'Logo Mode',
+					name: 'logoMode',
+					type: 'options',
+					required: true,
+					default: 'custom',
+					options: [
+						{ name: 'Custom', value: 'custom' },
+						{ name: 'Default', value: 'default' },
+						{ name: 'None', value: 'none' },
+					],
+				},
+				{
+					displayName: 'Color',
+					name: 'color',
+					type: 'color',
+					required: true,
+					description: 'Hex 6 chiffres, ex. #1D4ED8.',
+					default: '',
+				},
+				{
+					displayName: 'Format',
+					name: 'format',
+					type: 'options',
+					required: true,
+					default: 'jpeg',
+					options: [
+						{ name: 'Jpeg', value: 'jpeg' },
+						{ name: 'Png', value: 'png' },
+						{ name: 'Svg', value: 'svg' },
+					],
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Logo URL',
+							name: 'logoUrl',
+							type: 'string',
+							description: 'URL http(s) du logo — uniquement quand logoMode = custom, null sinon',
+							default: '',
+						},
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							description: 'Nom du QR code — libre, jamais requis',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'deleteLinkInBioBlock',
+			name: 'Delete Link In Bio Block',
+			action: 'Supprime DÉFINITIVEMENT un bloc d\'une page bio, fichiers associés compris (photo, message vocal)',
+			description: 'Supprime DÉFINITIVEMENT un bloc d\'une page bio, fichiers associés compris (photo, message vocal). Pas de corbeille. La page publique change immédiatement. Avant de l\'appeler, propose `update_link_in_bio_block` avec `active: false` si l\'utilisateur veut seulement masquer le bloc « pour l\'instant ». Appelle-le uniquement quand il a nommé le bloc (libellé + type relus dans `list_link_in_bio_links`) et confirmé. Bloc d\'une page d\'agence refusé (404).',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/link-in-bio/blocks/{block_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Block ID',
+					name: 'block_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du bloc à supprimer',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteLinkInBioFolder',
+			name: 'Delete Link In Bio Folder',
+			action: 'Supprime un dossier de pages bio',
+			description: 'Supprime un dossier de pages bio. Les SOUS-DOSSIERS sont supprimés en cascade ; les pages qu\'ils contenaient ne sont PAS supprimées, elles redeviennent « non rangées » (à la racine). Dis-le à l\'utilisateur : aucune page publique ne tombe. Appelle-le sur un dossier nommé et confirmé, jamais pour ranger. Dossier d\'agence refusé (404).',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/link-in-bio/folders/{folder_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Folder ID',
+					name: 'folder_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du dossier à supprimer',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listLinkInBioFolders',
+			name: 'List Link In Bio Folders',
+			action: 'Les dossiers link-in-bio de la personne (racine et sous-dossiers, avec les IDs de parent)',
+			description: 'Les dossiers link-in-bio de la personne (racine et sous-dossiers, avec les IDs de parent). Lis-le avant de créer un dossier, avant `update_link_in_bio_folder` / `delete_link_in_bio_folder`, et pour dire à la personne où une page est rangée.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/link-in-bio/folders","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
 			value: 'listLinkInBioLinks',
 			name: 'List Link In Bio Links',
 			action: 'List blocks on a Link-in-bio page (Aurentia website with kind=link_in_bio) — PRD-186',
@@ -117,6 +326,292 @@ export const linkInBioResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The website ID for this operation',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'listLinkInBioPages',
+			name: 'List Link In Bio Pages',
+			action: 'Liste les pages Link-in-bio personnelles de l\'utilisateur (ID, slug, titre, dossier, domaine personnalisé)',
+			description: 'Liste les pages Link-in-bio personnelles de l\'utilisateur (ID, slug, titre, dossier, domaine personnalisé). C\'est le seul outil qui rend le `website_id` dont dépendent `update_link_in_bio_page`, `reorder_link_in_bio_blocks`, `customize_link_in_bio_qr_code` et les trois outils de domaine personnalisé. Les pages d\'agence n\'y figurent pas.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/link-in-bio","queryParams":[]},
+			properties: [
+
+			],
+		},
+		{
+			value: 'removeLinkInBioCustomDomain',
+			name: 'Remove Link In Bio Custom Domain',
+			action: 'Détache le domaine personnalisé d\'une page bio : l\'adresse `bio.sondomaine.fr` cesse IMMÉDIATEMENT de servir la page (celle en `bio.aurentia.fr/&lt;slug&gt;` continue)',
+			description: 'Détache le domaine personnalisé d\'une page bio : l\'adresse `bio.sondomaine.fr` cesse IMMÉDIATEMENT de servir la page (celle en `bio.aurentia.fr/&lt;slug&gt;` continue). Irréversible du point de vue des visiteurs — cartes de visite, bios sociales, QR codes imprimés pointant sur ce domaine tombent. N\'appelle ceci que sur une demande explicite et nommée (« enlève mon domaine de ma page bio »), jamais pour « nettoyer » ; rien dans une phrase ambiguë ne distingue ce geste d\'un malentendu. Les enregistrements DNS chez le registrar ne sont pas touchés : l\'utilisateur peut les retirer ou re-rattacher plus tard.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/link-in-bio/{website_id}/custom-domain","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Website ID',
+					name: 'website_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de la page bio',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'reorderLinkInBioBlocks',
+			name: 'Reorder Link In Bio Blocks',
+			action: 'Réordonne les blocs d\'une page bio en une fois',
+			description: 'Réordonne les blocs d\'une page bio en une fois. `orderedLinkIds` est la liste COMPLÈTE des identifiants de blocs de la page dans l\'ordre voulu (haut → bas) : relis-la avec `list_link_in_bio_links` avant d\'appeler, l\'index dans le tableau devient `sort_order`. Un identifiant qui n\'appartient pas à la page est ignoré et signalé en erreur, il ne casse pas l\'ordre des autres. Appelle-le pour « mets mon lien Calendly en premier », « remonte la capture e-mail au-dessus des réseaux ». Pour changer UN bloc de place sans toucher aux autres, `update_link_in_bio_block` avec `sort_order` suffit. Page d\'agence refusée (404). Effet immédiat sur la page publique.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/link-in-bio/{website_id}/reorder","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Website ID',
+					name: 'website_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de la page bio',
+					default: '',
+				},
+				{
+					displayName: 'Ordered Link IDs',
+					name: 'orderedLinkIds',
+					type: 'json',
+					required: true,
+					description: 'Tous les UUID de blocs de la page, dans l\'ordre d\'affichage voulu. (provide a JSON array).',
+					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'updateLinkInBioBlock',
+			name: 'Update Link In Bio Block',
+			action: 'Modifie un bloc d\'une page bio (ceux que rend `list_link_in_bio_links`) : libellé, URL, icône, miniature, description, visibilité, fenêtre de visibilité, attribution, ordre, et même son type + sa config',
+			description: 'Modifie un bloc d\'une page bio (ceux que rend `list_link_in_bio_links`) : libellé, URL, icône, miniature, description, visibilité, fenêtre de visibilité, attribution, ordre, et même son type + sa config. Envoie seulement ce qui change. `URL`, `thumbnail_url`, `visible_from`, `visible_until`, `platform` acceptent `null` pour EFFACER (une URL vide `\'\'` est refusée : une chaîne vide n\'est pas une URL). `active: false` cache le bloc sans le supprimer — préfère ça à `delete_link_in_bio_block` quand l\'utilisateur hésite. `visible_from`/`visible_until` : ISO 8601, pour un lien temporaire. `platform` est l\'ATTRIBUTION revenue (linkedin, instagram…) : ne la devine jamais, `null` la retire ; jamais sur un bloc `connector` (sa plateforme affichée vit dans `config.platform`, vocabulaire distinct, la route refuse). `block_type` change le type du bloc — envoie TOUJOURS `config` avec lui, jamais `block_type` seul : `link` | `social_row` | `photo` | `text` | `email_capture` | `booking` | `boutique` | `connector` | `voice` | `app_link` | `carousel` | `tip_jar`. Bloc d\'une page d\'agence refusé (404). Effet immédiat sur la page publique.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/link-in-bio/blocks/{block_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Block ID',
+					name: 'block_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du bloc (list_link_in_bio_links)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Active',
+							name: 'active',
+							type: 'boolean',
+							description: 'Whether to enable active',
+							default: false,
+						},
+						{
+							displayName: 'Block Type',
+							name: 'block_type',
+							type: 'options',
+							default: 'app_link',
+							options: [
+								{ name: 'App Link', value: 'app_link' },
+								{ name: 'Booking', value: 'booking' },
+								{ name: 'Boutique', value: 'boutique' },
+								{ name: 'Carousel', value: 'carousel' },
+								{ name: 'Connector', value: 'connector' },
+								{ name: 'Email Capture', value: 'email_capture' },
+								{ name: 'Link', value: 'link' },
+								{ name: 'Photo', value: 'photo' },
+								{ name: 'Social Row', value: 'social_row' },
+								{ name: 'Text', value: 'text' },
+								{ name: 'Tip Jar', value: 'tip_jar' },
+								{ name: 'Voice', value: 'voice' },
+							],
+						},
+						{
+							displayName: 'Config',
+							name: 'config',
+							type: 'json',
+							description: 'Config propre au type — obligatoire quand block_type est envoyé. (provide a JSON object).',
+							default: '{}',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Icon',
+							name: 'icon',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Label',
+							name: 'label',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Platform',
+							name: 'platform',
+							type: 'string',
+							description: 'Attribution revenue — jamais devinée ; null l\'efface ; interdit sur connector',
+							default: '',
+						},
+						{
+							displayName: 'Sort Order',
+							name: 'sort_order',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Thumbnail URL',
+							name: 'thumbnail_url',
+							type: 'string',
+							description: 'Miniature manuelle ; null revient au favicon auto',
+							default: '',
+						},
+						{
+							displayName: 'URL',
+							name: 'url',
+							type: 'string',
+							description: 'Http(s) ; null retire le lien (bloc photo/texte)',
+							default: '',
+						},
+						{
+							displayName: 'Visible From',
+							name: 'visible_from',
+							type: 'string',
+							description: 'ISO 8601 ; null = pas de début',
+							default: '',
+						},
+						{
+							displayName: 'Visible Until',
+							name: 'visible_until',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateLinkInBioFolder',
+			name: 'Update Link In Bio Folder',
+			action: 'Renomme ou déplace un dossier de rangement des pages bio (dossiers personnels, arborescence à plusieurs niveaux)',
+			description: 'Renomme ou déplace un dossier de rangement des pages bio (dossiers personnels, arborescence à plusieurs niveaux). `name` : non vide. `parentFolderId` : UUID d\'un autre dossier personnel pour l\'y déplacer, `null` pour le remonter à la racine ; un dossier ne peut pas devenir son propre descendant. Ne range aucune page : pour mettre une page dans un dossier, c\'est `update_link_in_bio_page` avec `folderId`. `folder_id` vient de `list_link_in_bio_folders` — ne le devine pas. Dossier d\'agence refusé (404).',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/link-in-bio/folders/{folder_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Folder ID',
+					name: 'folder_id',
+					type: 'string',
+					required: true,
+					description: 'UUID du dossier',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Name',
+							name: 'name',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Parent Folder ID',
+							name: 'parentFolderId',
+							type: 'string',
+							description: 'Nouveau parent ; null = racine',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateLinkInBioPage',
+			name: 'Update Link In Bio Page',
+			action: 'Modifie une page Link-in-bio PERSONNELLE (créée par `create_link_in_bio_page`) : titre, sous-titre « carte de visite », slug, photo de profil, dossier de rangement, sélecteur de langue, et tout l\'onglet Design',
+			description: 'Modifie une page Link-in-bio PERSONNELLE (créée par `create_link_in_bio_page`) : titre, sous-titre « carte de visite », slug, photo de profil, dossier de rangement, sélecteur de langue, et tout l\'onglet Design. Envoie seulement ce qui change ; `title`/`subtitle`/`theme.logoUrl`/`folderId` acceptent `null` pour EFFACER, `slug` et les champs de design ne s\'effacent pas (une page a toujours un slug). `slug` : kebab-case, doit être disponible dans la table partagée des sites (même index unique que les sites complets) — un slug pris est refusé en conflit, la page reste servie sur l\'ancien. Le design est fusionné champ par champ dans `theme`, jamais remplacé en bloc : `theme.skinId`, `theme.backgroundType` (`solid` | `gradient`), `theme.backgroundColors` (hex), `theme.textColor`, `theme.fontFamily`, `theme.buttonStyle` (`{ shape: pill|rounded|sharp, fill: solid|outline|soft-shadow|glass }`). Une page d\'AGENCE est refusée ici (404) : cette surface ne connaît pas les permissions d\'équipe. La page est PUBLIQUE : ce que tu écris est visible immédiatement sur bio.aurentia.fr/&lt;slug&gt;.',
+			routeSpec: {"method":"PATCH","path":"/api/aurentia/link-in-bio/{website_id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Website ID',
+					name: 'website_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de la page bio (create_link_in_bio_page / list_link_in_bio_pages)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Folder ID',
+							name: 'folderId',
+							type: 'string',
+							description: 'UUID d\'un dossier personnel ; null = sortir du dossier',
+							default: '',
+						},
+						{
+							displayName: 'Slug',
+							name: 'slug',
+							type: 'string',
+							description: 'Kebab-case, disponible dans public.websites.slug',
+							default: '',
+						},
+						{
+							displayName: 'Subtitle',
+							name: 'subtitle',
+							type: 'string',
+							description: 'Rôle affiché sous le titre ; null efface',
+							default: '',
+						},
+						{
+							displayName: 'Theme',
+							name: 'theme',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Title',
+							name: 'title',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'verifyLinkInBioCustomDomain',
+			name: 'Verify Link In Bio Custom Domain',
+			action: 'Demande la vérification DNS du domaine personnalisé rattaché à une page bio et rend `{ verified }`',
+			description: 'Demande la vérification DNS du domaine personnalisé rattaché à une page bio et rend `{ verified }`. Appelle-le UNE fois, quand l\'utilisateur dit qu\'il a posé les enregistrements DNS — jamais en boucle : la propagation se fait chez le registrar, pas chez Aurentia, et marteler un résolveur ne l\'accélère pas. `verified: true` = le domaine sert la page ; `false` = les enregistrements ne sont pas (encore) visibles, dis-lui de vérifier leur saisie et de réessayer plus tard. Sans domaine rattaché, la route rend introuvable (404) : rattache d\'abord avec `connect_link_in_bio_custom_domain`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/link-in-bio/{website_id}/custom-domain/verify","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Website ID',
+					name: 'website_id',
+					type: 'string',
+					required: true,
+					description: 'UUID de la page bio',
 					default: '',
 				}
 			],

@@ -6,10 +6,75 @@ export const devisResource: GeneratedResource = {
 	displayName: 'Quotes',
 	operations: [
 		{
+			value: 'billAcceptedQuote',
+			name: 'Bill Accepted Quote',
+			action: '« The client said yes »: accepts the quote if needed, draws an invoice from it, NUMBERS IT and sends it — in one call',
+			description: '« The client said yes »: accepts the quote if needed, draws an invoice from it, NUMBERS IT and sends it — in one call. Two things become final and must be said BEFORE you call: the number is taken from a gap-free sequence and the document becomes immutable (no deletion, ever), and the email leaves for the client. If the quote was already paid online, the payment is carried onto the invoice WITHOUT counting the revenue twice — never follow the on-screen advice to « record the payment afterwards », it writes a second revenue line that shares no key with the first and doubles the turnover. A currency other than the euro is refused, and so is a quote attached to no project (invoicing is organised per project) — both BEFORE anything is written. IF THE SEND FAILS AFTER THE INVOICE WAS ISSUED, the answer comes back `issued: true, sent: false` with the number: THE INVOICE EXISTS, announce it and do not call again — a second call would burn another number. Set `send: false` to number the document without emailing it. To only accept a quote, or only issue, or only send, the unit tools remain (`mark_quote_accepted`, `issue_invoice`, `send_invoice`).',
+			routeSpec: {"method":"POST","path":"/api/aurentia/devis/{quote_id}/bill","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Quote ID',
+					name: 'quote_id',
+					type: 'string',
+					required: true,
+					description: 'Quotes.ID (uuid) — from list_quotes',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Accepted By',
+							name: 'accepted_by',
+							type: 'string',
+							description: 'Who accepted, on the client side (name or email). Optional.',
+							default: '',
+						},
+						{
+							displayName: 'Carry Payment',
+							name: 'carry_payment',
+							type: 'boolean',
+							description: 'Whether default true. Carries onto the invoice a payment already cashed on the quote, WITHOUT creating a second revenue line.',
+							default: false,
+						},
+						{
+							displayName: 'Locale',
+							name: 'locale',
+							type: 'options',
+							description: 'Language of the email sent to the client',
+							default: 'en',
+							options: [
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+							],
+						},
+						{
+							displayName: 'Recipient Email',
+							name: 'recipient_email',
+							type: 'string',
+							description: 'Recipient. Default: the client email frozen on the invoice at issue time.',
+							default: '',
+						},
+						{
+							displayName: 'Send',
+							name: 'send',
+							type: 'boolean',
+							description: 'Whether default true. false = issue the invoice without emailing it (number allocated, document frozen, no email).',
+							default: false,
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'createQuote',
 			name: 'Create Quote',
 			action: 'Create a quote (devis)',
-			description: 'Create a quote (devis). Amounts are computed from line items. unit_price is in EUR excluding tax (HT). Only title is required. Returns the quote plus `share_url` — a public link the client opens to view and SIGN the quote; always give this link to the user.',
+			description: 'Create a quote (devis). Amounts are computed from line items. unit_price is in EUR excluding tax (HT). Only title is required. VAT: leave `tva_rate` out unless the person names a rate — the server applies the project\'s REGISTERED tax regime (0 % for franchise en base, art. 293 B of the French CGI; 20 % otherwise). Passing 20 « to be safe » puts an illegal rate on a franchise entrepreneur\'s quote. Returns the quote plus `share_url` — a public link the client opens to view and SIGN the quote; always give this link to the user.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/devis","queryParams":[]},
 			properties: [
 				{
@@ -113,7 +178,7 @@ export const devisResource: GeneratedResource = {
 							displayName: 'Tva Rate',
 							name: 'tva_rate',
 							type: 'number',
-							description: 'VAT rate, default 20',
+							description: 'VAT rate. OMIT IT by default: the server reads the project\'s registered VAT regime (franchise en base ⇒ 0, otherwise 20). Only pass a value the person explicitly asked for.',
 							default: 0,
 						},
 						{
@@ -124,6 +189,39 @@ export const devisResource: GeneratedResource = {
 							default: '',
 						},
 					],
+				}
+			],
+		},
+		{
+			value: 'deleteDevis',
+			name: 'Delete Devis',
+			action: 'Delete a quote (devis), definitively — no bin, no restore',
+			description: 'Delete a quote (devis), definitively — no bin, no restore. The server does NOT check the status: it will delete a quote the client has already SIGNED or PAID just as readily as a draft. So: call it ONLY on a draft, a refused or an expired quote. For a quote that was sent and is simply dead, set its `status` to `refused` or `expired` with `update_quote` instead, so the history stays. NEVER delete an accepted quote: it is the amount the client signed, and any invoice created from it points to it. Ask before deleting a quote you did not create in this same conversation.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/devis/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Quote ID — must be a draft, refused or expired quote',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteQuoteLogo',
+			name: 'Delete Quote Logo',
+			action: 'Remove the logo uploaded for this project\'s quotes',
+			description: 'Remove the logo uploaded for this project\'s quotes. The quote then falls back to the brand logo if there is one (`logoSource` in `get_quote_project_settings` tells you which is in use). Irreversible: the uploaded file is deleted, re-adding one requires a fresh upload from the interface.',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/devis/project-settings/logo","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
 				}
 			],
 		},
@@ -141,6 +239,57 @@ export const devisResource: GeneratedResource = {
 					required: true,
 					description: 'Quote ID',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'followUpQuote',
+			name: 'Follow Up Quote',
+			action: 'Follows up on a quote that got no answer: re-sends the SAME document to the SAME recipient with a follow-up note, and records the follow-up (number and date)',
+			description: 'Follows up on a quote that got no answer: re-sends the SAME document to the SAME recipient with a follow-up note, and records the follow-up (number and date). NEVER USE `send_quote` TO FOLLOW UP: that path rewrites the original send date, and the quote then vanishes from the weekly « devis sans réponse » automation, which looks for quotes sent more than 7 days ago. Here nothing of the sort moves — not the number, not the status, not the original send date. ONE FOLLOW-UP PER WEEK AT MOST, and three in total: past that the tool refuses and tells you when the next one becomes possible, or that they are exhausted (past three, a call unlocks things, not one more email). The follow-up text is a FIXED template, never generated by a model — pass `message` only when the person dictates their own words. AN EMAIL LEAVES FOR A THIRD PARTY IN THIS CALL AND DOES NOT COME BACK. A quote that was never sent, or that is already accepted or signed, is refused with the reason.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/devis/{quote_id}/follow-up","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Quote ID',
+					name: 'quote_id',
+					type: 'string',
+					required: true,
+					description: 'Quotes.ID (uuid) — from list_quotes',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Locale',
+							name: 'locale',
+							type: 'options',
+							description: 'Language of the follow-up email',
+							default: 'en',
+							options: [
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+							],
+						},
+						{
+							displayName: 'Message',
+							name: 'message',
+							type: 'string',
+							description: 'The person\'s own words. Without it, the standard follow-up text for this level (1st, 2nd, final), which is NOT model-generated.',
+							default: '',
+						},
+						{
+							displayName: 'Recipient Email',
+							name: 'recipient_email',
+							type: 'string',
+							description: 'Recipient. Default: the client email carried by the quote.',
+							default: '',
+						},
+					],
 				}
 			],
 		},
@@ -201,6 +350,39 @@ export const devisResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getQuotePaymentStatus',
+			name: 'Get Quote Payment Status',
+			action: 'Read the payment status of a quote: `none`, `pending` or `paid`, plus the payment date and whether the project\'s Stripe account is ready to take charges',
+			description: 'Read the payment status of a quote: `none`, `pending` or `paid`, plus the payment date and whether the project\'s Stripe account is ready to take charges. Read it BEFORE `request_quote_payment` (an already-paid quote is refused) and after it, to tell the person whether the client has gone through. Reading only: it never opens a checkout.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/devis/{id}/payment","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Quote ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getQuoteProjectSettings',
+			name: 'Get Quote Project Settings',
+			action: 'The per-project QUOTE defaults applied to every new devis: display name, default VAT rate, currency, payment terms, validity in days, whether bank transfer is offered, and the resolved logo (`logoSource`, `logoUrl`)',
+			description: 'The per-project QUOTE defaults applied to every new devis: display name, default VAT rate, currency, payment terms, validity in days, whether bank transfer is offered, and the resolved logo (`logoSource`, `logoUrl`). Read this before quoting so the numbers you announce match what the PDF will carry.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/devis/project-settings","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'listQuotes',
 			name: 'List Quotes',
 			action: 'List your quotes (devis)',
@@ -240,10 +422,77 @@ export const devisResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'markQuoteAccepted',
+			name: 'Mark Quote Accepted',
+			action: 'Record that the client ACCEPTED a quote outside the platform (by email, on the phone, on paper)',
+			description: 'Record that the client ACCEPTED a quote outside the platform (by email, on the phone, on paper). Sets `status=accepted`, stamps `accepted_at` now and `accepted_by` with the name you give, fires the \'quote accepted\' events (agent automations, XP) and unlocks `create_invoice_from_quote`. This is the sales milestone — it is definitive in every downstream system even though the status field itself can still be edited. Call it ONLY when the person tells you the client agreed; never to \'test\', never because a quote looks old, never in place of the client\'s own signature (that goes through the public link from `mint_quote_signing_link`). The server does not check the current status: an already-accepted quote gets re-stamped, so read it first with `get_quote`.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/devis/{id}/accept","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Quote ID (sent or viewed)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Accepted By',
+							name: 'accepted_by',
+							type: 'string',
+							description: 'Name of the person who agreed on the client side, as it should appear on the record',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'mintQuoteSigningLink',
+			name: 'Mint Quote Signing Link',
+			action: 'Mint a public link (`/signer/&lt;token&gt;`) the client opens to read and SIGN a quote — the same link `create_quote` already returned as `share_url`, for a quote created earlier or whose link expired',
+			description: 'Mint a public link (`/signer/&lt;token&gt;`) the client opens to read and SIGN a quote — the same link `create_quote` already returned as `share_url`, for a quote created earlier or whose link expired. Each call creates a NEW 30-day token and does not revoke the previous ones, so call it once and hand the URL to the person; do not mint one per message. Nothing is sent by this call: `send_quote` is the tool that emails the quote with the link. Signing through that link is what makes the quote `accepted` — sharing it is the commitment, treat the URL as such.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/devis/{id}/share-link","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Quote ID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'requestQuotePayment',
+			name: 'Request Quote Payment',
+			action: 'Open a Stripe Checkout page for the FULL amount incl',
+			description: 'Open a Stripe Checkout page for the FULL amount incl. VAT of a quote, charged on the project\'s connected Stripe account, and return its `URL`. Nothing is emailed: give the URL to the person so they send it to the client (or they will paste it themselves). Refused when the quote is already paid, has no project, has a zero or negative total, or when the project\'s Stripe account cannot take charges yet — check `stripe_payment_status` first and, if not ready, say so instead of retrying. Calling it twice within 10 minutes for the same amount returns the SAME URL (intended: « renvoie le lien »); editing the quote amount produces a new session. Aurentia\'s application fee is applied on the charge. Payment status is what `get_quote_payment_status` reads afterwards. This is the entrepreneur asking to be paid — it is never the client\'s move, and never yours without the person asking.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/devis/{id}/payment","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Quote ID (must belong to a project with a ready Stripe account)',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'sendQuote',
 			name: 'Send Quote',
-			action: 'Email a quote (devis) to a client with the branded PDF attached and a public view/accept link',
-			description: 'Email a quote (devis) to a client with the branded PDF attached and a public view/accept link. Marks the quote as sent.',
+			action: 'Email a quote (devis) to a client for the FIRST time, with the branded PDF attached and a public view/accept link',
+			description: 'Email a quote (devis) to a client for the FIRST time, with the branded PDF attached and a public view/accept link. Marks the quote as sent. NEVER USE IT TO FOLLOW UP ON A QUOTE THAT GOT NO ANSWER — that is `follow_up_quote`. Re-sending through here REWRITES `sent_at` to now on any quote that is not yet accepted or signed, which makes the quote disappear from the weekly « devis sans réponse » automation (it looks for quotes sent more than 7 days ago): the follow-up would erase the very data the follow-up runs on.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/devis/{id}/send","queryParams":[]},
 			properties: [
 				{
@@ -424,6 +673,92 @@ export const devisResource: GeneratedResource = {
 							name: 'valid_until',
 							type: 'string',
 							description: 'ISO date',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateQuoteProjectSettings',
+			name: 'Update Quote Project Settings',
+			action: 'Update the per-project QUOTE defaults',
+			description: 'Update the per-project QUOTE defaults. PARTIAL update: send only the fields to change, at least one is required. `bank_details` (iban + bic, both validated) and `clear_bank_details` are mutually exclusive — sending both is refused. Currency is one of EUR, USD, GBP, CHF. These defaults apply to devis created AFTERWARDS; existing quotes keep the values they were issued with.',
+			routeSpec: {"method":"PUT","path":"/api/aurentia/devis/project-settings","queryParams":["project_id:projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'project_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Bank Details',
+							name: 'bankDetails',
+							type: 'json',
+							description: 'IBAN + BIC printed on the quote. Both are checksum-validated. (provide a JSON object)',
+							default: '{}',
+						},
+						{
+							displayName: 'Bank Transfer Enabled',
+							name: 'bankTransferEnabled',
+							type: 'boolean',
+							description: 'Whether offer bank transfer as a payment method',
+							default: false,
+						},
+						{
+							displayName: 'Clear Bank Details',
+							name: 'clearBankDetails',
+							type: 'boolean',
+							description: 'Whether remove the stored bank details. Cannot be combined with bankDetails.',
+							default: false,
+						},
+						{
+							displayName: 'Default Currency',
+							name: 'defaultCurrency',
+							type: 'options',
+							default: 'CHF',
+							options: [
+								{ name: 'CHF', value: 'CHF' },
+								{ name: 'EUR', value: 'EUR' },
+								{ name: 'GBP', value: 'GBP' },
+								{ name: 'USD', value: 'USD' },
+							],
+						},
+						{
+							displayName: 'Default Payment Terms',
+							name: 'defaultPaymentTerms',
+							type: 'string',
+							description: 'Default payment terms, max 2000 chars',
+							default: '',
+						},
+						{
+							displayName: 'Default Tva Rate',
+							name: 'defaultTvaRate',
+							type: 'number',
+							description: 'Default VAT rate, 0-100',
+							default: 0,
+						},
+						{
+							displayName: 'Default Validity Days',
+							name: 'defaultValidityDays',
+							type: 'number',
+							description: 'Default validity in days, 1-3650',
+							default: 0,
+						},
+						{
+							displayName: 'Display Name',
+							name: 'displayName',
+							type: 'string',
+							description: 'Name shown on the quote, max 160 chars. Null to fall back to the project name.',
 							default: '',
 						},
 					],
