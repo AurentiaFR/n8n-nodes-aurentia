@@ -3396,6 +3396,20 @@ export const projectsResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
+							displayName: 'Activite',
+							name: 'activite',
+							type: 'string',
+							description: 'Activity established by discovery; forward it when adding a suggestion',
+							default: '',
+						},
+						{
+							displayName: 'Description',
+							name: 'description',
+							type: 'string',
+							description: 'Grounded reason why the suggestion is a competitor',
+							default: '',
+						},
+						{
 							displayName: 'Portee',
 							name: 'portee',
 							type: 'options',
@@ -3406,6 +3420,13 @@ export const projectsResource: GeneratedResource = {
 								{ name: 'Local', value: 'local' },
 								{ name: 'National', value: 'national' },
 							],
+						},
+						{
+							displayName: 'Search Location',
+							name: 'searchLocation',
+							type: 'string',
+							description: 'Forward searchLocation from a discovery suggestion to identify the correct local business, including when it has no website',
+							default: '',
 						},
 						{
 							displayName: 'Type',
@@ -3891,8 +3912,8 @@ export const projectsResource: GeneratedResource = {
 		{
 			value: 'veilleDiscoverCompetitors',
 			name: 'Veille Discover Competitors',
-			action: 'AI-discover candidate competitors for a project, using the project context and excluding the ones already tracked',
-			description: 'AI-discover candidate competitors for a project, using the project context and excluding the ones already tracked. FREE — returns suggestions only, nothing is tracked or billed. Feed a chosen suggestion to veille_add_competitor to run the paid deep-dive.',
+			action: 'Discover direct, indirect and potential competitors, including small local businesses and niche specialists',
+			description: 'Discover direct, indirect and potential competitors, including small local businesses and niche specialists. For nearby competitors, use searchScope=local and location (city, neighborhood or region); reuse the known project location or ask if missing. Local results require evidence of presence in that area. Optionally narrow with niche. FREE suggestions only; nothing tracked or billed. Feed a chosen suggestion to veille_add_competitor for a paid deep-dive.',
 			routeSpec: {"method":"POST","path":"/api/projects/{project_id}/competitors/discover","queryParams":[]},
 			properties: [
 				{
@@ -3902,6 +3923,41 @@ export const projectsResource: GeneratedResource = {
 					required: true,
 					description: 'Project ID (required)',
 					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Location',
+							name: 'location',
+							type: 'string',
+							description: 'City, neighborhood or region for a local search. Falls back to the known project location; does not change the business address.',
+							default: '',
+						},
+						{
+							displayName: 'Niche',
+							name: 'niche',
+							type: 'string',
+							description: 'Specialty to investigate within the actual project offer, e.g. artisan sourdough bakery',
+							default: '',
+						},
+						{
+							displayName: 'Search Scope',
+							name: 'searchScope',
+							type: 'options',
+							description: 'Search scope. Defaults to national for existing integrations.',
+							default: 'international',
+							options: [
+								{ name: 'International', value: 'international' },
+								{ name: 'Local', value: 'local' },
+								{ name: 'National', value: 'national' },
+							],
+						},
+					],
 				}
 			],
 		},

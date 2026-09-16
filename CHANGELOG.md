@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2 — 2026-09-16
+
+- Synchronize generated operations with the September 16, 2026 Aurentia registry: 90 resources and 1,687 operations.
+- Add `calendar.getCalendarEvent`, `import.getAiMemoryImportPrompt`, `messaging.inviteToConversation` and `tasksAdvanced.previewCardDelete`.
+- No operation was removed and no input contract changed: upgrading from 0.3.1 is safe for existing workflows.
+
 ## 0.3.1 — 2026-09-12
 
 - Pass the official n8n scanner without inline lint suppressions: omit redundant generated option descriptions and keep node metadata in `Aurentia.node.ts`.

@@ -241,6 +241,47 @@ export const messagingResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'inviteToConversation',
+			name: 'Invite To Conversation',
+			action: 'Invite an email address that has NO Aurentia account (or that the directory could not find) to a conversation',
+			description: 'Invite an email address that has NO Aurentia account (or that the directory could not find) to a conversation. Sends an invitation email — NOT a message: the conversation is created when the person accepts, and `note` (optional, ≤ 1000 chars) is posted as your first message at that moment. Quotas: 10 per 24 h, 20 pending. Use `find_messaging_user_by_email` first; if it returns a match, use `open_direct_message` instead. Never tell the user the email \'was sent a message\'.',
+			routeSpec: {"method":"POST","path":"/api/messaging/invitations","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Email',
+					name: 'email',
+					type: 'string',
+					required: true,
+					placeholder: 'name@email.com',
+					description: 'The exact email address to invite',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Channel ID',
+							name: 'channelId',
+							type: 'string',
+							description: 'Optional group_dm ID you own, to invite into an existing group',
+							default: '',
+						},
+						{
+							displayName: 'Note',
+							name: 'note',
+							type: 'string',
+							description: 'Optional personal note, delivered as your first message when the invitee joins',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'joinMessagingChannel',
 			name: 'Join Messaging Channel',
 			action: 'Make the person join a PUBLIC channel of the project (or re-activate their membership if they had left)',

@@ -622,8 +622,8 @@ export const integrationsResource: GeneratedResource = {
 			value: 'listIntegrationActions',
 			name: 'List Integration Actions',
 			action: 'Discover the callable actions of a connected integration (Airtable, Notion, Slack, HubSpot, Pipedrive, Gmail…)',
-			description: 'Discover the callable actions of a connected integration (Airtable, Notion, Slack, HubSpot, Pipedrive, Gmail…). Call this BEFORE execute_integration_action to find the exact action name + arguments. Omit `toolkit` to list the user\'s connected integrations first. Example: toolkit="airtable" → AIRTABLE_LIST_RECORDS, AIRTABLE_CREATE_RECORD, … Use `search` (e.g. "record", "lead") to narrow a long list.',
-			routeSpec: {"method":"GET","path":"/api/integrations/actions","queryParams":["toolkit","search"]},
+			description: 'Discover the callable actions of a connected integration (Airtable, Notion, Slack, HubSpot, Pipedrive, Gmail…). Call this BEFORE execute_integration_action to find the exact action name + arguments. Omit `toolkit` to list the user\'s connected integrations first. Example: toolkit="airtable" → AIRTABLE_LIST_RECORDS, AIRTABLE_CREATE_RECORD, … Use `search` (e.g. "record", "lead") to narrow a long list; pass nextOffset as offset to continue. If disconnected, show the returned connection request.',
+			routeSpec: {"method":"GET","path":"/api/integrations/actions","queryParams":["toolkit","search","offset"]},
 			properties: [
 				{
 					displayName: 'Additional Fields',
@@ -632,6 +632,13 @@ export const integrationsResource: GeneratedResource = {
 					placeholder: 'Add Field',
 					default: {},
 					options: [
+						{
+							displayName: 'Offset',
+							name: 'offset',
+							type: 'number',
+							description: 'Continue from the previous response nextOffset',
+							default: 0,
+						},
 						{
 							displayName: 'Search',
 							name: 'search',
@@ -663,9 +670,9 @@ export const integrationsResource: GeneratedResource = {
 		{
 			value: 'listIntegrationsCatalog',
 			name: 'List Integrations Catalog',
-			action: 'Browse the catalog of available integrations (slug → display info)',
-			description: 'Browse the catalog of available integrations (slug → display info). Use to discover what can be connected.',
-			routeSpec: {"method":"GET","path":"/api/integrations/catalog","queryParams":["category","search"]},
+			action: 'Search the full available integration catalog by app name, slug or description',
+			description: 'Search the full available integration catalog by app name, slug or description. Use the returned exact slug to connect; pass nextCursor as cursor to browse further pages.',
+			routeSpec: {"method":"GET","path":"/api/integrations/catalog","queryParams":["category","search","cursor","limit"]},
 			properties: [
 				{
 					displayName: 'Additional Fields',
@@ -679,6 +686,21 @@ export const integrationsResource: GeneratedResource = {
 							name: 'category',
 							type: 'string',
 							default: '',
+						},
+						{
+							displayName: 'Cursor',
+							name: 'cursor',
+							type: 'string',
+							description: 'Opaque nextCursor from the previous response',
+							default: '',
+						},
+						{
+							displayName: 'Limit',
+							name: 'limit',
+							type: 'number',
+							description: 'Max number of results to return',
+							typeOptions: { minValue: 1 },
+							default: 50,
 						},
 						{
 							displayName: 'Search',

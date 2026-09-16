@@ -629,7 +629,7 @@ export const whiteboardsResource: GeneratedResource = {
 			value: 'revokeWhiteboardShareLink',
 			name: 'Revoke Whiteboard Share Link',
 			action: 'Kill the public share link of a whiteboard (the mirror of `share_whiteboard`): the token hash is erased and the old URL answers 404 for everyone from the very next request — the way to react to a leaked link',
-			description: 'Kill the public share link of a whiteboard (the mirror of `share_whiteboard`): the token hash is erased and the old URL answers 404 for everyone from the very next request — the way to react to a leaked link. Owner only (403 otherwise). Named collaborators keep their access; only the link dies. Calling `share_whiteboard` afterwards issues a brand-new link. There is no undo: the old URL can never be revived.',
+			description: 'Kill the public share link of a whiteboard (the mirror of `share_whiteboard`): the token hash is erased and the old URL answers 404 for everyone from the very next request — the way to react to a leaked link. Requires `whiteboard.publish` on a project board; a personal board remains owner-only. Named collaborators keep their access; only the link dies. Calling `share_whiteboard` afterwards issues a brand-new link. There is no undo: the old URL can never be revived.',
 			routeSpec: {"method":"DELETE","path":"/api/whiteboards/{id}/share","queryParams":[]},
 			properties: [
 				{

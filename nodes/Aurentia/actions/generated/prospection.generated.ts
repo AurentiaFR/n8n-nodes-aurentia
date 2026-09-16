@@ -295,9 +295,16 @@ export const prospectionResource: GeneratedResource = {
 			value: 'estimateProspectionCost',
 			name: 'Estimate Prospection Cost',
 			action: 'Estimate the credit cost of a prospection batch BEFORE running',
-			description: 'Estimate the credit cost of a prospection batch BEFORE running. Returns a RANGE, not a price: `minCredits` (no conditional contactability search fires) and `totalCredits` (the ceiling — every lead triggers all of them). Quote both; never present `totalCredits` alone as the price. `canProceed` (cap + balance check) is decided on `totalCredits`.',
+			description: 'Estimate the credit cost of a prospection batch BEFORE running. Pass icp_id so project permission, sponsorship and caps are evaluated against the real target. Returns a RANGE, not a price: `minCredits` (no conditional contactability search fires) and `totalCredits` (the ceiling — every lead triggers all of them). Quote both; never present `totalCredits` alone as the price. `canProceed` (cap + balance check) is decided on `totalCredits`.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/prospection/cost-estimate","queryParams":[]},
 			properties: [
+				{
+					displayName: 'Icp ID',
+					name: 'icp_id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
 				{
 					displayName: 'Audience Type',
 					name: 'audience_type',

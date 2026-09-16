@@ -27,6 +27,14 @@ export const crmResource: GeneratedResource = {
 					required: true,
 					description: 'Note text (max 4000 chars)',
 					default: '',
+				},
+				{
+					displayName: 'Expected Updated At',
+					name: 'expectedUpdatedAt',
+					type: 'string',
+					required: true,
+					description: 'Exact updated_at returned by the activity list when starting this edit. A stale revision is refused.',
+					default: '',
 				}
 			],
 		},
@@ -547,8 +555,8 @@ export const crmResource: GeneratedResource = {
 		{
 			value: 'createContactRelationTask',
 			name: 'Create Contact Relation Task',
-			action: 'Create a kanban task linked to a CRM contact (shows up on the contact 360 view, distinct from create_card)',
-			description: 'Create a kanban task linked to a CRM contact (shows up on the contact 360 view, distinct from create_card)',
+			action: 'Create a task atomically linked to a CRM contact',
+			description: 'Create a task atomically linked to a CRM contact. Requires CRM.view and Tasks.create in its actual project. Optional boardId must belong to that project. When omitted, the oldest project board is used. Ordinary creation: check the task list before retrying an uncertain response.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/crm/contacts/{contact_id}/relations/tasks","queryParams":[]},
 			properties: [
 				{
@@ -565,6 +573,22 @@ export const crmResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Board ID',
+							name: 'boardId',
+							type: 'string',
+							description: 'Optional destination board in the contact project. An explicit unavailable board fails without falling back.',
+							default: '',
+						},
+					],
 				}
 			],
 		},
@@ -1232,8 +1256,8 @@ export const crmResource: GeneratedResource = {
 		{
 			value: 'deleteCustomField',
 			name: 'Delete Custom Field',
-			action: 'Delete a custom field',
-			description: 'Delete a custom field',
+			action: 'Delete a personal custom field',
+			description: 'Delete a personal custom field. Requires its displayed revision and CRM.edit in every public project whose contact values are removed. Read list_custom_fields first; do not invent a revision.',
 			routeSpec: {"method":"DELETE","path":"/api/crm/custom-fields/{id}","queryParams":[]},
 			properties: [
 				{
@@ -1242,6 +1266,14 @@ export const crmResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Expected Updated At',
+					name: 'expectedUpdatedAt',
+					type: 'string',
+					required: true,
+					description: 'Exact updated_at returned by list_custom_fields for this definition. Required; reload after a conflict before forming a new deletion intent.',
 					default: '',
 				}
 			],
@@ -1566,8 +1598,8 @@ export const crmResource: GeneratedResource = {
 		{
 			value: 'linkContactRelation',
 			name: 'Link Contact Relation',
-			action: 'Link an existing task or decision to a CRM contact (shows up on the contact 360 view)',
-			description: 'Link an existing task or decision to a CRM contact (shows up on the contact 360 view)',
+			action: 'Link an existing task or decision to a CRM contact',
+			description: 'Link an existing task or decision to a CRM contact. For task, first read get_card and pass its exact permission_revision as expected_revision. On conflict, read and choose again; never infer a newer revision. Decision behavior is unchanged.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/crm/contacts/{contact_id}/relations/link","queryParams":[]},
 			properties: [
 				{
@@ -1595,6 +1627,22 @@ export const crmResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Expected Revision',
+							name: 'expected_revision',
+							type: 'string',
+							description: 'Required for type=task: exact permission_revision from the displayed candidate or get_card. Omit for decision.',
+							default: '',
+						},
+					],
 				}
 			],
 		},
@@ -1997,6 +2045,14 @@ export const crmResource: GeneratedResource = {
 					required: true,
 					description: 'Activity event ID',
 					default: '',
+				},
+				{
+					displayName: 'Expected Updated At',
+					name: 'expectedUpdatedAt',
+					type: 'string',
+					required: true,
+					description: 'Exact updated_at returned by the activity list. Read the event first; never invent or refresh this revision to overwrite a concurrent edit.',
+					default: '',
 				}
 			],
 		},
@@ -2020,8 +2076,8 @@ export const crmResource: GeneratedResource = {
 		{
 			value: 'markDealWon',
 			name: 'Mark Deal Won',
-			action: '« C\'est signé » — moves the deal to the WON stage of the client pipeline, WHICH THE SERVER RESOLVES ITSELF',
-			description: '« C\'est signé » — moves the deal to the WON stage of the client pipeline, WHICH THE SERVER RESOLVES ITSELF. Do not look the stage up, do not guess its name: picking the wrong one raises NO error at all and silently skips everything below. Winning a deal then fires, right after the response: a revenue line in Finance marked NOT CASHED IN (`is_paid: false`), the contact promoted to client, the client\'s revenue aggregate recomputed, a delivery mission if a line of the deal requires one, and an onboarding task. Those writes land JUST AFTER the reply — do not read them back in the same turn, they are not there yet. Pass `value` when the person announces an amount different from the one on the deal, in EUROS (the CRM counts in euros, NOT in cents, unlike every Finance tool): it is written BEFORE the stage flips, so it is that amount that goes to Finance. Re-winning a deal duplicates nothing (every step is idempotent). WON IS NOT CASHED IN: this records a receivable, not a payment — for money actually received, that is `record_invoice_payment`. Nothing here leaves the account: no email, no publication, nobody is notified. To move a deal from stage to stage, or to reopen it, keep using `update_deal`.',
+			action: '« C\'est signé » — moves the deal to the WON stage resolved by the server',
+			description: '« C\'est signé » — moves the deal to the WON stage resolved by the server. Pass an optional `value` in EUROS: the amount and stage commit together. CRM permissions apply to each materialized record; creating a client requires CRM.create. The response includes the actual `cascade` outcomes: Finance revenue, a delivery mission if required, and an onboarding task each require their own resource permission. Inspect `skipped_forbidden`, `no_destination`, or `failed`; never promise that a skipped effect exists. The deal may already be saved when an optional effect fails. Replays use durable receipts and do not recreate deleted targets. A Finance revenue line is NOT CASHED IN (`is_paid: false`). WON IS NOT CASHED IN: it is a receivable; use `record_invoice_payment` for money actually received. This action sends no email or publication. Use `update_deal` to move or reopen a deal.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/crm/deals/{deal_id}/won","queryParams":[]},
 			properties: [
 				{
@@ -2043,7 +2099,7 @@ export const crmResource: GeneratedResource = {
 							displayName: 'Value',
 							name: 'value',
 							type: 'number',
-							description: 'Amount actually signed, in EUROS (the CRM counts in euros, not cents). Written BEFORE the stage flips: this is the amount that becomes revenue.',
+							description: 'Amount actually signed, in EUROS (the CRM counts in euros, not cents). Committed together with the won stage; optional Finance effects use this amount.',
 							default: 0,
 						},
 					],
@@ -2367,6 +2423,14 @@ export const crmResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The event ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Expected Updated At',
+					name: 'expectedUpdatedAt',
+					type: 'string',
+					required: true,
+					description: 'Exact updated_at returned by the activity list. A stale revision is refused.',
 					default: '',
 				}
 			],
@@ -2946,8 +3010,8 @@ export const crmResource: GeneratedResource = {
 		{
 			value: 'upsertCustomFieldValues',
 			name: 'Upsert Custom Field Values',
-			action: 'Update custom field values',
-			description: 'Update custom field values',
+			action: 'Edit custom fields on a public CRM contact, with CRM.view/edit and visible system/personal definitions',
+			description: 'Edit custom fields on a public CRM contact, with CRM.view/edit and visible system/personal definitions. Read list_custom_field_values first and carry each displayed row identity and revision; null/null means the field has no stored value.',
 			routeSpec: {"method":"PUT","path":"/api/crm/custom-fields/values","queryParams":[]},
 			properties: [
 				{

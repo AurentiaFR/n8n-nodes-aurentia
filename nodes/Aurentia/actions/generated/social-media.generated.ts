@@ -13,6 +13,22 @@ export const socialMediaResource: GeneratedResource = {
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/generate/adapt-content","queryParams":[]},
 			properties: [
 				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project UUID (injected from the session)',
+					default: '',
+				},
+				{
+					displayName: 'Operation ID',
+					name: 'operationId',
+					type: 'string',
+					required: true,
+					description: 'Stable UUID for this paid attempt; reuse it only when retrying the same request',
+					default: '',
+				},
+				{
 					displayName: 'Original Text',
 					name: 'originalText',
 					type: 'string',
@@ -238,7 +254,7 @@ export const socialMediaResource: GeneratedResource = {
 			name: 'Analyze Sentiment',
 			action: 'Re-run sentiment analysis on a single inbox item',
 			description: 'Re-run sentiment analysis on a single inbox item. Returns {score, label}.',
-			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/inbox/{item_id}/sentiment","queryParams":[]},
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/inbox/{item_id}/sentiment","queryParams":["projectId"]},
 			properties: [
 				{
 					displayName: 'Item ID',
@@ -246,6 +262,13 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The item ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
 					default: '',
 				}
 			],
@@ -263,6 +286,13 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The item ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
 					default: '',
 				}
 			],
@@ -305,6 +335,14 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'Project UUID (injected from the session when you have one)',
+					default: '',
+				},
+				{
+					displayName: 'Operation ID',
+					name: 'operationId',
+					type: 'string',
+					required: true,
+					description: 'Stable UUID for this generation attempt; reuse it when retrying the same request',
 					default: '',
 				},
 				{
@@ -415,6 +453,13 @@ export const socialMediaResource: GeneratedResource = {
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/inbox/bulk","queryParams":[]},
 			properties: [
 				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
 					displayName: 'Item IDs',
 					name: 'itemIds',
 					type: 'json',
@@ -463,7 +508,7 @@ export const socialMediaResource: GeneratedResource = {
 			name: 'Cancel Or Delete Post History Import',
 			action: 'Deux effets selon l\'état du job d\'import d\'historique (`import_post_history`) : si le job est encore `queued`/`processing`, il est ANNULÉ (rend `{ action: \'cancelled\' }`) ; s\'il est terminé, TOUS les posts qu\'il a importés sont SUPPRIMÉS d\'Aurentia et retirés en masse chez Bundle.social (rend `{ action: \'deleted\' }`)',
 			description: 'Deux effets selon l\'état du job d\'import d\'historique (`import_post_history`) : si le job est encore `queued`/`processing`, il est ANNULÉ (rend `{ action: \'cancelled\' }`) ; s\'il est terminé, TOUS les posts qu\'il a importés sont SUPPRIMÉS d\'Aurentia et retirés en masse chez Bundle.social (rend `{ action: \'deleted\' }`). Lis d\'abord `get_post_history_import_status` et dis à l\'utilisateur lequel des deux va se produire avant d\'appeler. Ne l\'utilise pas pour « réimporte » : c\'est `retry_post_history_import`. Les analytics natives récupérées avec ces posts disparaissent aussi.',
-			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/history-import/{id}","queryParams":[]},
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/history-import/{id}","queryParams":["projectId"]},
 			properties: [
 				{
 					displayName: 'ID',
@@ -471,6 +516,14 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'UUID du job d\'import (jobId rendu par import_post_history)',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Projet auquel appartient le compte social importé',
 					default: '',
 				}
 			],
@@ -856,10 +909,17 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'createAutoReply',
 			name: 'Create Auto Reply',
-			action: 'Create a new DM auto-reply rule',
-			description: 'Create a new DM auto-reply rule',
+			action: 'Create a new project-scoped DM auto-reply rule',
+			description: 'Create a new project-scoped DM auto-reply rule',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/auto-replies","queryParams":[]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
 				{
 					displayName: 'Source Account ID',
 					name: 'source_account_id',
@@ -1938,9 +1998,9 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'deleteAutoReply',
 			name: 'Delete Auto Reply',
-			action: 'Delete a DM auto-reply rule',
-			description: 'Delete a DM auto-reply rule',
-			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/auto-replies/{id}","queryParams":[]},
+			action: 'Delete a project-scoped DM auto-reply rule',
+			description: 'Delete a project-scoped DM auto-reply rule',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/auto-replies/{id}","queryParams":["projectId"]},
 			properties: [
 				{
 					displayName: 'ID',
@@ -1948,6 +2008,13 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
 					default: '',
 				}
 			],
@@ -2421,28 +2488,20 @@ export const socialMediaResource: GeneratedResource = {
 					default: '',
 				},
 				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project the inbox item belongs to',
+					default: '',
+				},
+				{
 					displayName: 'Text',
 					name: 'text',
 					type: 'string',
 					required: true,
 					description: 'The full new text of our comment (it replaces the old one). No minimum length — just not empty.',
 					default: '',
-				},
-				{
-					displayName: 'Additional Fields',
-					name: 'additionalFields',
-					type: 'collection',
-					placeholder: 'Add Field',
-					default: {},
-					options: [
-						{
-							displayName: 'Project ID',
-							name: 'projectId',
-							type: 'string',
-							description: 'Project the inbox item belongs to',
-							default: '',
-						},
-					],
 				}
 			],
 		},
@@ -2579,9 +2638,9 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'fetchRssFeedNow',
 			name: 'Fetch Rss Feed Now',
-			action: 'Trigger an immediate fetch of an RSS feed (max 25 items)',
-			description: 'Trigger an immediate fetch of an RSS feed (max 25 items)',
-			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/rss-feeds/{id}/fetch-now","queryParams":[]},
+			action: 'Trigger an immediate project-scoped RSS fetch (max 25 items)',
+			description: 'Trigger an immediate project-scoped RSS fetch (max 25 items)',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/rss-feeds/{id}/fetch-now","queryParams":["projectId"]},
 			properties: [
 				{
 					displayName: 'ID',
@@ -2589,6 +2648,13 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
 					default: '',
 				}
 			],
@@ -2900,6 +2966,22 @@ export const socialMediaResource: GeneratedResource = {
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/generate-pillar-instructions","queryParams":[]},
 			properties: [
 				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project UUID (injected from the session)',
+					default: '',
+				},
+				{
+					displayName: 'Operation ID',
+					name: 'operationId',
+					type: 'string',
+					required: true,
+					description: 'Stable UUID for this paid attempt; reuse it only when retrying the same request',
+					default: '',
+				},
+				{
 					displayName: 'Pillar Name',
 					name: 'pillarName',
 					type: 'string',
@@ -3088,16 +3170,31 @@ export const socialMediaResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
 				},
 				{
-					displayName: 'Type',
-					name: 'type',
+					displayName: 'Platform',
+					name: 'platform',
 					type: 'string',
 					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Asset Key',
+					name: 'assetKey',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Operation ID',
+					name: 'operationId',
+					type: 'string',
+					required: true,
+					description: 'Stable UUID for this paid attempt',
 					default: '',
 				}
 			],
@@ -3111,25 +3208,25 @@ export const socialMediaResource: GeneratedResource = {
 			properties: [
 				{
 					displayName: 'Project ID',
-					name: 'project_id',
+					name: 'projectId',
 					type: 'string',
 					required: true,
 					default: '',
 				},
 				{
-					displayName: 'Additional Fields',
-					name: 'additionalFields',
-					type: 'collection',
-					placeholder: 'Add Field',
-					default: {},
-					options: [
-						{
-							displayName: 'Platform',
-							name: 'platform',
-							type: 'string',
-							default: '',
-						},
-					],
+					displayName: 'Platform',
+					name: 'platform',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Operation ID',
+					name: 'operationId',
+					type: 'string',
+					required: true,
+					description: 'Stable UUID for this paid attempt',
+					default: '',
 				}
 			],
 		},
@@ -3927,7 +4024,7 @@ export const socialMediaResource: GeneratedResource = {
 			name: 'Get Inbox Item',
 			action: 'Single inbox item with full context',
 			description: 'Single inbox item with full context',
-			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/inbox/{item_id}","queryParams":[]},
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/inbox/{item_id}","queryParams":["projectId"]},
 			properties: [
 				{
 					displayName: 'Item ID',
@@ -3935,6 +4032,13 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The item ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
 					default: '',
 				}
 			],
@@ -3944,9 +4048,15 @@ export const socialMediaResource: GeneratedResource = {
 			name: 'Get Inbox Stats',
 			action: 'Inbox counters by state, priority and platform',
 			description: 'Inbox counters by state, priority and platform',
-			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/inbox/stats","queryParams":[]},
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/inbox/stats","queryParams":["projectId"]},
 			properties: [
-
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
 			],
 		},
 		{
@@ -3969,9 +4079,9 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'getPostHistoryImportStatus',
 			name: 'Get Post History Import Status',
-			action: 'Get the status/progress of a post-history import job (queued/processing/completed/partial/failed)',
-			description: 'Get the status/progress of a post-history import job (queued/processing/completed/partial/failed)',
-			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/history-import/{id}","queryParams":[]},
+			action: 'Get the status/progress of a project-scoped post-history import job (queued/processing/completed/partial/failed)',
+			description: 'Get the status/progress of a project-scoped post-history import job (queued/processing/completed/partial/failed)',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/history-import/{id}","queryParams":["projectId"]},
 			properties: [
 				{
 					displayName: 'ID',
@@ -3979,6 +4089,13 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
 					default: '',
 				}
 			],
@@ -4119,10 +4236,17 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'getSentimentOverview',
 			name: 'Get Sentiment Overview',
-			action: 'Sentiment overview (positive / neutral / negative counts) over the last N days, optionally broken down by platform',
-			description: 'Sentiment overview (positive / neutral / negative counts) over the last N days, optionally broken down by platform',
-			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/intelligence/sentiment-overview","queryParams":["window_days"]},
+			action: 'Project-scoped sentiment overview (positive / neutral / negative counts) over the last N days, optionally broken down by platform',
+			description: 'Project-scoped sentiment overview (positive / neutral / negative counts) over the last N days, optionally broken down by platform',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/intelligence/sentiment-overview","queryParams":["projectId","window_days"]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
 				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
@@ -4267,10 +4391,17 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'importPostHistory',
 			name: 'Import Post History',
-			action: 'Import a connected account\'s historical posts (with native analytics) from Bundle.social to backfill the dashboards',
-			description: 'Import a connected account\'s historical posts (with native analytics) from Bundle.social to backfill the dashboards. One-shot, free. Returns a jobId.',
+			action: 'Import a connected project\'s historical posts (with native analytics) from Bundle.social to backfill the dashboards',
+			description: 'Import a connected project\'s historical posts (with native analytics) from Bundle.social to backfill the dashboards. One-shot, free. Returns a jobId.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/history-import","queryParams":[]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
 				{
 					displayName: 'Source Account ID',
 					name: 'sourceAccountId',
@@ -4447,10 +4578,17 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'listAutoReplies',
 			name: 'List Auto Replies',
-			action: 'List DM auto-reply rules owned by the user',
-			description: 'List DM auto-reply rules owned by the user',
-			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/auto-replies","queryParams":["accountId"]},
+			action: 'List DM auto-reply rules authorized for a project',
+			description: 'List DM auto-reply rules authorized for a project',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/auto-replies","queryParams":["projectId","accountId"]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
 				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
@@ -4742,8 +4880,15 @@ export const socialMediaResource: GeneratedResource = {
 			name: 'List Inbox',
 			action: 'List social inbox items (comments + reviews) with filters',
 			description: 'List social inbox items (comments + reviews) with filters',
-			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/inbox","queryParams":["states","priorities","itemTypes","platforms","search","limit","offset"]},
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/inbox","queryParams":["projectId","states","priorities","itemTypes","platforms","search","limit","offset"]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
 				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
@@ -4969,11 +5114,17 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'listRssFeeds',
 			name: 'List Rss Feeds',
-			action: 'List RSS feeds you have subscribed to',
-			description: 'List RSS feeds you have subscribed to',
-			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/rss-feeds","queryParams":[]},
+			action: 'List RSS feeds authorized for a project',
+			description: 'List RSS feeds authorized for a project',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/rss-feeds","queryParams":["projectId"]},
 			properties: [
-
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
 			],
 		},
 		{
@@ -5194,6 +5345,13 @@ export const socialMediaResource: GeneratedResource = {
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/inbox/bulk","queryParams":[]},
 			properties: [
 				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
 					displayName: 'Item IDs',
 					name: 'itemIds',
 					type: 'json',
@@ -5275,6 +5433,13 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The item ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
 					default: '',
 				},
 				{
@@ -5396,8 +5561,8 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'postingCalendarCreate',
 			name: 'Posting Calendar Create',
-			action: 'Create a regular posting calendar (e.g',
-			description: 'Create a regular posting calendar (e.g. 3× per week on LinkedIn for a B2B SaaS audience). Auto-triggers initial slot generation (best-times AI + content generation per slot).',
+			action: 'Create a project-scoped regular posting calendar (e.g',
+			description: 'Create a project-scoped regular posting calendar (e.g. 3× per week on LinkedIn for a B2B SaaS audience). Auto-triggers paid initial slot generation under social.generate, with the authenticated actor and project sponsor/cap rules.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/calendars","queryParams":[]},
 			properties: [
 				{
@@ -5423,6 +5588,14 @@ export const socialMediaResource: GeneratedResource = {
 					required: true,
 					description: 'Posts per week (1-21)',
 					default: 0,
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project whose social generation permission and billing rules apply',
+					default: '',
 				},
 				{
 					displayName: 'Additional Fields',
@@ -5461,12 +5634,6 @@ export const socialMediaResource: GeneratedResource = {
 							default: '{}',
 						},
 						{
-							displayName: 'Project ID',
-							name: 'projectId',
-							type: 'string',
-							default: '',
-						},
-						{
 							displayName: 'Target Audience',
 							name: 'targetAudience',
 							type: 'string',
@@ -5486,10 +5653,18 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'postingCalendarList',
 			name: 'Posting Calendar List',
-			action: 'List the authenticated user\'s posting calendars (filter by status: active | paused | archived)',
-			description: 'List the authenticated user\'s posting calendars (filter by status: active | paused | archived)',
-			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/calendars","queryParams":["status"]},
+			action: 'List every posting calendar in a project visible through social.view (filter by status: active | paused | archived)',
+			description: 'List every posting calendar in a project visible through social.view (filter by status: active | paused | archived)',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/calendars","queryParams":["projectId","status"]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project whose social calendars are listed',
+					default: '',
+				},
 				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
@@ -6275,11 +6450,17 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'refreshSocialAnalytics',
 			name: 'Refresh Social Analytics',
-			action: 'Force a fresh pull of engagement metrics from Bundle.social for all your published posts',
-			description: 'Force a fresh pull of engagement metrics from Bundle.social for all your published posts. Best-effort: returns counts of updated rows + errors. Use sparingly — costs Bundle.social API quota. For a TARGETED paid force-refresh of one post or account (e.g. X/Twitter, manual-only at the provider), use `force_refresh_social_analytics` instead.',
-			routeSpec: {"method":"POST","path":"/api/social-media/analytics/fetch","queryParams":[]},
+			action: 'Force a fresh pull of engagement metrics from Bundle.social for the selected project',
+			description: 'Force a fresh pull of engagement metrics from Bundle.social for the selected project. Best-effort: returns counts of updated rows + errors. Use sparingly — costs Bundle.social API quota. For a TARGETED paid force-refresh of one post or account (e.g. X/Twitter, manual-only at the provider), use `force_refresh_social_analytics` instead.',
+			routeSpec: {"method":"POST","path":"/api/social-media/analytics/fetch","queryParams":["projectId"]},
 			properties: [
-
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
 			],
 		},
 		{
@@ -6630,6 +6811,13 @@ export const socialMediaResource: GeneratedResource = {
 					default: '',
 				},
 				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
 					displayName: 'Text',
 					name: 'text',
 					type: 'string',
@@ -6654,6 +6842,13 @@ export const socialMediaResource: GeneratedResource = {
 					default: '',
 				},
 				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
 					displayName: 'Text',
 					name: 'text',
 					type: 'string',
@@ -6667,9 +6862,17 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'repurposeYoutubeVideo',
 			name: 'Repurpose Youtube Video',
 			action: 'Transforme une vidéo YouTube PUBLIQUE en posts natifs pour plusieurs réseaux, à partir de sa transcription automatique',
-			description: 'Transforme une vidéo YouTube PUBLIQUE en posts natifs pour plusieurs réseaux, à partir de sa transcription automatique. N\'écrit RIEN : rend `{ video_title, video_id, transcript_length, posts: [...] }` ; montre les posts à l\'utilisateur et crée ceux qu\'il garde avec `create_posts_batch` ou `generate_post`. Appelle-le pour « fais-moi des posts à partir de cette vidéo », « recycle mon dernier YouTube ». `URL` : l\'URL YouTube ; `platforms` : 1 à 8 réseaux (clés minuscules) ; `count` : 1 à 5 posts par réseau ; `tone` : `professional`, `conversational`, `inspirational`, `analytical`, `humorous` ; `locale` : `fr`/`en`. Refusé (400, message clair à relayer) si la vidéo n\'a pas de sous-titres publics ou si la transcription est trop courte — dans ce cas ne réessaie pas, demande une autre source.',
+			description: 'Transforme une vidéo YouTube PUBLIQUE en posts natifs pour plusieurs réseaux, à partir de sa transcription automatique. `projectId` est obligatoire : la génération respecte social.generate, le payeur et le plafond de crédits du collaborateur. N\'écrit RIEN : rend `{ video_title, video_id, transcript_length, posts: [...] }` ; montre les posts à l\'utilisateur et crée ceux qu\'il garde avec `create_posts_batch` ou `generate_post`. Appelle-le pour « fais-moi des posts à partir de cette vidéo », « recycle mon dernier YouTube ». Refusé si la vidéo n\'a pas de sous-titres publics ou si la transcription est trop courte.',
 			routeSpec: {"method":"POST","path":"/api/social-media/repurpose/youtube","queryParams":[]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Projet social qui autorise et finance cette génération',
+					default: '',
+				},
 				{
 					displayName: 'URL',
 					name: 'url',
@@ -6929,6 +7132,14 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'UUID du job d\'import d\'origine',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Projet auquel appartient le compte social importé',
 					default: '',
 				}
 			],
@@ -7191,6 +7402,14 @@ export const socialMediaResource: GeneratedResource = {
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/script-critic","queryParams":[]},
 			properties: [
 				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project UUID (injected from the session)',
+					default: '',
+				},
+				{
 					displayName: 'Script',
 					name: 'script',
 					type: 'string',
@@ -7427,9 +7646,17 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'socialAiBestTimes',
 			name: 'Social AI Best Times',
 			action: 'Recommended optimal posting time slots per platform + industry + audience',
-			description: 'Recommended optimal posting time slots per platform + industry + audience. Cached 7d.',
+			description: 'Recommended optimal posting time slots per platform + industry + audience. Cached 7d. Requires social.generate on projectId and applies its sponsor/cap rules on cache miss.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/ai/best-times","queryParams":[]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project whose social permission and billing rules apply',
+					default: '',
+				},
 				{
 					displayName: 'Platform',
 					name: 'platform',
@@ -8186,10 +8413,17 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'subscribeRssFeed',
 			name: 'Subscribe Rss Feed',
-			action: 'Subscribe to an RSS/Atom feed — fetches every 30min and creates draft posts',
-			description: 'Subscribe to an RSS/Atom feed — fetches every 30min and creates draft posts. SSRF-guarded.',
+			action: 'Subscribe a project to an RSS/Atom feed — fetches every 30min and creates draft posts',
+			description: 'Subscribe a project to an RSS/Atom feed — fetches every 30min and creates draft posts. SSRF-guarded.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/rss-feeds","queryParams":[]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
 				{
 					displayName: 'Feed URL',
 					name: 'feed_url',
@@ -8259,6 +8493,22 @@ export const socialMediaResource: GeneratedResource = {
 			description: 'Suggest hashtags for a post, from the post TEXT and the platforms it targets. Read-only — it returns suggestions, it does not attach them to anything: put them into the post with update_post if the person keeps them.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/generate/hashtag-suggestions","queryParams":[]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project UUID (injected from the session)',
+					default: '',
+				},
+				{
+					displayName: 'Operation ID',
+					name: 'operationId',
+					type: 'string',
+					required: true,
+					description: 'Stable UUID for this paid attempt; reuse it only when retrying the same request',
+					default: '',
+				},
 				{
 					displayName: 'Post Content',
 					name: 'postContent',
@@ -8400,11 +8650,17 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'syncInboxNow',
 			name: 'Sync Inbox Now',
-			action: 'Trigger an immediate inbox sync for the user accounts',
-			description: 'Trigger an immediate inbox sync for the user accounts',
+			action: 'Trigger an immediate inbox sync for the project accounts',
+			description: 'Trigger an immediate inbox sync for the project accounts',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/inbox/sync","queryParams":[]},
 			properties: [
-
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
 			],
 		},
 		{
@@ -8420,8 +8676,8 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'testAutoReplyMatch',
 			name: 'Test Auto Reply Match',
-			action: 'Dry-run a rule against a sample text',
-			description: 'Dry-run a rule against a sample text',
+			action: 'Dry-run a project-scoped rule against a sample text',
+			description: 'Dry-run a project-scoped rule against a sample text',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/auto-replies/{id}/test","queryParams":[]},
 			properties: [
 				{
@@ -8430,6 +8686,13 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
 					default: '',
 				},
 				{
@@ -8461,8 +8724,8 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'toggleAutoReply',
 			name: 'Toggle Auto Reply',
-			action: 'Activate / deactivate a rule',
-			description: 'Activate / deactivate a rule',
+			action: 'Activate or deactivate a project-scoped rule',
+			description: 'Activate or deactivate a project-scoped rule',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/auto-replies/{id}/toggle","queryParams":[]},
 			properties: [
 				{
@@ -8471,6 +8734,13 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
 					default: '',
 				},
 				{
@@ -8562,7 +8832,7 @@ export const socialMediaResource: GeneratedResource = {
 			name: 'Translate Inbox Item',
 			action: 'Translate a social inbox item to a target language',
 			description: 'Translate a social inbox item to a target language. Cache-first (no quota burn for repeats).',
-			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/inbox/{item_id}/translate","queryParams":[]},
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/inbox/{item_id}/translate","queryParams":["projectId"]},
 			properties: [
 				{
 					displayName: 'Item ID',
@@ -8570,6 +8840,13 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The item ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
 					default: '',
 				},
 				{
@@ -8587,7 +8864,7 @@ export const socialMediaResource: GeneratedResource = {
 			name: 'Translate Post',
 			action: 'Translate a draft social post',
 			description: 'Translate a draft social post. Does NOT persist — caller chooses what to do with the result.',
-			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/posts/{post_id}/translate","queryParams":[]},
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/posts/{post_id}/translate","queryParams":["projectId"]},
 			properties: [
 				{
 					displayName: 'Post ID',
@@ -8595,6 +8872,13 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The post ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
 					default: '',
 				},
 				{
@@ -8626,9 +8910,9 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'unsubscribeRssFeed',
 			name: 'Unsubscribe Rss Feed',
-			action: 'Unsubscribe from an RSS feed',
-			description: 'Unsubscribe from an RSS feed',
-			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/rss-feeds/{id}","queryParams":[]},
+			action: 'Unsubscribe a project from an RSS feed',
+			description: 'Unsubscribe a project from an RSS feed',
+			routeSpec: {"method":"DELETE","path":"/api/aurentia/social-media/rss-feeds/{id}","queryParams":["projectId"]},
 			properties: [
 				{
 					displayName: 'ID',
@@ -8637,14 +8921,21 @@ export const socialMediaResource: GeneratedResource = {
 					required: true,
 					description: 'The ID for this operation',
 					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
 				}
 			],
 		},
 		{
 			value: 'updateAutoReply',
 			name: 'Update Auto Reply',
-			action: 'Update an existing DM auto-reply rule',
-			description: 'Update an existing DM auto-reply rule',
+			action: 'Update a project-scoped DM auto-reply rule',
+			description: 'Update a project-scoped DM auto-reply rule',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/auto-replies/{id}","queryParams":[]},
 			properties: [
 				{
@@ -8653,6 +8944,13 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
 					default: '',
 				},
 				{
@@ -9171,6 +9469,14 @@ export const socialMediaResource: GeneratedResource = {
 					default: '',
 				},
 				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Projet de cet item',
+					default: '',
+				},
+				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
 					type: 'collection',
@@ -9543,7 +9849,7 @@ export const socialMediaResource: GeneratedResource = {
 			value: 'updateRssFeed',
 			name: 'Update Rss Feed',
 			action: 'Modifie un abonnement RSS → posts : le titre affiché, les comptes de destination, le gabarit de post, le statut donné aux posts créés, ou l\'activation',
-			description: 'Modifie un abonnement RSS → posts : le titre affiché, les comptes de destination, le gabarit de post, le statut donné aux posts créés, ou l\'activation. Appelle-le pour « mets le flux en pause » (`active: false`), « publie les brouillons RSS aussi sur Instagram », « change le modèle de texte ». `post_template` accepte les variables `{{title}}`, `{{summary}}`, `{{link}}`, `{{author}}`. `post_status` : `draft`, `pending_review`, `approved`, `scheduled` — ne mets pas `scheduled` sans que l\'utilisateur ait explicitement voulu que le flux publie tout seul. `target_account_ids` remplace la liste (≥ 1 compte). L\'URL du flux ne se change pas : désabonne (`unsubscribe_rss_feed`) et réabonne (`subscribe_rss_feed`).',
+			description: 'Modifie un abonnement RSS → posts : le titre affiché, les comptes de destination, le gabarit de post, le statut donné aux posts créés, ou l\'activation. Appelle-le pour « mets le flux RSS en pause » (`active: false`), « publie les brouillons RSS aussi sur Instagram », « change le modèle de texte ». `post_template` accepte les variables `{{title}}`, `{{summary}}`, `{{link}}`, `{{author}}`. `post_status` : `draft`, `pending_review`, `approved`, `scheduled` — ne mets pas `scheduled` sans que l\'utilisateur ait explicitement voulu que le flux publie tout seul. `target_account_ids` remplace la liste (≥ 1 compte). L\'URL du flux ne se change pas : désabonne (`unsubscribe_rss_feed`) et réabonne (`subscribe_rss_feed`).',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/rss-feeds/{id}","queryParams":[]},
 			properties: [
 				{
@@ -9552,6 +9858,14 @@ export const socialMediaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'UUID du flux (voir list_rss_feeds)',
+					default: '',
+				},
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Projet auquel appartient le flux RSS',
 					default: '',
 				},
 				{

@@ -32,16 +32,24 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'aiDecomposeTask',
 			name: 'AI Decompose Task',
-			action: 'Break one task down into concrete subtasks with AI',
-			description: 'Break one task down into concrete subtasks with AI. Send the task WORDING, never a card ID: this tool reads nothing from the board and writes nothing to it — it returns a proposed list of subtasks that you create afterwards with create_card (parent_card_id = the parent) once the person agrees. To decompose a card that already exists, read it with get_card first and pass its title and description here.',
+			action: 'Break one task down into concrete subtasks with AI when tasks.generate is granted on its real board',
+			description: 'Break one task down into concrete subtasks with AI when tasks.generate is granted on its real board. Send the task wording; the tool returns proposals and writes nothing.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/ai/decompose","queryParams":[]},
 			properties: [
+				{
+					displayName: 'Board ID',
+					name: 'boardId',
+					type: 'string',
+					required: true,
+					description: 'Board that owns the task context and determines tasks.generate plus billing',
+					default: '',
+				},
 				{
 					displayName: 'Title',
 					name: 'title',
 					type: 'string',
 					required: true,
-					description: 'The task to break down, worded the way the person said it ("refaire la page tarifs", "lancer la campagne de janvier"). This is what the model works from — an ID, a slug or a uuid here produces meaningless subtasks.',
+					description: 'The task to break down, worded the way the person said it',
 					default: '',
 				},
 				{
@@ -55,14 +63,14 @@ export const tasksResource: GeneratedResource = {
 							displayName: 'Context',
 							name: 'context',
 							type: 'string',
-							description: 'Surrounding context the model cannot guess: the project, the deadline, who does the work, constraints already discussed in the conversation',
+							description: 'Surrounding project context and constraints',
 							default: '',
 						},
 						{
 							displayName: 'Description',
 							name: 'description',
 							type: 'string',
-							description: 'What the task involves, if any detail was given. The more concrete this is, the less generic the subtasks come back.',
+							description: 'What the task involves, if any detail was given',
 							default: '',
 						},
 					],
@@ -72,16 +80,24 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'aiGenerateFromModule',
 			name: 'AI Generate From Module',
-			action: 'Same as ai_generate_tasks_from_module: turn a completed module deliverable into a list of PROPOSED tasks',
-			description: 'Same as ai_generate_tasks_from_module: turn a completed module deliverable into a list of PROPOSED tasks. Read the module with list_completed_modules, pass its name and its content. Nothing is written to a board — create the cards with create_card once the person agrees.',
+			action: 'Alias of ai_generate_tasks_from_module: turn a visible project module into proposed tasks when tasks.generate is granted',
+			description: 'Alias of ai_generate_tasks_from_module: turn a visible project module into proposed tasks when tasks.generate is granted',
 			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/ai/generate-from-module","queryParams":[]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project returned by list_completed_modules; determines modules.view, tasks.generate and billing',
+					default: '',
+				},
 				{
 					displayName: 'Module Name',
 					name: 'moduleName',
 					type: 'string',
 					required: true,
-					description: 'Human name of the module the actions come from, e.g. "Étude de marché", "Business Model Canvas". It goes into the prompt, so send the label the person recognises, not a slug or a uuid.',
+					description: 'Human name of the module',
 					default: '',
 				},
 				{
@@ -89,7 +105,7 @@ export const tasksResource: GeneratedResource = {
 					name: 'moduleData',
 					type: 'json',
 					required: true,
-					description: 'The module deliverable itself, as the structured object list_completed_modules returns. Send it whole — the model reads its fields to find the actions to do; a summary or an empty object gives generic tasks. (provide a JSON object)',
+					description: 'Structured deliverable returned by list_completed_modules. (provide a JSON object).',
 					default: '{}',
 				}
 			],
@@ -97,16 +113,24 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'aiGenerateTasksFromModule',
 			name: 'AI Generate Tasks From Module',
-			action: 'Turn the deliverable of a completed module into a list of PROPOSED tasks',
-			description: 'Turn the deliverable of a completed module into a list of PROPOSED tasks. Read the module first with list_completed_modules, then pass its name and its content here. Nothing is written to a board: the answer is a proposal you create with create_card once the person agrees.',
+			action: 'Turn a visible project module into proposed tasks when tasks.generate is granted',
+			description: 'Turn a visible project module into proposed tasks when tasks.generate is granted. Nothing is written to a board.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/ai/generate-from-module","queryParams":[]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Project returned by list_completed_modules; determines modules.view, tasks.generate and billing',
+					default: '',
+				},
 				{
 					displayName: 'Module Name',
 					name: 'moduleName',
 					type: 'string',
 					required: true,
-					description: 'Human name of the module the actions come from, e.g. "Étude de marché", "Business Model Canvas". It goes into the prompt, so send the label the person recognises, not a slug or a uuid.',
+					description: 'Human name of the module',
 					default: '',
 				},
 				{
@@ -114,7 +138,7 @@ export const tasksResource: GeneratedResource = {
 					name: 'moduleData',
 					type: 'json',
 					required: true,
-					description: 'The module deliverable itself, as the structured object list_completed_modules returns. Send it whole — the model reads its fields to find the actions to do; a summary or an empty object gives generic tasks. (provide a JSON object)',
+					description: 'Structured deliverable returned by list_completed_modules. (provide a JSON object).',
 					default: '{}',
 				}
 			],
@@ -140,7 +164,7 @@ export const tasksResource: GeneratedResource = {
 			value: 'bulkCardAction',
 			name: 'Bulk Card Action',
 			action: 'Apply ONE action to up to 100 kanban cards at once: `delete` (definitive, no bin), `move_column` (to `columnId`, appended at the bottom of that column — the column decides the new status), or `assign` (the assignee list of every card becomes `[assigneeId]`, or EMPTY when `assigneeId` is null — it replaces, it does not add)',
-			description: 'Apply ONE action to up to 100 kanban cards at once: `delete` (definitive, no bin), `move_column` (to `columnId`, appended at the bottom of that column — the column decides the new status), or `assign` (the assignee list of every card becomes `[assigneeId]`, or EMPTY when `assigneeId` is null — it replaces, it does not add). Access is checked card by card and the call is NOT atomic: the result is `{ results: [{ID, ok, error?}], processed }` — always report the failures, some cards may have changed and others not. For changing fields (priority, dates, tags…) on many cards use `bulk_update_cards` instead. Get IDs from `list_cards`, column IDs from `get_board_schema`, user IDs from `list_collaborators`. Name the count and the action to the person before calling.',
+			description: 'Apply ONE action to up to 100 kanban cards at once: `delete` (definitive, no bin), `move_column` (to `columnId`, appended at the bottom of that column — the column decides the new status), or `assign` (the assignee list of every card becomes `[assigneeId]`, or EMPTY when `assigneeId` is null — it replaces, it does not add). Access is checked card by card and the call is NOT atomic: the result is `{ results: [{ID, ok, error?}], processed }` — always report the failures, some cards may have changed and others not. For changing fields (priority, dates, tags…) on many cards use `bulk_update_cards` instead. Get IDs from `list_cards`, column IDs from `get_board_schema`, user IDs from `list_collaborators`. Name the count and the action to the person before calling. For delete ONLY, supply delete_intents with one previewed and confirmed original intention per unique ID. Processing is sequential in INPUT ORDER and partial: a later selected descendant removed by an earlier successful root can return covered_by; an earlier child deletion may invalidate a later root token and produce 409. Report each failure and require explicit reselection/reconfirmation; never retry with fresh revisions or tokens.',
 			routeSpec: {"method":"POST","path":"/api/tasks/cards/bulk","queryParams":[]},
 			properties: [
 				{
@@ -184,6 +208,13 @@ export const tasksResource: GeneratedResource = {
 							type: 'string',
 							description: 'Move_column only: target column ID',
 							default: '',
+						},
+						{
+							displayName: 'Delete Intents',
+							name: 'delete_intents',
+							type: 'json',
+							description: 'Required for delete only; one entry per unique IDs item, using confirmed preview tokens. (provide a JSON array).',
+							default: '[]',
 						},
 					],
 				}
@@ -328,8 +359,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'createCardComment',
 			name: 'Create Card Comment',
-			action: 'Add a comment to a card',
-			description: 'Add a comment to a card',
+			action: 'Add a comment when tasks.comment is granted',
+			description: 'Add a comment when tasks.comment is granted',
 			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/cards/{card_id}/comments","queryParams":[]},
 			properties: [
 				{
@@ -352,8 +383,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'createCardSubtask',
 			name: 'Create Card Subtask',
-			action: 'Add a subtask to a card',
-			description: 'Add a subtask to a card',
+			action: 'Create one direct child with current Tasks.view/create and the original displayed parent revision/scope',
+			description: 'Create one direct child with current Tasks.view/create and the original displayed parent revision/scope. Read get_card first; after a conflict reload explicitly for a new intention. The actor and source always come from authenticated context; this tool never retries or borrows owner identity.',
 			routeSpec: {"method":"POST","path":"/api/tasks/cards/{card_id}/subtasks","queryParams":[]},
 			properties: [
 				{
@@ -362,6 +393,30 @@ export const tasksResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The card ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Expected Parent Revision',
+					name: 'expected_parent_revision',
+					type: 'string',
+					required: true,
+					description: 'Original parent permission_revision displayed by get_card when drafting began. Never renew automatically.',
+					default: '',
+				},
+				{
+					displayName: 'Expected Board ID',
+					name: 'expected_board_id',
+					type: 'string',
+					required: true,
+					description: 'Original parent delete_scope.board_id',
+					default: '',
+				},
+				{
+					displayName: 'Expected Project ID',
+					name: 'expected_project_id',
+					type: 'string',
+					required: true,
+					description: 'Original parent delete_scope.project_id; explicit null is required for a no-project board',
 					default: '',
 				},
 				{
@@ -395,21 +450,41 @@ export const tasksResource: GeneratedResource = {
 							displayName: 'Due Date',
 							name: 'due_date',
 							type: 'string',
-							description: 'ISO 8601 datetime',
+							description: 'UTC ISO datetime ending in Z (seconds optional)',
 							default: '',
 						},
 						{
 							displayName: 'Estimated Minutes',
 							name: 'estimated_minutes',
 							type: 'number',
-							description: 'Estimate in minutes (1-43200)',
 							default: 0,
+						},
+						{
+							displayName: 'Is Code Task',
+							name: 'is_code_task',
+							type: 'boolean',
+							description: 'Whether to enable is code task',
+							default: false,
+						},
+						{
+							displayName: 'Is Important',
+							name: 'is_important',
+							type: 'boolean',
+							description: 'Whether to enable is important',
+							default: false,
+						},
+						{
+							displayName: 'Is Urgent',
+							name: 'is_urgent',
+							type: 'boolean',
+							description: 'Whether to enable is urgent',
+							default: false,
 						},
 						{
 							displayName: 'Priority',
 							name: 'priority',
 							type: 'string',
-							description: 'Priority key (project-scoped, free list) — call list_task_priorities to discover valid keys/labels/ranks. Default-seeded projects have \'low\'/\'medium\'/\'high\'/\'urgent\'.',
+							description: 'Existing text priority key. Omit for medium.',
 							default: '',
 						},
 					],
@@ -833,8 +908,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'createTaskBoardComment',
 			name: 'Create Task Board Comment',
-			action: 'Add a comment to a task project (board)',
-			description: 'Add a comment to a task project (board)',
+			action: 'Add a board comment when tasks.comment is granted',
+			description: 'Add a board comment when tasks.comment is granted',
 			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/boards/{board_id}/comments","queryParams":[]},
 			properties: [
 				{
@@ -1280,8 +1355,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'deleteCardComment',
 			name: 'Delete Card Comment',
-			action: 'Delete a comment',
-			description: 'Delete a comment',
+			action: 'Delete the actor’s own card comment when tasks.comment is granted',
+			description: 'Delete the actor’s own card comment when tasks.comment is granted',
 			routeSpec: {"method":"DELETE","path":"/api/aurentia/tasks/cards/{card_id}/comments/{comment_id}","queryParams":[]},
 			properties: [
 				{
@@ -1305,8 +1380,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'deleteCardSubtask',
 			name: 'Delete Card Subtask',
-			action: 'Delete a subtask',
-			description: 'Delete a subtask',
+			action: 'Delete a subtask and its descendants after preview_card_delete with require_subtask=true and explicit confirmation',
+			description: 'Delete a subtask and its descendants after preview_card_delete with require_subtask=true and explicit confirmation. Send the same original revision/scope and tree_token. The route always enforces subtask ancestry; a task now detached from its parent conflicts. Never renew an old intent automatically.',
 			routeSpec: {"method":"DELETE","path":"/api/tasks/subtasks/{subtask_id}","queryParams":[]},
 			properties: [
 				{
@@ -1315,6 +1390,39 @@ export const tasksResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The subtask ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Expected Revision',
+					name: 'expected_revision',
+					type: 'string',
+					required: true,
+					description: 'Original displayed permission_revision from get_card/list_cards. Never replace it with a later read for this deletion.',
+					default: '',
+				},
+				{
+					displayName: 'Expected Board ID',
+					name: 'expected_board_id',
+					type: 'string',
+					required: true,
+					description: 'Original delete_scope.board_id from the selected task',
+					default: '',
+				},
+				{
+					displayName: 'Expected Project ID',
+					name: 'expected_project_id',
+					type: 'string',
+					required: true,
+					description: 'Original delete_scope.project_id, including explicit null for a no-project board. Key required.',
+					default: '',
+				},
+				{
+					displayName: 'Tree Token',
+					name: 'tree_token',
+					type: 'string',
+					required: true,
+					description: 'Exact tree_token returned by preview_card_delete and confirmed with its root title/descendant_count',
+					typeOptions: { password: true },
 					default: '',
 				}
 			],
@@ -1432,8 +1540,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'deleteTaskBoardComment',
 			name: 'Delete Task Board Comment',
-			action: 'Delete a comment from a task project (board)',
-			description: 'Delete a comment from a task project (board)',
+			action: 'Delete the actor’s own board comment when tasks.comment is granted',
+			description: 'Delete the actor’s own board comment when tasks.comment is granted',
 			routeSpec: {"method":"DELETE","path":"/api/aurentia/tasks/boards/{board_id}/comments/{comment_id}","queryParams":[]},
 			properties: [
 				{
@@ -2108,8 +2216,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'listCardComments',
 			name: 'List Card Comments',
-			action: 'Comments on a card',
-			description: 'Comments on a card',
+			action: 'List comments on an authorized card',
+			description: 'List comments on an authorized card',
 			routeSpec: {"method":"GET","path":"/api/aurentia/tasks/cards/{card_id}/comments","queryParams":[]},
 			properties: [
 				{
@@ -2241,8 +2349,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'listTaskBoardComments',
 			name: 'List Task Board Comments',
-			action: 'Comments on a task project (board), Informations tab',
-			description: 'Comments on a task project (board), Informations tab',
+			action: 'List comments on an authorized task project',
+			description: 'List comments on an authorized task project',
 			routeSpec: {"method":"GET","path":"/api/aurentia/tasks/boards/{board_id}/comments","queryParams":[]},
 			properties: [
 				{
@@ -2480,6 +2588,63 @@ export const tasksResource: GeneratedResource = {
 					required: true,
 					description: 'Integer 1-90',
 					default: 0,
+				}
+			],
+		},
+		{
+			value: 'previewCardDelete',
+			name: 'Preview Card Delete',
+			action: 'Prepare deletion of the selected task and its complete card subtree under current Tasks.view + Tasks.delete',
+			description: 'Prepare deletion of the selected task and its complete card subtree under current Tasks.view + Tasks.delete. Get the original permission_revision and delete_scope from get_card/list_cards; send those exact values. Show the returned root title and descendant_count before confirming delete_card/delete_card_subtask. A conflict requires a new selection and confirmation, never an automatic token refresh. This token covers card versions, not individual comment/attachment versions. This call deletes nothing.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/tasks/cards/{card_id}/delete-preview","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Card ID',
+					name: 'card_id',
+					type: 'string',
+					required: true,
+					description: 'The card ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Expected Revision',
+					name: 'expected_revision',
+					type: 'string',
+					required: true,
+					description: 'Original displayed permission_revision from get_card/list_cards. Never replace it with a later read for this deletion.',
+					default: '',
+				},
+				{
+					displayName: 'Expected Board ID',
+					name: 'expected_board_id',
+					type: 'string',
+					required: true,
+					description: 'Original delete_scope.board_id from the selected task',
+					default: '',
+				},
+				{
+					displayName: 'Expected Project ID',
+					name: 'expected_project_id',
+					type: 'string',
+					required: true,
+					description: 'Original delete_scope.project_id, including explicit null for a no-project board. Key required.',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Require Subtask',
+							name: 'require_subtask',
+							type: 'boolean',
+							description: 'Whether true only for deleting a subtask; must match preview',
+							default: false,
+						},
+					],
 				}
 			],
 		},
@@ -2936,8 +3101,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'toggleCardSubtask',
 			name: 'Toggle Card Subtask',
-			action: 'Toggle a subtask between completed and todo',
-			description: 'Toggle a subtask between completed and todo',
+			action: 'Toggle an existing subtask between completed and todo with current Tasks.view/edit and the original displayed revision/parent scope',
+			description: 'Toggle an existing subtask between completed and todo with current Tasks.view/edit and the original displayed revision/parent scope. This is not an idempotent command. Read list_card_subtasks first; after a conflict reload for a new intention, never retry with a substituted revision. No parent/column change or downstream synchronization.',
 			routeSpec: {"method":"POST","path":"/api/tasks/subtasks/{subtask_id}/toggle","queryParams":[]},
 			properties: [
 				{
@@ -2946,6 +3111,38 @@ export const tasksResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The subtask ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Expected Revision',
+					name: 'expected_revision',
+					type: 'string',
+					required: true,
+					description: 'Original permission_revision displayed by list_card_subtasks/get_card when this edit began. Never renew automatically.',
+					default: '',
+				},
+				{
+					displayName: 'Expected Board ID',
+					name: 'expected_board_id',
+					type: 'string',
+					required: true,
+					description: 'Original delete_scope.board_id of the selected subtask',
+					default: '',
+				},
+				{
+					displayName: 'Expected Project ID',
+					name: 'expected_project_id',
+					type: 'string',
+					required: true,
+					description: 'Original delete_scope.project_id; explicit null is required for a no-project board',
+					default: '',
+				},
+				{
+					displayName: 'Expected Parent ID',
+					name: 'expected_parent_id',
+					type: 'string',
+					required: true,
+					description: 'Original parent_card_id of the selected subtask. Required even when unchanged.',
 					default: '',
 				}
 			],
@@ -3112,8 +3309,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'updateCardComment',
 			name: 'Update Card Comment',
-			action: 'Update a comment',
-			description: 'Update a comment',
+			action: 'Update the actor’s own card comment when tasks.comment is granted',
+			description: 'Update the actor’s own card comment when tasks.comment is granted',
 			routeSpec: {"method":"PUT","path":"/api/aurentia/tasks/cards/{card_id}/comments/{comment_id}","queryParams":[]},
 			properties: [
 				{
@@ -3144,8 +3341,8 @@ export const tasksResource: GeneratedResource = {
 		{
 			value: 'updateCardSubtask',
 			name: 'Update Card Subtask',
-			action: 'Update a subtask (title, status, priority, due date…)',
-			description: 'Update a subtask (title, status, priority, due date…)',
+			action: 'Patch the ten supported subtask fields using the original displayed revision and parent scope',
+			description: 'Patch the ten supported subtask fields using the original displayed revision and parent scope. Unknown HTTP keys are not editable. A true no-op needs Tasks.view and CAS; any change needs Tasks.edit. Read list_card_subtasks first; after a conflict reload for a new intention, never retry with a substituted revision. No parent/column change or downstream synchronization.',
 			routeSpec: {"method":"PATCH","path":"/api/tasks/subtasks/{subtask_id}","queryParams":[]},
 			properties: [
 				{
@@ -3154,6 +3351,38 @@ export const tasksResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					description: 'The subtask ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Expected Revision',
+					name: 'expected_revision',
+					type: 'string',
+					required: true,
+					description: 'Original permission_revision displayed by list_card_subtasks/get_card when this edit began. Never renew automatically.',
+					default: '',
+				},
+				{
+					displayName: 'Expected Board ID',
+					name: 'expected_board_id',
+					type: 'string',
+					required: true,
+					description: 'Original delete_scope.board_id of the selected subtask',
+					default: '',
+				},
+				{
+					displayName: 'Expected Project ID',
+					name: 'expected_project_id',
+					type: 'string',
+					required: true,
+					description: 'Original delete_scope.project_id; explicit null is required for a no-project board',
+					default: '',
+				},
+				{
+					displayName: 'Expected Parent ID',
+					name: 'expected_parent_id',
+					type: 'string',
+					required: true,
+					description: 'Original parent_card_id of the selected subtask. Required even when unchanged.',
 					default: '',
 				},
 				{
@@ -3180,6 +3409,7 @@ export const tasksResource: GeneratedResource = {
 							displayName: 'Due Date',
 							name: 'due_date',
 							type: 'string',
+							description: 'UTC ISO datetime ending in Z (seconds optional), or null to clear. Date-only and numeric offsets are refused.',
 							default: '',
 						},
 						{
@@ -3189,18 +3419,41 @@ export const tasksResource: GeneratedResource = {
 							default: 0,
 						},
 						{
+							displayName: 'Is Code Task',
+							name: 'is_code_task',
+							type: 'boolean',
+							description: 'Whether to enable is code task',
+							default: false,
+						},
+						{
+							displayName: 'Is Important',
+							name: 'is_important',
+							type: 'boolean',
+							description: 'Whether to enable is important',
+							default: false,
+						},
+						{
+							displayName: 'Is Urgent',
+							name: 'is_urgent',
+							type: 'boolean',
+							description: 'Whether to enable is urgent',
+							default: false,
+						},
+						{
 							displayName: 'Priority',
 							name: 'priority',
 							type: 'string',
-							description: 'Priority key (project-scoped, free list) — call list_task_priorities to discover valid keys/labels/ranks. Default-seeded projects have \'low\'/\'medium\'/\'high\'/\'urgent\'.',
+							description: 'Existing text priority key. No implicit priority change when omitted.',
 							default: '',
 						},
 						{
 							displayName: 'Status',
 							name: 'status',
 							type: 'options',
-							default: 'completed',
+							default: 'backlog',
 							options: [
+								{ name: 'Backlog', value: 'backlog' },
+								{ name: 'Blocked', value: 'blocked' },
 								{ name: 'Completed', value: 'completed' },
 								{ name: 'In Progress', value: 'in_progress' },
 								{ name: 'Todo', value: 'todo' },

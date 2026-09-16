@@ -87,7 +87,7 @@ export const meetingsResource: GeneratedResource = {
 			value: 'addMeetingParticipant',
 			name: 'Add Meeting Participant',
 			action: 'Add a participant to a meeting RECORD — to label them in the transcript and the report, NOT to invite them (no email is sent, no calendar event is touched)',
-			description: 'Add a participant to a meeting RECORD — to label them in the transcript and the report, NOT to invite them (no email is sent, no calendar event is touched). A participant can be an Aurentia account (`user_id`), a CRM contact (`contact_id`), an address (`email`) or just a `name` — a name alone is enough (a client, an outside guest). At least one of the four. `role`: `attendee` (default) or `organizer`. Meeting owner only (404 otherwise). Returns the participant with its `ID`, which `map_meeting_speakers` then needs.',
+			description: 'Add a participant to a meeting RECORD — to label them in the transcript and the report, NOT to invite them (no email is sent, no calendar event is touched). A participant can be an Aurentia account (`user_id`), a CRM contact (`contact_id`), an address (`email`) or just a `name` — a name alone is enough (a client, an outside guest). At least one of the four. `role`: `attendee` (default) or `organizer`. Requires `meetings.manage_members` on a project meeting; a personal meeting remains owner-only. Returns the participant with its `ID`, which `map_meeting_speakers` then needs.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/meetings/{id}/participants","queryParams":[]},
 			properties: [
 				{
@@ -248,7 +248,7 @@ export const meetingsResource: GeneratedResource = {
 			value: 'createMeetingTask',
 			name: 'Create Meeting Task',
 			action: 'Create a kanban card attached to a meeting directly, without going through the AI proposals',
-			description: 'Create a kanban card attached to a meeting directly, without going through the AI proposals. `title` is required and has no minimum length; `board_id` is optional (otherwise the meeting\'s or the project\'s default board); `due_date` is YYYY-MM-DD. Call it on « add a task “chase the quote” to this meeting ». Meeting owner only. The card shows in the meeting\'s Tasks tab and in the board.',
+			description: 'Create a kanban card attached to a meeting directly, without going through the AI proposals. `title` is required and has no minimum length; `board_id` is optional (otherwise the meeting\'s or the project\'s default board); `due_date` is YYYY-MM-DD. Call it on « add a task “chase the quote” to this meeting ». Requires `meetings.edit` on the project meeting and `tasks.create` on the destination board; a personal meeting remains owner-only. The card shows in the meeting\'s Tasks tab and in the board.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/meetings/{id}/tasks","queryParams":[]},
 			properties: [
 				{
@@ -294,7 +294,7 @@ export const meetingsResource: GeneratedResource = {
 			value: 'deleteMeeting',
 			name: 'Delete Meeting',
 			action: 'Delete a meeting (soft delete: the report, the transcript and the proposed tasks stay in the database, and `restore_meeting` brings it back)',
-			description: 'Delete a meeting (soft delete: the report, the transcript and the proposed tasks stay in the database, and `restore_meeting` brings it back). Tasks already ACCEPTED into a kanban board are NOT deleted. The calendar event created with the meeting is NOT removed by this route. Owner only (404 otherwise — someone the meeting was shared with cannot delete it). Only call it on a meeting the person named, and offer `restore_meeting` in case of a mistake.',
+			description: 'Delete a meeting (soft delete: the report, the transcript and the proposed tasks stay in the database, and `restore_meeting` brings it back). Tasks already ACCEPTED into a kanban board are NOT deleted. The calendar event created with the meeting is NOT removed by this route. Requires `meetings.delete` on a project meeting; a personal meeting remains owner-only. A nominative read-only share never permits deletion. Only call it on a meeting the person named, and offer `restore_meeting` in case of a mistake.',
 			routeSpec: {"method":"DELETE","path":"/api/aurentia/meetings/{id}","queryParams":[]},
 			properties: [
 				{
@@ -469,7 +469,7 @@ export const meetingsResource: GeneratedResource = {
 			value: 'mapMeetingSpeakers',
 			name: 'Map Meeting Speakers',
 			action: 'Map the anonymous speakers of a transcript (« Locuteur 0 », « Locuteur 1 »…) to the participants of the meeting',
-			description: 'Map the anonymous speakers of a transcript (« Locuteur 0 », « Locuteur 1 »…) to the participants of the meeting. `mapping` is a list of `{ speaker_index, participant_id }` (50 max); `participant_id: null` unmaps. The `participant_id` values come from `get_meeting` (add the missing people first with `add_meeting_participant`). Call it when the person says « speaker 1 is Marie ». Owner only. An already generated report is NOT regenerated: offer `generate_meeting_summary` afterwards if the names matter.',
+			description: 'Map the anonymous speakers of a transcript (« Locuteur 0 », « Locuteur 1 »…) to the participants of the meeting. `mapping` is a list of `{ speaker_index, participant_id }` (50 max); `participant_id: null` unmaps. The `participant_id` values come from `get_meeting` (add the missing people first with `add_meeting_participant`). Call it when the person says « speaker 1 is Marie ». Requires `meetings.edit` on a project meeting; a personal meeting remains owner-only. An already generated report is NOT regenerated: offer `generate_meeting_summary` afterwards if the names matter.',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/meetings/{id}/speakers","queryParams":[]},
 			properties: [
 				{
@@ -528,7 +528,7 @@ export const meetingsResource: GeneratedResource = {
 			value: 'removeMeetingParticipant',
 			name: 'Remove Meeting Participant',
 			action: 'Remove a participant from a meeting record',
-			description: 'Remove a participant from a meeting record. `participantId` is the `ID` of the PARTICIPANT ROW returned by `get_meeting`, not the person\'s UUID, and it travels as a QUERY parameter. The transcript speakers that were mapped to them become anonymous again. Nothing is sent to anyone. Owner only.',
+			description: 'Remove a participant from a meeting record. `participantId` is the `ID` of the PARTICIPANT ROW returned by `get_meeting`, not the person\'s UUID, and it travels as a QUERY parameter. The transcript speakers that were mapped to them become anonymous again. Nothing is sent to anyone. Requires `meetings.manage_members` on a project meeting; a personal meeting remains owner-only.',
 			routeSpec: {"method":"DELETE","path":"/api/aurentia/meetings/{id}/participants","queryParams":["participantId"]},
 			properties: [
 				{
@@ -553,7 +553,7 @@ export const meetingsResource: GeneratedResource = {
 			value: 'restoreMeeting',
 			name: 'Restore Meeting',
 			action: 'Undo the deletion of a meeting (sets `deleted_at` back to null)',
-			description: 'Undo the deletion of a meeting (sets `deleted_at` back to null). Only works on a deleted meeting that belongs to the person (404 otherwise). Call it on « put back the meeting you deleted ».',
+			description: 'Undo the deletion of a meeting (sets `deleted_at` back to null). Requires `meetings.delete` on a project meeting; a deleted personal meeting remains owner-only. Call it on « put back the meeting you deleted ».',
 			routeSpec: {"method":"POST","path":"/api/aurentia/meetings/{id}/restore","queryParams":[]},
 			properties: [
 				{
@@ -570,7 +570,7 @@ export const meetingsResource: GeneratedResource = {
 			value: 'revokeMeetingPublicLink',
 			name: 'Revoke Meeting Public Link',
 			action: 'Cut a meeting\'s public access: the shared page answers 404 immediately, including for the link emailed at the end of the transcription',
-			description: 'Cut a meeting\'s public access: the shared page answers 404 immediately, including for the link emailed at the end of the transcription. It does NOT affect nominative shares (`revoke_meeting_share` for those). Call it on « disable the meeting\'s public link ». Owner only. Publishing again afterwards creates a brand new link.',
+			description: 'Cut a meeting\'s public access: the shared page answers 404 immediately, including for the link emailed at the end of the transcription. It does NOT affect nominative shares (`revoke_meeting_share` for those). Call it on « disable the meeting\'s public link ». Requires `meetings.publish` on a project meeting; a personal meeting remains owner-only. Publishing again afterwards creates a brand new link.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/meetings/{id}/share/revoke","queryParams":[]},
 			properties: [
 				{

@@ -45,7 +45,7 @@ export const devisResource: GeneratedResource = {
 							displayName: 'Locale',
 							name: 'locale',
 							type: 'options',
-							description: 'Language of the email sent to the client',
+							description: 'Language of the email sent to the client. Omit to use the user\'s selected app language.',
 							default: 'en',
 							options: [
 								{ name: 'En', value: 'en' },
@@ -74,7 +74,7 @@ export const devisResource: GeneratedResource = {
 			value: 'createQuote',
 			name: 'Create Quote',
 			action: 'Create a quote (devis)',
-			description: 'Create a quote (devis). Amounts are computed from line items. unit_price is in EUR excluding tax (HT). Only title is required. VAT: leave `tva_rate` out unless the person names a rate — the server applies the project\'s REGISTERED tax regime (0 % for franchise en base, art. 293 B of the French CGI; 20 % otherwise). Passing 20 « to be safe » puts an illegal rate on a franchise entrepreneur\'s quote. Returns the quote plus `share_url` — a public link the client opens to view and SIGN the quote; always give this link to the user.',
+			description: 'Create a quote (devis). Amounts are computed from line items. unit_price is in EUR excluding tax (HT). Only title is required. VAT: leave `tva_rate` out unless the person names a rate — the server applies the project\'s REGISTERED tax regime (0 % for franchise en base, art. 293 B of the French CGI; 20 % otherwise). Passing 20 « to be safe » puts an illegal rate on a franchise entrepreneur\'s quote. The response includes `share_url` only when the caller also has devis.publish; otherwise mint it later after that permission is granted.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/devis","queryParams":[]},
 			properties: [
 				{
@@ -268,7 +268,7 @@ export const devisResource: GeneratedResource = {
 							displayName: 'Locale',
 							name: 'locale',
 							type: 'options',
-							description: 'Language of the follow-up email',
+							description: 'Language of the follow-up email. Omit to use the user\'s selected app language.',
 							default: 'en',
 							options: [
 								{ name: 'En', value: 'en' },
@@ -385,9 +385,9 @@ export const devisResource: GeneratedResource = {
 		{
 			value: 'listQuotes',
 			name: 'List Quotes',
-			action: 'List your quotes (devis)',
-			description: 'List your quotes (devis). Optionally filter by status (draft, sent, viewed, accepted, refused, expired).',
-			routeSpec: {"method":"GET","path":"/api/aurentia/devis","queryParams":["status","search"]},
+			action: 'List quotes (devis) visible to you',
+			description: 'List quotes (devis) visible to you. Pass project_id to scope the result to one project; without it, the server returns personal quotes plus quotes from projects where you have devis.view.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/devis","queryParams":["project_id:projectId","status","search"]},
 			properties: [
 				{
 					displayName: 'Additional Fields',
@@ -396,6 +396,13 @@ export const devisResource: GeneratedResource = {
 					placeholder: 'Add Field',
 					default: {},
 					options: [
+						{
+							displayName: 'Project ID',
+							name: 'project_id',
+							type: 'string',
+							description: 'Optional project scope',
+							default: '',
+						},
 						{
 							displayName: 'Search',
 							name: 'search',

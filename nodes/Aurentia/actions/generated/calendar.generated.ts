@@ -364,6 +364,23 @@ export const calendarResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getCalendarEvent',
+			name: 'Get Calendar Event',
+			action: 'Fetch one exact event from the person\'s calendar by the UUID returned by list_calendar_events',
+			description: 'Fetch one exact event from the person\'s calendar by the UUID returned by list_calendar_events. Returns the complete event details, including time, location, participants, conferencing, reminders, recurrence, sync state and editability. Use it before changing, deleting or discussing a specific event when the list result is not detailed enough; never guess an event ID.',
+			routeSpec: {"method":"GET","path":"/api/calendar/events/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Event UUID returned by list_calendar_events',
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'listCalendarCategories',
 			name: 'List Calendar Categories',
 			action: 'List the event categories visible to the person, with their `ID`, label, colour and icon',

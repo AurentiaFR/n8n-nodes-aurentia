@@ -525,22 +525,17 @@ export const assistantResource: GeneratedResource = {
 		{
 			value: 'proposeConnection',
 			name: 'Propose Connection',
-			action: 'Aurentia: propose connecting a missing external service (google-calendar, outlook, or gmail) INLINE in the conversation, when the current request needs it and it is not connected yet',
-			description: 'Aurentia: propose connecting a missing external service (google-calendar, outlook, or gmail) INLINE in the conversation, when the current request needs it and it is not connected yet. ALWAYS call list_calendar_connections (for google-calendar/outlook) or list_integrations (for gmail) FIRST to check — never call this for a service that is already connected. Propose at most ONE missing service per turn; wait for the user\'s next message before considering another.',
+			action: 'Aurentia: propose connecting a missing external service (Notion, Slack, Airtable or any discovered Composio toolkit; also google-calendar, outlook and gmail) INLINE in the conversation, when the current request needs it and it is not connected yet',
+			description: 'Aurentia: propose connecting a missing external service (Notion, Slack, Airtable or any discovered Composio toolkit; also google-calendar, outlook and gmail) INLINE in the conversation, when the current request needs it and it is not connected yet. ALWAYS call list_calendar_connections (for google-calendar/outlook) or list_email_connections (for gmail), and list_integrations for Composio toolkits FIRST to check — never call this for a service that is already connected. Propose at most ONE missing service per turn; wait for the user\'s next message before considering another.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/assistant/propose-connection","queryParams":[]},
 			properties: [
 				{
 					displayName: 'Service',
 					name: 'service',
-					type: 'options',
+					type: 'string',
 					required: true,
-					description: 'The service to propose connecting',
-					default: 'gmail',
-					options: [
-						{ name: 'Gmail', value: 'gmail' },
-						{ name: 'Google Calendar', value: 'google-calendar' },
-						{ name: 'Outlook', value: 'outlook' },
-					],
+					description: 'Native service ID or exact Composio toolkit slug discovered in the integrations catalog, e.g. notion',
+					default: '',
 				},
 				{
 					displayName: 'Reason',

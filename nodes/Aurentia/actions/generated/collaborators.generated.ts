@@ -186,8 +186,8 @@ export const collaboratorsResource: GeneratedResource = {
 		{
 			value: 'setCollaboratorFunction',
 			name: 'Set Collaborator Function',
-			action: 'Label a collaborator\'s business function on a project — a preset (`associe`, `salarie`, `freelance`, `investisseur`, `mentor`, `stagiaire`) or any free label up to 60 chars; `null` clears it',
-			description: 'Label a collaborator\'s business function on a project — a preset (`associe`, `salarie`, `freelance`, `investisseur`, `mentor`, `stagiaire`) or any free label up to 60 chars; `null` clears it. Presets carry a default set of hidden sections (an `investisseur` does not see the action plan, modules or CRM) applied by the UI when chosen — this route only stores the label; use `set_collaborator_hidden_sections` to actually mask sections. Owner or admin only. `ID` from `list_collaborators`.',
+			action: 'Set a collaborator\'s business function on a project — a preset (`associe`, `salarie`, `freelance`, `investisseur`, `mentor`, `stagiaire`) or any free label up to 60 chars; `null` clears it',
+			description: 'Set a collaborator\'s business function on a project — a preset (`associe`, `salarie`, `freelance`, `investisseur`, `mentor`, `stagiaire`) or any free label up to 60 chars; `null` clears it. Presets immediately merge server-enforced `view: false` resource overrides: the locked resources disappear from project navigation and every action on them is refused. For example, `investisseur` locks `plan_action`, `modules`, `crm`, `bases`, `forms` and `messages`. Changing or clearing the function does not restore permissions previously locked; use `update_collaborator_permissions` to grant them again. Requires effective `team.manage_members`; the owner cannot be changed and non-owner delegation is capped by the caller\'s permissions. `ID` from `list_collaborators`.',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/collaborators/{id}/function","queryParams":["projectId"]},
 			properties: [
 				{
@@ -219,8 +219,8 @@ export const collaboratorsResource: GeneratedResource = {
 		{
 			value: 'setCollaboratorHiddenSections',
 			name: 'Set Collaborator Hidden Sections',
-			action: 'Hide whole sections of the project from ONE collaborator',
-			description: 'Hide whole sections of the project from ONE collaborator. `hidden_sections` is the FULL list of masked keys among `vue-ensemble`, `modules`, `catalogue`, `previsionnel`, `assistant-ia`, `plan-action`, `crm` — an empty array shows everything again; unknown keys are silently filtered. This hides navigation, it is not a permission: pair it with `update_collaborator_permissions` when the data itself must be protected. Owner or admin only.',
+			action: 'Set the legacy navigation mask for ONE collaborator and lock each listed section\'s mapped resource with a server-enforced `view: false` permission',
+			description: 'Set the legacy navigation mask for ONE collaborator and lock each listed section\'s mapped resource with a server-enforced `view: false` permission. `hidden_sections` is the FULL legacy mask among `vue-ensemble`, `modules`, `catalogue`, `previsionnel`, `assistant-ia`, `plan-action`, `crm`; unknown keys are silently filtered. Removing a key or sending an empty array clears the legacy mask only: it does not restore a `view: false` resource override already written. Use `update_collaborator_permissions` with the full intended override map to grant access again. Requires effective `team.manage_members`; the owner cannot be changed and non-owner delegation is capped by the caller\'s permissions.',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/collaborators/{id}/sections","queryParams":["projectId"]},
 			properties: [
 				{
@@ -244,7 +244,7 @@ export const collaboratorsResource: GeneratedResource = {
 					name: 'hidden_sections',
 					type: 'json',
 					required: true,
-					description: 'Full replacement of the hidden section keys. (provide a JSON array).',
+					description: 'Full replacement of the legacy mask; listed sections also receive a persistent resource view lock. (provide a JSON array).',
 					default: '[]',
 				}
 			],
@@ -300,8 +300,8 @@ export const collaboratorsResource: GeneratedResource = {
 		{
 			value: 'updateCollaboratorPermissions',
 			name: 'Update Collaborator Permissions',
-			action: 'Set a collaborator\'s fine-grained permission grid and/or custom role on a project',
-			description: 'Set a collaborator\'s fine-grained permission grid and/or custom role on a project. `permissions` is `{ [resource]: { [action]: boolean } }` — actions among `view`, `edit`, `create`, `delete`, `generate`, `publish`, `manage_members`, `comment`; unknown resources/actions are silently DROPPED, so read `list_collaborators` back after the call. `customRoleId` (from `list_custom_roles`) or `null` to detach. Send only the keys you change. Refused on the owner, and an admin cannot change another admin. Owner or admin only.',
+			action: 'Replace a collaborator\'s sparse permission override map and/or custom role on a project',
+			description: 'Replace a collaborator\'s sparse permission override map and/or custom role on a project. `permissions` is `{ [resource]: { [action]: boolean } }` — actions among `view`, `edit`, `create`, `delete`, `generate`, `publish`, `manage_members`, `comment`; unknown resources/actions are silently DROPPED, so read `list_collaborators` back after the call. Send the FULL intended override map: the supplied `permissions` object replaces the previous one. `view: false` is a server-enforced lock that hides mapped navigation and forces every action on that resource to false; `view: true` alone does not grant edit, create, generate or publish. `customRoleId` comes from `list_custom_roles`; `null` detaches it. Requires effective `team.manage_members`; the owner cannot be changed, non-owners cannot change themselves or an admin, and grants cannot exceed the caller\'s effective permissions.',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/collaborators/{id}/permissions","queryParams":["projectId"]},
 			properties: [
 				{
@@ -338,7 +338,7 @@ export const collaboratorsResource: GeneratedResource = {
 							displayName: 'Permissions',
 							name: 'permissions',
 							type: 'json',
-							description: 'Map resource -> { action: boolean }. Unknown keys dropped server-side. (provide a JSON object)',
+							description: 'Full sparse override map: resource -> { action: boolean }. Replaces previous overrides; unknown keys are dropped server-side. (provide a JSON object)',
 							default: '{}',
 						},
 					],

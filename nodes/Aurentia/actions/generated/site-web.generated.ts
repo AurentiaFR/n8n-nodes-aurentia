@@ -9,7 +9,7 @@ export const siteWebResource: GeneratedResource = {
 			value: 'applySiteCharter',
 			name: 'Apply Site Charter',
 			action: 'Apply a new brand charter (colours, optionally fonts) to an EXISTING generated website: the values are saved on the website profile AND every already-generated page is re-skinned in place — old hex values and font names are swapped for the new ones, deterministically, with no AI pass and no credit',
-			description: 'Apply a new brand charter (colours, optionally fonts) to an EXISTING generated website: the values are saved on the website profile AND every already-generated page is re-skinned in place — old hex values and font names are swapped for the new ones, deterministically, with no AI pass and no credit. Use it when the person changed their brand colours (in the brand kit or by telling you) and wants the site to follow. `projectId` identifies the project; the site is resolved from it, and only its owner may call this. `brand_colors.primary`, `secondary` and `accent` are REQUIRED hex strings (#rgb, #rrggbb or #rrggbbaa); `background` and `text` are optional. `brand_fonts` is optional but if given needs BOTH `headings` and `body` (font family names, e.g. Inter). Send the COMPLETE set of colours you want on the site, not a diff: what you send replaces what was stored. The response tells how many files were rewritten (`filesUpdated`); 0 means the site had nothing generated yet, in which case the charter is simply stored for the next generation. This does not publish anything — the live site changes only after the next `publish_website`.',
+			description: 'Apply a new brand charter (colours, optionally fonts) to an EXISTING generated website: the values are saved on the website profile AND every already-generated page is re-skinned in place — old hex values and font names are swapped for the new ones, deterministically, with no AI pass and no credit. Use it when the person changed their brand colours (in the brand kit or by telling you) and wants the site to follow. `projectId` identifies the project; the site is resolved from it, and the caller needs `site_web.edit` on that project. `brand_colors.primary`, `secondary` and `accent` are REQUIRED hex strings (#rgb, #rrggbb or #rrggbbaa); `background` and `text` are optional. `brand_fonts` is optional but if given needs BOTH `headings` and `body` (font family names, e.g. Inter). Send the COMPLETE set of colours you want on the site, not a diff: what you send replaces what was stored. The response tells how many files were rewritten (`filesUpdated`); 0 means the site had nothing generated yet, in which case the charter is simply stored for the next generation. This does not publish anything — the live site changes only after the next `publish_website`.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/charter/apply","queryParams":[]},
 			properties: [
 				{
@@ -17,7 +17,7 @@ export const siteWebResource: GeneratedResource = {
 					name: 'projectId',
 					type: 'string',
 					required: true,
-					description: 'Project whose website receives the charter (owner only)',
+					description: 'Project whose website receives the charter; requires site_web.edit',
 					default: '',
 				},
 				{
@@ -246,7 +246,7 @@ export const siteWebResource: GeneratedResource = {
 			value: 'connectCustomDomain',
 			name: 'Connect Custom Domain',
 			action: 'Aurentia (PRD-204): attach an existing custom domain the user owns to their Vercel-deployed site',
-			description: 'Aurentia (PRD-204): attach an existing custom domain the user owns to their Vercel-deployed site. Returns the DNS records to set + verification status. Outbound → approval required.',
+			description: 'Aurentia (PRD-204): attach an existing custom domain the user owns to their Vercel-deployed site. Returns the DNS records to set + verification status. Requires `site_web.publish` on the site. Outbound → approval required.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/vercel-domain/{site_id}","queryParams":[],"body":{"mode":"connect"}},
 			properties: [
 				{
@@ -271,7 +271,7 @@ export const siteWebResource: GeneratedResource = {
 			value: 'connectSiteCustomDomain',
 			name: 'Connect Site Custom Domain',
 			action: 'Rattache un domaine que l\'utilisateur POSSÈDE à son site HÉBERGÉ PAR AURENTIA (celui publié par `publish_website` sur `&lt;slug&gt;.aurentia.site`)',
-			description: 'Rattache un domaine que l\'utilisateur POSSÈDE à son site HÉBERGÉ PAR AURENTIA (celui publié par `publish_website` sur `&lt;slug&gt;.aurentia.site`). Ne confonds pas avec `connect_custom_domain`, qui vise un site déployé sur le PROPRE compte Vercel de l\'utilisateur (`deploy_website_to_vercel`) — deux hébergements, deux outils. La réponse rend `dnsRecords` : les enregistrements exacts à poser chez le registrar, par l\'utilisateur, jamais par toi. Relaie-les verbatim et dis-lui d\'appeler `verify_site_custom_domain` une fois posés. Palier Pro/Scale exigé — résolu sur le PROPRIÉTAIRE du site, pas sur l\'acteur : un collaborateur d\'un site dont le propriétaire est en gratuit est refusé (403) même s\'il est lui-même Pro. Domaine déjà pris ailleurs = conflit ; second domaine sur le même site = remplace le premier.',
+			description: 'Rattache un domaine que l\'utilisateur POSSÈDE à son site HÉBERGÉ PAR AURENTIA (celui publié par `publish_website` sur `&lt;slug&gt;.aurentia.site`). Requiert `site_web.publish` sur ce site ; un collaborateur peut l\'exécuter lorsque cette permission est cochée. Ne confonds pas avec `connect_custom_domain`, qui vise un site déployé sur le PROPRE compte Vercel de l\'utilisateur (`deploy_website_to_vercel`) — deux hébergements, deux outils. La réponse rend `dnsRecords` : les enregistrements exacts à poser chez le registrar, par l\'utilisateur, jamais par toi. Relaie-les verbatim et dis-lui d\'appeler `verify_site_custom_domain` une fois posés. Palier Pro/Scale exigé — résolu sur le PROPRIÉTAIRE du site, pas sur l\'acteur : un collaborateur d\'un site dont le propriétaire est en gratuit est refusé (403) même s\'il est lui-même Pro. Domaine déjà pris ailleurs = conflit ; second domaine sur le même site = remplace le premier.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/custom-domain/{site_id}","queryParams":[]},
 			properties: [
 				{
@@ -869,7 +869,7 @@ export const siteWebResource: GeneratedResource = {
 			value: 'deployWebsiteToVercel',
 			name: 'Deploy Website To Vercel',
 			action: 'Aurentia (PRD-204): deploy the site to the user\'s OWN connected Vercel account (they own + pay for it)',
-			description: 'Aurentia (PRD-204): deploy the site to the user\'s OWN connected Vercel account (they own + pay for it). Requires a prior Vercel connection. Outbound + costly → approval required.',
+			description: 'Aurentia (PRD-204): deploy the site to the user\'s OWN connected Vercel account (they own + pay for it). Requires `site_web.publish` on the site and a prior Vercel connection. Outbound + costly → approval required.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/vercel-deploy/{site_id}","queryParams":[]},
 			properties: [
 				{
@@ -1254,7 +1254,7 @@ export const siteWebResource: GeneratedResource = {
 			value: 'getChatbotWidgetConfig',
 			name: 'Get Chatbot Widget Config',
 			action: 'Read the configuration of the chatbot embedded on the person\'s website: welcome and teaser per language, suggested questions per language, theme, whether visitors may attach files and whether those files are kept',
-			description: 'Read the configuration of the chatbot embedded on the person\'s website: welcome and teaser per language, suggested questions per language, theme, whether visitors may attach files and whether those files are kept. Call it before `update_chatbot_widget_config` so you patch only what changes. Owner only (403 otherwise).',
+			description: 'Read the configuration of the chatbot embedded on the person\'s website: welcome and teaser per language, suggested questions per language, theme, whether visitors may attach files and whether those files are kept. Call it before `update_chatbot_widget_config` so you patch only what changes. Requires `site_web.view` on the site\'s project.',
 			routeSpec: {"method":"GET","path":"/api/aurentia/site-web/chatbot-widget/config","queryParams":["website_profile_id:websiteProfileId"]},
 			properties: [
 				{
@@ -1947,7 +1947,7 @@ export const siteWebResource: GeneratedResource = {
 			value: 'refreshVercelDomainStatus',
 			name: 'Refresh Vercel Domain Status',
 			action: 'Relit chez Vercel l\'état de vérification d\'un domaine rattaché par `connect_custom_domain` à un site déployé sur le PROPRE compte Vercel de l\'utilisateur, et rend `{ domain, verified }`',
-			description: 'Relit chez Vercel l\'état de vérification d\'un domaine rattaché par `connect_custom_domain` à un site déployé sur le PROPRE compte Vercel de l\'utilisateur, et rend `{ domain, verified }`. À appeler une fois quand l\'utilisateur dit avoir posé ses DNS ; jamais en boucle. Ne s\'applique pas aux sites hébergés par Aurentia : pour eux c\'est `verify_site_custom_domain`. `domain` doit être exactement celui rattaché — `get_vercel_domain_status` le rend.',
+			description: 'Relit chez Vercel l\'état de vérification d\'un domaine rattaché par `connect_custom_domain` à un site déployé sur le PROPRE compte Vercel de l\'utilisateur, et rend `{ domain, verified }`. Requiert `site_web.publish` sur le site. À appeler une fois quand l\'utilisateur dit avoir posé ses DNS ; jamais en boucle. Ne s\'applique pas aux sites hébergés par Aurentia : pour eux c\'est `verify_site_custom_domain`. `domain` doit être exactement celui rattaché — `get_vercel_domain_status` le rend.',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/site-web/vercel-domain/{site_id}","queryParams":[]},
 			properties: [
 				{
@@ -2191,7 +2191,7 @@ export const siteWebResource: GeneratedResource = {
 			value: 'removeSiteCustomDomain',
 			name: 'Remove Site Custom Domain',
 			action: 'Détache le domaine personnalisé d\'un site hébergé par Aurentia : l\'adresse `www.sondomaine.fr` cesse IMMÉDIATEMENT de servir le site (l\'adresse `&lt;slug&gt;.aurentia.site` continue)',
-			description: 'Détache le domaine personnalisé d\'un site hébergé par Aurentia : l\'adresse `www.sondomaine.fr` cesse IMMÉDIATEMENT de servir le site (l\'adresse `&lt;slug&gt;.aurentia.site` continue). Irréversible pour les visiteurs, référencement compris. Uniquement sur demande explicite et nommée ; jamais pour « nettoyer » ou en réponse à une phrase ambiguë. Les DNS chez le registrar ne sont pas touchés.',
+			description: 'Détache le domaine personnalisé d\'un site hébergé par Aurentia : l\'adresse `www.sondomaine.fr` cesse IMMÉDIATEMENT de servir le site (l\'adresse `&lt;slug&gt;.aurentia.site` continue). Requiert `site_web.publish` sur ce site. Irréversible pour les visiteurs, référencement compris. Uniquement sur demande explicite et nommée ; jamais pour « nettoyer » ou en réponse à une phrase ambiguë. Les DNS chez le registrar ne sont pas touchés.',
 			routeSpec: {"method":"DELETE","path":"/api/aurentia/site-web/custom-domain/{site_id}","queryParams":[]},
 			properties: [
 				{
@@ -2208,7 +2208,7 @@ export const siteWebResource: GeneratedResource = {
 			value: 'removeVercelDomain',
 			name: 'Remove Vercel Domain',
 			action: 'Retire un domaine personnalisé du projet Vercel de l\'utilisateur (site déployé par `deploy_website_to_vercel`) : Vercel cesse de le servir immédiatement',
-			description: 'Retire un domaine personnalisé du projet Vercel de l\'utilisateur (site déployé par `deploy_website_to_vercel`) : Vercel cesse de le servir immédiatement. Irréversible pour les visiteurs ; les DNS chez le registrar ne sont pas touchés. Uniquement sur demande explicite, domaine nommé — relis-le avec `get_vercel_domain_status`. Ne confonds pas avec `remove_site_custom_domain` (site hébergé par Aurentia).',
+			description: 'Retire un domaine personnalisé du projet Vercel de l\'utilisateur (site déployé par `deploy_website_to_vercel`) : Vercel cesse de le servir immédiatement. Requiert `site_web.publish` sur le site. Irréversible pour les visiteurs ; les DNS chez le registrar ne sont pas touchés. Uniquement sur demande explicite, domaine nommé — relis-le avec `get_vercel_domain_status`. Ne confonds pas avec `remove_site_custom_domain` (site hébergé par Aurentia).',
 			routeSpec: {"method":"DELETE","path":"/api/aurentia/site-web/vercel-domain/{site_id}","queryParams":[]},
 			properties: [
 				{
@@ -2509,7 +2509,7 @@ export const siteWebResource: GeneratedResource = {
 			value: 'setWebsiteConstructionMode',
 			name: 'Set Website Construction Mode',
 			action: 'Active ou désactive la page « site en construction » d\'un site PUBLIÉ : `enabled: true` fait voir à tous les visiteurs une page d\'attente à la place du site (avec `title` et `message` optionnels, ≤ 120 et ≤ 500 caractères), `enabled: false` remet le site',
-			description: 'Active ou désactive la page « site en construction » d\'un site PUBLIÉ : `enabled: true` fait voir à tous les visiteurs une page d\'attente à la place du site (avec `title` et `message` optionnels, ≤ 120 et ≤ 500 caractères), `enabled: false` remet le site. Effet IMMÉDIAT sur l\'adresse publique. Ce n\'est pas `unpublish_website` : le slug reste servi, seul le contenu est masqué — c\'est le bon outil pour « cache le site le temps que je corrige ». `title`/`message` à `null` reviennent au texte par défaut. Seul le PROPRIÉTAIRE du site peut l\'appeler (un collaborateur reçoit 404). Rend l\'état de publication.',
+			description: 'Active ou désactive la page « site en construction » d\'un site PUBLIÉ : `enabled: true` fait voir à tous les visiteurs une page d\'attente à la place du site (avec `title` et `message` optionnels, ≤ 120 et ≤ 500 caractères), `enabled: false` remet le site. Effet IMMÉDIAT sur l\'adresse publique. Ce n\'est pas `unpublish_website` : le slug reste servi, seul le contenu est masqué — c\'est le bon outil pour « cache le site le temps que je corrige ». `title`/`message` à `null` reviennent au texte par défaut. Exige `site_web.publish` sur le projet du site, y compris pour un collaborateur. Rend l\'état de publication.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/construction-mode/{site_id}","queryParams":[]},
 			properties: [
 				{
@@ -3269,6 +3269,13 @@ export const siteWebResource: GeneratedResource = {
 							default: '{}',
 						},
 						{
+							displayName: 'Details',
+							name: 'details',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
 							displayName: 'Goal',
 							name: 'goal',
 							type: 'json',
@@ -3429,7 +3436,7 @@ export const siteWebResource: GeneratedResource = {
 			value: 'verifySiteCustomDomain',
 			name: 'Verify Site Custom Domain',
 			action: 'Demande la vérification DNS du domaine personnalisé rattaché à un site hébergé par Aurentia et rend `{ verified }`',
-			description: 'Demande la vérification DNS du domaine personnalisé rattaché à un site hébergé par Aurentia et rend `{ verified }`. Une fois, quand l\'utilisateur dit avoir posé les enregistrements — jamais en boucle, la propagation est chez le registrar. `false` = pas encore visible : fais-lui vérifier la saisie et réessayer plus tard. Sans domaine rattaché → 404 : passe d\'abord par `connect_site_custom_domain`. Pour un site sur le compte Vercel de l\'utilisateur, c\'est `refresh_vercel_domain_status`.',
+			description: 'Demande la vérification DNS du domaine personnalisé rattaché à un site hébergé par Aurentia et rend `{ verified }`. Requiert `site_web.publish` sur ce site ; la vérification peut activer ou retirer son état public. Une fois, quand l\'utilisateur dit avoir posé les enregistrements — jamais en boucle, la propagation est chez le registrar. `false` = pas encore visible : fais-lui vérifier la saisie et réessayer plus tard. Sans domaine rattaché → 404 : passe d\'abord par `connect_site_custom_domain`. Pour un site sur le compte Vercel de l\'utilisateur, c\'est `refresh_vercel_domain_status`.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/site-web/custom-domain/{site_id}/verify","queryParams":[]},
 			properties: [
 				{

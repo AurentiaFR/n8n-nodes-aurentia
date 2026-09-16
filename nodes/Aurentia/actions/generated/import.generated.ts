@@ -8,8 +8,8 @@ export const importResource: GeneratedResource = {
 		{
 			value: 'commitImport',
 			name: 'Commit Import',
-			action: 'Commit an import job: writes the data (dedup + insert) using the reviewed mapping',
-			description: 'Commit an import job: writes the data (dedup + insert) using the reviewed mapping. Requires a lawful-basis attestation for personal data.',
+			action: 'Commit an import job using the reviewed mapping',
+			description: 'Commit an import job using the reviewed mapping. For llm_memory, factDecisions control explicit replacements and children select the target categories; a lawful-basis attestation is required when contacts are selected. retryCompensation resumes only pending rollback steps and never calls the model again.',
 			routeSpec: {"method":"POST","path":"/api/import/{job_id}/commit","queryParams":[]},
 			properties: [
 				{
@@ -57,10 +57,31 @@ export const importResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
+							displayName: 'Children',
+							name: 'children',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
+							displayName: 'Fact Decisions',
+							name: 'factDecisions',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
 							displayName: 'Lawful Basis Purpose',
 							name: 'lawfulBasisPurpose',
 							type: 'string',
 							default: '',
+						},
+						{
+							displayName: 'Retry Compensation',
+							name: 'retryCompensation',
+							type: 'boolean',
+							description: 'Whether to enable retry compensation',
+							default: false,
 						},
 					],
 				}
@@ -88,6 +109,37 @@ export const importResource: GeneratedResource = {
 					required: true,
 					description: 'Natural-language correction, 1-2000 chars',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'getAiMemoryImportPrompt',
+			name: 'Get AI Memory Import Prompt',
+			action: 'Get the single localized prompt to paste into any AI assistant before importing its reply as an AI memory',
+			description: 'Get the single localized prompt to paste into any AI assistant before importing its reply as an AI memory',
+			routeSpec: {"method":"GET","path":"/api/import","queryParams":["variant","locale"]},
+			properties: [
+				{
+					displayName: 'Variant',
+					name: 'variant',
+					type: 'options',
+					required: true,
+					default: 'agency',
+					options: [
+						{ name: 'Agency', value: 'agency' },
+						{ name: 'Project', value: 'project' },
+					],
+				},
+				{
+					displayName: 'Locale',
+					name: 'locale',
+					type: 'options',
+					required: true,
+					default: 'en',
+					options: [
+						{ name: 'En', value: 'en' },
+						{ name: 'Fr', value: 'fr' },
+					],
 				}
 			],
 		},
@@ -216,7 +268,7 @@ export const importResource: GeneratedResource = {
 			value: 'startImport',
 			name: 'Start Import',
 			action: 'Start a universal AI import: analyzes the source (paste/URL/composio/attachment/inline) and proposes a field mapping',
-			description: 'Start a universal AI import: analyzes the source (paste/URL/composio/attachment/inline) and proposes a field mapping. Analysis only — no data is written until commit_import. Use \'attachment\' for a file already dropped in this conversation (never guess an ID from another conversation — it is ownership-checked server-side and rejected otherwise), \'inline\' when the data is pasted directly in the user\'s message. Calling start_import again on the SAME attachment that already has a non-finished job returns that job instead of billing a second extraction.',
+			description: 'Start a universal AI import: analyzes the source (paste/URL/composio/attachment/inline) and proposes a field mapping. Use sourcePreset=\'llm_memory\' for a memory copied from any AI assistant: the source is extracted once into a reviewable multi-target bundle and no data is written until commit_import. Use \'attachment\' for a file already dropped in this conversation (never guess an ID from another conversation — it is ownership-checked server-side and rejected otherwise), \'inline\' when the data is pasted directly in the user\'s message.',
 			routeSpec: {"method":"POST","path":"/api/import","queryParams":[]},
 			properties: [
 				{
@@ -238,7 +290,7 @@ export const importResource: GeneratedResource = {
 					name: 'source',
 					type: 'json',
 					required: true,
-					description: 'Paste: { pasteText } · URL: { URL } · composio: { composio: { toolkit, objectType?, filter? } } · attachment: { attachmentId } (ID of a file attachment already in this conversation) · inline: { text } (raw data pasted in the message) (provide a JSON object)',
+					description: 'Paste: { pasteText } · URL: { URL } · composio: { composio: { toolkit, objectType?, filter? } } · attachment: { attachmentId } · inline: { text } (provide a JSON object)',
 					default: '{}',
 				},
 				{
@@ -259,8 +311,18 @@ export const importResource: GeneratedResource = {
 							displayName: 'Project ID',
 							name: 'projectId',
 							type: 'string',
-							description: 'Destination project ID (REQUIRED for CRM targets — get it from list_projects)',
+							description: 'Destination project ID; required for llm_memory in Aurentia',
 							default: '',
+						},
+						{
+							displayName: 'Source Preset',
+							name: 'sourcePreset',
+							type: 'options',
+							description: 'Optional preset for a third-party AI memory paste',
+							default: 'llm_memory',
+							options: [
+								{ name: 'Llm Memory', value: 'llm_memory' },
+							],
 						},
 						{
 							displayName: 'Target Domain',
