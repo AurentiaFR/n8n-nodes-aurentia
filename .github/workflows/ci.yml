@@ -25,6 +25,9 @@ jobs:
           # No cache: the mirror ships without a lockfile (source of truth is a
           # pnpm monorepo). `npm install` resolves from package.json.
 
+      - name: Use the tested npm version
+        run: npm install -g npm@11.19.0
+
       - name: Install dependencies
         run: 'npm install --no-audit --no-fund'
 

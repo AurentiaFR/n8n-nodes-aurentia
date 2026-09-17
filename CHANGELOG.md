@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.2 — 2026-09-17
+
+- Pin npm 11.19.0 in CI and publishing. The 0.4.1 CI passed, but its publish job upgraded to npm 12, which blocked the SQLite install script required by the E2E runtime. No 0.4.0 or 0.4.1 package reached npm; 0.4.2 includes their changes below and uses the toolchain validated by CI.
+
 ## 0.4.1 — 2026-09-17
 
 - Run CI and provenance publishing on Node.js 24, as required by the n8n 2.39.7 E2E runtime. The 0.4.0 publication stopped before npm upload because its runner used Node.js 22; 0.4.1 includes all 0.4.0 changes below.
