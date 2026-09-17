@@ -6,6 +6,7 @@ import { mkdtemp, mkdir, readFile, readdir, symlink, writeFile, rm } from 'node:
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { executionOutput } from './execution-output.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const packageInfo = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
@@ -128,8 +129,10 @@ async function run(args, label) {
 			{ cwd: folder, env },
 		);
 		let output = '';
+		let stdout = '';
 		child.stdout.on('data', (chunk) => {
 			output += chunk;
+			stdout += chunk;
 		});
 		child.stderr.on('data', (chunk) => {
 			output += chunk;
@@ -143,7 +146,7 @@ async function run(args, label) {
 				reject(
 					new Error(`${label} exited ${code}. See ${folder}/${label}.log\n${output.slice(-3000)}`),
 				);
-			else done(output);
+			else done(stdout);
 		});
 	});
 }
@@ -217,9 +220,14 @@ try {
 		await writeFile(input, JSON.stringify(workflow));
 		await run(['import:workflow', `--input=${input}`], `import-${index}`);
 		const output = await run(['execute', `--id=${id}`, '--rawOutput'], `execute-${index}`);
-		const match = output.match(/\{\s*"[\s\S]*\}\s*$/);
-		assert.ok(match, `No execution result for ${file}. See ${folder}/execute-${index}.log`);
-		const result = JSON.parse(match[0]);
+		let result;
+		try {
+			result = executionOutput(output);
+		} catch (error) {
+			throw new Error(
+				`${file}: ${error.message}\n${(await readFile(join(folder, `execute-${index}.log`), 'utf8')).slice(-6000)}`,
+			);
+		}
 		assert.equal(
 			result.data.resultData.error,
 			undefined,
@@ -291,7 +299,7 @@ try {
 		['execute', `--id=${generatedWorkflow.id}`, '--rawOutput'],
 		'execute-generated',
 	);
-	const generatedResult = JSON.parse(generatedOutput.match(/\{\s*"[\s\S]*\}\s*$/)?.[0] ?? '{}');
+	const generatedResult = executionOutput(generatedOutput);
 	assert.ok(
 		generatedResult.finished || generatedResult.status === 'success',
 		JSON.stringify(generatedResult.data?.resultData?.error),

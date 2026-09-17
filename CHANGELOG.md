@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.3 — 2026-09-17
+
+- Isolate n8n execution stdout from npm diagnostics and parse the execution object even when shutdown logs follow it. Keep failure details visible in CI and use the same registry configuration in CI and publishing. Runtime behavior is unchanged; previous 0.4.x attempts stopped before npm upload.
+
 ## 0.4.2 — 2026-09-17
 
 - Pin npm 11.19.0 in CI and publishing. The 0.4.1 CI passed, but its publish job upgraded to npm 12, which blocked the SQLite install script required by the E2E runtime. No 0.4.0 or 0.4.1 package reached npm; 0.4.2 includes their changes below and uses the toolchain validated by CI.

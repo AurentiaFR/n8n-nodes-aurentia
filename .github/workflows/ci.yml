@@ -22,6 +22,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
           # No cache: the mirror ships without a lockfile (source of truth is a
           # pnpm monorepo). `npm install` resolves from package.json.
 
