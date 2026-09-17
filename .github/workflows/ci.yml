@@ -21,7 +21,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           # No cache: the mirror ships without a lockfile (source of truth is a
           # pnpm monorepo). `npm install` resolves from package.json.
 

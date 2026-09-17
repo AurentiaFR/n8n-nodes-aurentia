@@ -71,7 +71,7 @@ Both methods carry the same permissions — an Aurentia credential can access ev
 
 ## Compatibility
 
-The workflow templates are exercised in n8n **2.39.7** against a local API simulator (API-key and OAuth bearer credentials). Requires Node.js 22+.
+The workflow templates are exercised in n8n **2.39.7** against a local API simulator (API-key and OAuth bearer credentials). This tested n8n runtime and the E2E command require **Node.js 24+**.
 
 For **AI Agent tool usage**: on n8n 2.x no extra configuration is needed. On n8n 1.x (>= 1.79), set `N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true` on the instance.
 

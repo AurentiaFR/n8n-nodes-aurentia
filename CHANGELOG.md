@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 — 2026-09-17
+
+- Run CI and provenance publishing on Node.js 24, as required by the n8n 2.39.7 E2E runtime. The 0.4.0 publication stopped before npm upload because its runner used Node.js 22; 0.4.1 includes all 0.4.0 changes below.
+
 ## 0.4.0 — 2026-09-17
 
 - Correct optional query aliases and query/body placement across generated operations.
