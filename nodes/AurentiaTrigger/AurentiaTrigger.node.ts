@@ -5,13 +5,15 @@ import type {
 	INodeTypeDescription,
 	IPollFunctions,
 } from 'n8n-workflow';
-import { NodeConnectionTypes } from 'n8n-workflow';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import * as listSearch from '../Aurentia/methods/listSearch';
 import * as loadOptions from '../Aurentia/methods/loadOptions';
-import { aurentiaApiRequest } from '../Aurentia/transport';
-
-const MAX_SEEN_IDS = 500;
+import {
+	aurentiaApiRequest,
+	aurentiaApiRequestPaged,
+	aurentiaRecordsRequestPaged,
+} from '../Aurentia/transport';
 
 // A polling trigger has no execute() and cannot become an AI Agent tool, so
 // `usableAsTool` is intentionally absent here. The lint rule only auto-exempts
@@ -189,121 +191,98 @@ export class AurentiaTrigger implements INodeType {
 		const staticData = this.getWorkflowStaticData('node') as {
 			lastTimeChecked?: string;
 			seenIds?: string[];
+			scope?: string;
 		};
 		const now = new Date().toISOString();
-		const isManual = this.getMode() === 'manual';
-		const since = staticData.lastTimeChecked ?? now;
+		const { items, timestampKey, scope } = await fetchForEvent.call(this, event);
+		// Validate the whole scan BEFORE advancing any persistent state. An API
+		// contract failure must not silently consume an event or reset a baseline.
+		if (
+			!Array.isArray(items) ||
+			items.some((item) => !item || typeof item.id !== 'string' || !item.id)
+		) {
+			throw new NodeOperationError(this.getNode(), 'Aurentia returned an invalid event list', {
+				description: 'Every event must have an ID. Retry the poll; no progress has been saved.',
+			});
+		}
+		const unique = [...new Map(items.map((item) => [item.id as string, item])).values()];
+		const byTime = (a: IDataObject, b: IDataObject) =>
+			(Date.parse(String(a[timestampKey])) || 0) - (Date.parse(String(b[timestampKey])) || 0) ||
+			String(a.id).localeCompare(String(b.id));
 
-		const { items, timestampKey } = await fetchForEvent.call(this, event, isManual);
-
-		if (isManual) {
-			// Manual test run: emit a single sample item and leave the cursor untouched.
-			const sample = [...items]
-				.sort((a, b) =>
-					String(b[timestampKey] ?? '').localeCompare(String(a[timestampKey] ?? '')),
-				)
-				.slice(0, 1);
+		if (this.getMode() === 'manual') {
+			const sample = unique.sort(byTime).slice(-1);
 			return sample.length ? [this.helpers.returnJsonArray(sample)] : null;
 		}
 
-		const seen = new Set(staticData.seenIds ?? []);
-		const fresh = items
-			.filter(
-				(item) =>
-					String(item[timestampKey] ?? '') > since && !seen.has(String(item.id)),
-			)
-			.sort((a, b) =>
-				String(a[timestampKey] ?? '').localeCompare(String(b[timestampKey] ?? '')),
-			);
-
+		const sameScope = staticData.scope === scope;
+		const migrating = !staticData.scope && Boolean(staticData.lastTimeChecked);
+		const seen = new Set(sameScope || migrating ? (staticData.seenIds ?? []) : []);
+		const fresh = unique
+			.filter((item) => {
+				if (seen.has(String(item.id))) return false;
+				if (sameScope) return true;
+				// Upgrade legacy workflows once, retaining their timestamp boundary.
+				// Compare instants, not strings (Postgres offsets/precision differ).
+				return (
+					migrating &&
+					Date.parse(String(item[timestampKey])) >= Date.parse(staticData.lastTimeChecked!)
+				);
+			})
+			.sort(byTime);
+		const result = fresh.length ? [this.helpers.returnJsonArray(fresh)] : null;
+		for (const item of unique) seen.add(String(item.id));
+		// Keep the ID ledger, including temporarily absent/deleted items. Cutting
+		// it to 500 or replacing it with only this scan replays events after page
+		// reordering. Storage scales with observed IDs in this watched scope.
+		staticData.seenIds = [...seen];
+		staticData.scope = scope;
 		staticData.lastTimeChecked = now;
-		staticData.seenIds = [...(staticData.seenIds ?? []), ...fresh.map((f) => String(f.id))].slice(
-			-MAX_SEEN_IDS,
-		);
-
-		return fresh.length ? [this.helpers.returnJsonArray(fresh)] : null;
+		return result;
 	}
 }
 
 async function fetchForEvent(
 	this: IPollFunctions,
 	event: string,
-	isManual: boolean,
-): Promise<{ items: IDataObject[]; timestampKey: string }> {
-	const limit = isManual ? 1 : 100;
-
-	if (event === 'contactCreated') {
-		const projectId = this.getNodeParameter('projectId', undefined, {
-			extractValue: true,
-		}) as string;
-		// C3: newest-first list, envelope data: { data: Contact[], total }.
-		const res = await aurentiaApiRequest.call(this, 'GET', '/api/aurentia/crm/contacts', {}, {
-			projectId,
-			limit,
-			sortBy: 'created_at',
-			sortOrder: 'desc',
-		});
-		return { items: (res.data as IDataObject[]) ?? [], timestampKey: 'created_at' };
-	}
-
-	if (event === 'dealCreated') {
-		const projectId = this.getNodeParameter('projectId', undefined, {
-			extractValue: true,
-		}) as string;
-		// C6: envelope data: { data: Deal[], total }, sorted created_at DESC by default.
-		const res = await aurentiaApiRequest.call(this, 'GET', '/api/aurentia/crm/deals', {}, {
-			projectId,
-			limit,
-		});
-		return { items: (res.data as IDataObject[]) ?? [], timestampKey: 'created_at' };
-	}
-
+): Promise<{ items: IDataObject[]; timestampKey: string; scope: string }> {
 	if (event === 'taskCreated') {
-		const boardId = this.getNodeParameter('boardId', undefined, {
-			extractValue: true,
-		}) as string;
-		// C13: cards come back as a direct array ordered by display_order ASC (not by
-		// date) and the endpoint has no server-side pagination, so we fetch the whole
-		// board and sort/window client-side by created_at DESC. The seenIds dedup +
-		// cursor make this safe against duplicates; only cards beyond the newest 100
-		// created between two polls could be missed (documented in the README).
-		const cards = (await aurentiaApiRequest.call(
+		const boardId = this.getNodeParameter('boardId', undefined, { extractValue: true }) as string;
+		const items = await aurentiaApiRequest.call(
 			this,
 			'GET',
 			'/api/aurentia/tasks/cards',
 			{},
 			{ boardId },
-		)) as unknown as IDataObject[];
-		const windowed = [...cards]
-			.sort((a, b) =>
-				String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')),
-			)
-			.slice(0, limit);
-		return { items: windowed, timestampKey: 'created_at' };
+		);
+		return {
+			items: items as unknown as IDataObject[],
+			timestampKey: 'created_at',
+			scope: `${event}:${boardId}`,
+		};
 	}
-
 	if (event === 'recordCreated') {
 		const tableId = this.getNodeParameter('tableId') as string;
-		// C18: envelope data: { records: [...], total, limit, offset } — read `records`.
-		const res = await aurentiaApiRequest.call(
-			this,
-			'GET',
-			`/api/aurentia/bases/tables/${tableId}/records`,
-			{},
-			{ limit: isManual ? 1 : 1000 },
-		);
-		return { items: (res.records as IDataObject[]) ?? [], timestampKey: 'created_at' };
+		const items = await aurentiaRecordsRequestPaged.call(this, tableId, {}, true, 500);
+		return { items, timestampKey: 'created_at', scope: `${event}:${tableId}` };
 	}
-
-	// postPublished
-	const projectId = this.getNodeParameter('projectId', undefined, {
-		extractValue: true,
-	}) as string;
-	// C21: envelope data: { data: Post[], total, page, limit }.
-	const res = await aurentiaApiRequest.call(this, 'GET', '/api/aurentia/social-media/posts', {}, {
-		projectId,
-		status: 'published',
-		limit: isManual ? 1 : 50,
-	});
-	return { items: (res.data as IDataObject[]) ?? [], timestampKey: 'published_at' };
+	if (!['contactCreated', 'dealCreated', 'postPublished'].includes(event)) {
+		throw new NodeOperationError(this.getNode(), 'Choose a supported Aurentia trigger event');
+	}
+	const projectId = this.getNodeParameter('projectId', undefined, { extractValue: true }) as string;
+	const endpoint =
+		event === 'contactCreated'
+			? '/api/aurentia/crm/contacts'
+			: event === 'dealCreated'
+				? '/api/aurentia/crm/deals'
+				: '/api/aurentia/social-media/posts';
+	const qs: IDataObject = { projectId };
+	if (event === 'contactCreated') Object.assign(qs, { sortBy: 'created_at', sortOrder: 'desc' });
+	if (event === 'postPublished') qs.status = 'published';
+	const items = await aurentiaApiRequestPaged.call(this, endpoint, qs, true, 100);
+	return {
+		items,
+		timestampKey: event === 'postPublished' ? 'published_at' : 'created_at',
+		scope: `${event}:${projectId}`,
+	};
 }

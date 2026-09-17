@@ -3164,8 +3164,8 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'generateProfileAsset',
 			name: 'Generate Profile Asset',
-			action: 'Generate a profile asset with AI',
-			description: 'Generate a profile asset with AI',
+			action: 'Generate or regenerate one text asset for a social profile platform with AI',
+			description: 'Generate or regenerate one text asset for a social profile platform with AI. Costs 10 credits.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/profile-setup/generate-asset","queryParams":[]},
 			properties: [
 				{
@@ -3202,8 +3202,8 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'generateProfileSetup',
 			name: 'Generate Profile Setup',
-			action: 'Generate a profile configuration with AI',
-			description: 'Generate a profile configuration with AI',
+			action: 'Generate all text assets for one social profile platform with AI',
+			description: 'Generate all text assets for one social profile platform with AI. Costs 50 credits for that platform.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/profile-setup/generate","queryParams":[]},
 			properties: [
 				{

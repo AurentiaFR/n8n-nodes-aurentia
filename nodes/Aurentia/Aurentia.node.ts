@@ -7,7 +7,7 @@ import type {
 	INodePropertyOptions,
 	JsonObject,
 } from 'n8n-workflow';
-import { NodeApiError, NodeConnectionTypes } from 'n8n-workflow';
+import { NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import { router } from './actions/router';
 import * as listSearch from './methods/listSearch';
@@ -130,6 +130,12 @@ export class Aurentia implements INodeType {
 						pairedItem: { item: i },
 					});
 					continue;
+				}
+				if (error instanceof NodeOperationError || error instanceof NodeApiError) {
+					error.context.itemIndex = i;
+				}
+				if (error instanceof NodeOperationError) {
+					throw new NodeOperationError(this.getNode(), error, { itemIndex: i });
 				}
 				throw new NodeApiError(this.getNode(), error as JsonObject, { itemIndex: i });
 			}

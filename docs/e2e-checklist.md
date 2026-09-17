@@ -1,7 +1,9 @@
 # E2E checklist — `@aurentiaai/n8n-nodes-aurentia`
 
-Run this against a local stack before every release. It is the one gate that
-cannot be automated in CI (it needs a live Aurentia + a live n8n).
+First run `npm run build && npm test && npm run test:e2e`. The automated gate
+imports and runs all five templates in real n8n against an HTTP simulator.
+Then run this checklist against a live Aurentia test account: the simulator
+does not prove production authorization, OAuth consent, refresh or API behavior.
 
 ## Setup
 
@@ -22,8 +24,10 @@ cannot be automated in CI (it needs a live Aurentia + a live n8n).
 - [ ] OAuth2: create an **Aurentia OAuth2 API** credential → Connect my account
       → Aurentia login → **consent screen shows the redirect host** → Authorize →
       credential connected. Refuse once → n8n reports `access_denied` cleanly.
-- [ ] Revoke the OAuth client in Aurentia → reconnect fails; a workflow using a
-      previously issued token keeps working (token = `aur_` key). Documented.
+- [ ] Revoke the OAuth client in Aurentia → verify the expected token revocation
+      behavior against the authorization server. OAuth uses `mcp_at_*` access
+      tokens and `mcp_rt_*` refresh tokens, not an `aur_` key. Expire an access
+      token and verify refresh succeeds before revocation and fails afterwards.
 
 ## Curated resources (both auth methods for at least Contact)
 
@@ -59,8 +63,11 @@ cannot be automated in CI (it needs a live Aurentia + a live n8n).
 ## Trigger
 
 - [ ] Each of the 5 events: activate, create the object in Aurentia, verify it
-      is emitted on the next poll; re-poll → no duplicate; two objects created
-      between polls → two items, chronological order; manual mode → one sample.
+      is emitted on the next poll; re-poll → no duplicate; more than 100 contacts/deals/tasks, 50 posts and 1,000 records → all new
+      items, chronological order; manual mode → newest sample across pages.
+- [ ] Fail a later API page → no cursor advancement; retry recovers all items.
+- [ ] Restart n8n → no replay; change watched scope → fresh baseline.
+- [ ] An object with a delayed/older timestamp still emits once when first observed.
 
 ## AI tool
 

@@ -102,6 +102,10 @@ jobs:
       - name: Install dependencies
         run: 'npm install --no-audit --no-fund'
 
+      - name: Validate release behavior
+        run: npm run build && npm test && npm run test:e2e
+        timeout-minutes: 15
+
       - name: Release
         # Publishes to npm with a provenance attestation (requires id-token: write above).
         # Lint and build run automatically as part of the release process.

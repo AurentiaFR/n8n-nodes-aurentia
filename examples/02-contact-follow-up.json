@@ -1,0 +1,132 @@
+{
+  "name": "Aurentia — New contact → follow-up task",
+  "nodes": [
+    {
+      "id": "c79c0113-4291-5409-9416-276f9f08e948",
+      "name": "New contact",
+      "type": "@aurentiaai/n8n-nodes-aurentia.aurentiaTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "authentication": "apiKey",
+        "event": "contactCreated",
+        "projectId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "00000000-0000-0000-0000-000000000001"
+        },
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "6d60ae00-5bed-5ea0-9c8a-aa56ea7dedea",
+      "name": "Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ce950513-ad17-5d1c-85c4-0752cc59bba2",
+              "name": "boardId",
+              "value": "00000000-0000-0000-0000-000000000002",
+              "type": "string"
+            },
+            {
+              "id": "a9cae339-44e8-5a44-b3ac-1f45609b76b9",
+              "name": "columnId",
+              "value": "00000000-0000-0000-0000-000000000003",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "33db2c74-5578-579e-819b-0ae31cd08523",
+      "name": "Create follow-up task",
+      "type": "@aurentiaai/n8n-nodes-aurentia.aurentia",
+      "typeVersion": 1,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "authentication": "apiKey",
+        "resource": "task",
+        "operation": "create",
+        "boardId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Configuration').first().json.boardId }}"
+        },
+        "columnId": "={{ $('Configuration').first().json.columnId }}",
+        "title": "={{ 'Follow up / Recontacter : ' + ($json.first_name || $json.company || $json.id) }}",
+        "additionalFields": {
+          "description": "={{ 'Contact: ' + $json.id }}"
+        }
+      }
+    },
+    {
+      "id": "6d3898fe-88e9-56e4-8d25-6d8fa67e4908",
+      "name": "Read me / À lire",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -360
+      ],
+      "parameters": {
+        "content": "## Setup / Configuration\nChoose your project on New contact; set the board and column in Configuration. Select Aurentia credentials on both nodes. Activation establishes a baseline; only contacts first observed afterwards start workflows.\n\nChoisissez le projet dans New contact, puis le tableau et la colonne dans Configuration. Ajoutez les identifiants Aurentia sur les deux nodes. À l’activation, les contacts existants ne sont pas rejoués.",
+        "width": 640,
+        "height": 320
+      }
+    }
+  ],
+  "connections": {
+    "New contact": {
+      "main": [
+        [
+          {
+            "node": "Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuration": {
+      "main": [
+        [
+          {
+            "node": "Create follow-up task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "pinData": {},
+  "tags": []
+}

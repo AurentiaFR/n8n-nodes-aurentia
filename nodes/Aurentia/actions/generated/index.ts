@@ -35,7 +35,6 @@ import { durableWorkflowsResource } from './durable-workflows.generated';
 import { emailPreferencesResource } from './email-preferences.generated';
 import { emailResource } from './email.generated';
 import { entityLinksResource } from './entity-links.generated';
-import { featureRequestsResource } from './feature-requests.generated';
 import { feedbackResource } from './feedback.generated';
 import { financeResource } from './finance.generated';
 import { financialForecastResource } from './financial-forecast.generated';
@@ -130,7 +129,6 @@ export const GENERATED_RESOURCES: GeneratedResource[] = [
 	emailPreferencesResource,
 	emailResource,
 	entityLinksResource,
-	featureRequestsResource,
 	feedbackResource,
 	financeResource,
 	financialForecastResource,

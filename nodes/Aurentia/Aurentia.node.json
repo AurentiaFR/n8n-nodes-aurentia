@@ -2,7 +2,11 @@
 	"node": "@aurentiaai/n8n-nodes-aurentia",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
-	"categories": ["Productivity", "Sales", "Marketing & Content"],
+	"categories": [
+		"Productivity",
+		"Sales",
+		"Marketing & Content"
+	],
 	"alias": [
 		"crm",
 		"project",
@@ -24,6 +28,9 @@
 		"primaryDocumentation": [
 			{
 				"url": "https://github.com/AurentiaFR/n8n-nodes-aurentia?tab=readme-ov-file"
+			},
+			{
+				"url": "https://github.com/AurentiaFR/n8n-nodes-aurentia/blob/main/docs/WORKFLOWS.md"
 			}
 		]
 	}

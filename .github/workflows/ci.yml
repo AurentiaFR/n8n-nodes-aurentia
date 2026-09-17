@@ -8,7 +8,7 @@ on:
 
 # Cancel in-progress runs for the same branch/PR to avoid wasting CI minutes.
 concurrency:
-  group: ci-$
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -42,6 +42,13 @@ jobs:
 
       - name: Assert generated invariants (no onboarding/UI fields)
         run: 'npm run test:invariants'
+
+      - name: Test runtime and workflow regressions
+        run: 'npm run test:runtime'
+
+      - name: Execute templates in real n8n with a local API simulator
+        run: 'npm run test:e2e'
+        timeout-minutes: 15
 
       # NOTE: coverage:audit needs the Aurentia MCP registry (monorepo-only) and
       # is therefore run in the monorepo's `generate:check`, not here.

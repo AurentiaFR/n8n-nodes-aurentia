@@ -78,12 +78,16 @@ console.log('test-executor:');
 	const found = findOp(
 		(op) =>
 			op.routeSpec.method === 'GET' &&
-			op.routeSpec.queryParams.some((q) => q.includes(':')) &&
+			op.routeSpec.queryParams.some(
+				(q) => q.includes(':') && topLevelProps(op).some((p) => p.name === q.split(':')[0]),
+			) &&
 			pathParamNames(op).length === 0,
 	);
 	assert.ok(found, 'expected a GET op with a renamed query param');
 	const { op } = found;
-	const renamed = op.routeSpec.queryParams.find((q) => q.includes(':'));
+	const renamed = op.routeSpec.queryParams.find(
+		(q) => q.includes(':') && topLevelProps(op).some((p) => p.name === q.split(':')[0]),
+	);
 	const [inputKey, queryKey] = renamed.split(':');
 	const { ctx, captured } = makeCtx({ [inputKey]: 'p1' });
 	const out = await executeGenerated.call(ctx, found.res.resource, op.value, 0);
@@ -112,10 +116,7 @@ console.log('test-executor:');
 	const optNames = (coll.options ?? []).map((o) => o.name);
 	assert.ok(optNames.length >= 1, 'collection should have options');
 	const filled = optNames[0];
-	const { ctx, captured } = makeCtx(
-		{},
-		{ additionalFields: { [filled]: 'v', __empty: '' } },
-	);
+	const { ctx, captured } = makeCtx({}, { additionalFields: { [filled]: 'v', __empty: '' } });
 	await executeGenerated.call(ctx, found.res.resource, op.value, 0);
 	assert.equal(captured.options.qs[filled], 'v', 'filled filter must reach qs');
 	assert.equal(captured.options.qs.__empty, undefined, 'empty filter must be omitted');
@@ -162,7 +163,8 @@ console.log('test-executor:');
 	{
 		const params = {};
 		for (const n of pathParamNames(op)) params[n] = 'a/b';
-		for (const p of topLevelProps(op)) if (!(p.name in params)) params[p.name] = p.type === 'json' ? '{}' : 'x';
+		for (const p of topLevelProps(op))
+			if (!(p.name in params)) params[p.name] = p.type === 'json' ? '{}' : 'x';
 		const { ctx, captured } = makeCtx(params);
 		await executeGenerated.call(ctx, found.res.resource, op.value, 0);
 		assert.ok(
@@ -208,7 +210,10 @@ console.log('test-executor:');
 // Scenario 6 — unknown resource / operation throw.
 {
 	const { ctx } = makeCtx({});
-	await assert.rejects(() => executeGenerated.call(ctx, '__nope__', 'x', 0), /Unknown generated resource/);
+	await assert.rejects(
+		() => executeGenerated.call(ctx, '__nope__', 'x', 0),
+		/Unknown generated resource/,
+	);
 	const someRes = GENERATED_RESOURCES[0];
 	await assert.rejects(
 		() => executeGenerated.call(ctx, someRes.resource, '__nope__', 0),

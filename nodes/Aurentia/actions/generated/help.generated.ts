@@ -9,7 +9,7 @@ export const helpResource: GeneratedResource = {
 			value: 'sendSupportRequest',
 			name: 'Send Support Request',
 			action: 'Email the Aurentia support team on the person\'s behalf (`channel: support`) or write directly to the founder (`channel: founder`)',
-			description: 'Email the Aurentia support team on the person\'s behalf (`channel: support`) or write directly to the founder (`channel: founder`). Sends a real email — only on their explicit ask, with a `subject` and `message` they have seen; one call = one email. `fromEmail`/`fromName` are the sender shown to support: take them from `get_account_profile`. `product` is `aurentia` here. `priority` defaults to `normal`; `urgent` only for a blocking incident. Answers 202: tell the person support replies by email.',
+			description: 'Email the Aurentia support team on the person\'s behalf (`channel: support`) or write directly to the founder (`channel: founder`). Sends a real email — only on their explicit ask, with a `subject` and `message` they have seen; one call = one email. Sender name and email are resolved from the authenticated account; never ask the person for them. `product` is `aurentia` here. `priority` defaults to `normal`; `urgent` only for a blocking incident. Answers 202: tell the person support replies by email.',
 			routeSpec: {"method":"POST","path":"/api/help/support-request","queryParams":[]},
 			properties: [
 				{
@@ -22,21 +22,6 @@ export const helpResource: GeneratedResource = {
 						{ name: 'Aurentia', value: 'aurentia' },
 						{ name: 'Entreprises', value: 'entreprises' },
 					],
-				},
-				{
-					displayName: 'From Email',
-					name: 'fromEmail',
-					type: 'string',
-					required: true,
-					default: '',
-				},
-				{
-					displayName: 'From Name',
-					name: 'fromName',
-					type: 'string',
-					required: true,
-					description: '1-100 chars',
-					default: '',
 				},
 				{
 					displayName: 'Subject',

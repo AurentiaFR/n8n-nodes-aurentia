@@ -1,0 +1,174 @@
+{
+  "name": "Aurentia — Weekly pipeline → project wiki",
+  "nodes": [
+    {
+      "id": "2b7cb6a2-a282-576f-9c01-8188570f2417",
+      "name": "Monday morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "6d60ae00-5bed-5ea0-9c8a-aa56ea7dedea",
+      "name": "Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "79f6cfd9-4030-5485-a08f-f813de287095",
+              "name": "projectId",
+              "value": "00000000-0000-0000-0000-000000000001",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "8268e140-3afd-58c9-9f48-12a10d24f567",
+      "name": "List deals",
+      "type": "@aurentiaai/n8n-nodes-aurentia.aurentia",
+      "typeVersion": 1,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "authentication": "apiKey",
+        "resource": "deal",
+        "operation": "getAll",
+        "projectId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Configuration').first().json.projectId }}"
+        },
+        "returnAll": true,
+        "simplify": false,
+        "filters": {}
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "b91082de-7284-50eb-812e-3dae996d898e",
+      "name": "Build digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const deals = $input.all().map(item => item.json).filter(item => item.id);\nconst lines = deals.map(deal => '- ' + deal.title + ' | value / valeur: ' + (deal.value ?? 0) + ' ' + (deal.currency || '') + ' | probability / probabilité: ' + (deal.probability_percent ?? '?') + '%');\nreturn [{ json: { title: 'Pipeline — ' + $now.toISODate(), content: deals.length + ' deals / opportunités\\n\\n' + (lines.join('\\n') || 'No deals / Aucune opportunité') } }];"
+      }
+    },
+    {
+      "id": "67074799-8225-5151-9c72-cc23ecb3de46",
+      "name": "Save pipeline note",
+      "type": "@aurentiaai/n8n-nodes-aurentia.aurentia",
+      "typeVersion": 1,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "authentication": "apiKey",
+        "resource": "notes",
+        "operation": "createNote",
+        "title": "={{ $json.title }}",
+        "additionalFields": {
+          "project_id": "={{ $('Configuration').first().json.projectId }}",
+          "content": "={{ $json.content }}"
+        }
+      }
+    },
+    {
+      "id": "6d3898fe-88e9-56e4-8d25-6d8fa67e4908",
+      "name": "Read me / À lire",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -360
+      ],
+      "parameters": {
+        "content": "## Setup / Configuration\nSet projectId and Aurentia credentials on List deals and Save pipeline note. Every Monday at 09:00 Europe/Paris, save a complete pipeline snapshot in the project wiki. Values keep their original currency; no mixed-currency total.\n\nRenseignez le projet et les identifiants des deux nodes Aurentia. Chaque lundi à 9 h (Paris), une note récapitulative est créée dans le wiki du projet. Les devises sont conservées, sans total multidevise.",
+        "width": 640,
+        "height": 320
+      }
+    }
+  ],
+  "connections": {
+    "Monday morning": {
+      "main": [
+        [
+          {
+            "node": "Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuration": {
+      "main": [
+        [
+          {
+            "node": "List deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List deals": {
+      "main": [
+        [
+          {
+            "node": "Build digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build digest": {
+      "main": [
+        [
+          {
+            "node": "Save pipeline note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "pinData": {},
+  "tags": []
+}

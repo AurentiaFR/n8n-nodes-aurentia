@@ -1,0 +1,152 @@
+{
+  "name": "Aurentia — Complete table → JSON export",
+  "nodes": [
+    {
+      "id": "576a2a2d-14ce-59f9-845c-2b57282afadc",
+      "name": "Weekly export",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "6d60ae00-5bed-5ea0-9c8a-aa56ea7dedea",
+      "name": "Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2a195d6a-2f0d-5a86-af76-2187cb885170",
+              "name": "baseId",
+              "value": "00000000-0000-0000-0000-000000000004",
+              "type": "string"
+            },
+            {
+              "id": "343bc1c2-71a2-5e02-bfc4-851ccbd2661e",
+              "name": "tableId",
+              "value": "00000000-0000-0000-0000-000000000005",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "31b7dcd0-d03b-5cd1-afe4-c64bf24dbaaa",
+      "name": "Read all records",
+      "type": "@aurentiaai/n8n-nodes-aurentia.aurentia",
+      "typeVersion": 1,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "authentication": "apiKey",
+        "resource": "record",
+        "operation": "getAll",
+        "baseId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Configuration').first().json.baseId }}"
+        },
+        "tableId": "={{ $('Configuration').first().json.tableId }}",
+        "returnAll": true,
+        "simplify": false,
+        "filters": {}
+      }
+    },
+    {
+      "id": "f4da7e92-1db1-5793-acd9-153bd255043a",
+      "name": "Export JSON",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "operation": "toJson",
+        "options": {
+          "fileName": "aurentia-records.json"
+        }
+      }
+    },
+    {
+      "id": "6d3898fe-88e9-56e4-8d25-6d8fa67e4908",
+      "name": "Read me / À lire",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -360
+      ],
+      "parameters": {
+        "content": "## Setup / Configuration\nSet baseId/tableId and the Aurentia credential. The complete table is exported as JSON, with field IDs intact. Download the binary output of Export JSON from the execution, or connect your storage node for retention. An empty table produces no file.\n\nRenseignez la base, la table et les identifiants Aurentia. Toutes les lignes sont exportées en JSON avec les identifiants de champs. Téléchargez le fichier en sortie de Export JSON ou branchez votre stockage. Une table vide ne produit pas de fichier.",
+        "width": 640,
+        "height": 320
+      }
+    }
+  ],
+  "connections": {
+    "Weekly export": {
+      "main": [
+        [
+          {
+            "node": "Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuration": {
+      "main": [
+        [
+          {
+            "node": "Read all records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read all records": {
+      "main": [
+        [
+          {
+            "node": "Export JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "pinData": {},
+  "tags": []
+}

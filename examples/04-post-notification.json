@@ -1,0 +1,119 @@
+{
+  "name": "Aurentia — Published post → team notification",
+  "nodes": [
+    {
+      "id": "a00e61cd-a81d-522b-93d9-8db0dc168a56",
+      "name": "Published post",
+      "type": "@aurentiaai/n8n-nodes-aurentia.aurentiaTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "authentication": "apiKey",
+        "event": "postPublished",
+        "projectId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "00000000-0000-0000-0000-000000000001"
+        },
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "6d60ae00-5bed-5ea0-9c8a-aa56ea7dedea",
+      "name": "Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a6171179-4381-5794-b382-0a756690a53a",
+              "name": "notificationUrl",
+              "value": "https://example.invalid/replace-with-your-notification-webhook",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "c8715dad-a1ec-5674-9483-503eea133704",
+      "name": "Notify team",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuration').first().json.notificationUrl }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: 'Published / Publié : ' + ($json.title || $json.content?.text || $json.id) }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "6d3898fe-88e9-56e4-8d25-6d8fa67e4908",
+      "name": "Read me / À lire",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -360
+      ],
+      "parameters": {
+        "content": "## Setup / Configuration\nChoose the project and Aurentia credential on Published post. Set notificationUrl to a Slack incoming webhook or an endpoint accepting {text}. The template contains no secret; use an n8n credential/secret store for confidential URLs. Activation skips already published posts.\n\nChoisissez le projet et les identifiants Aurentia. Renseignez un webhook Slack entrant ou une URL acceptant {text}. Pour une URL confidentielle, utilisez le stockage de secrets n8n. Les posts déjà publiés sont ignorés à l’activation.",
+        "width": 640,
+        "height": 320
+      }
+    }
+  ],
+  "connections": {
+    "Published post": {
+      "main": [
+        [
+          {
+            "node": "Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuration": {
+      "main": [
+        [
+          {
+            "node": "Notify team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "pinData": {},
+  "tags": []
+}

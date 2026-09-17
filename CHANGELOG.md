@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0 — 2026-09-17
+
+- Correct optional query aliases and query/body placement across generated operations.
+- Parse optional JSON inputs and preserve explicit null/empty values in generated writes.
+- Read every page in all five polling triggers; retain an ID ledger, migrate legacy cursors, reset on scope change, and leave state unchanged on incomplete/failed scans.
+- Reject malformed or stalled pagination; recognize native n8n HTTP error shapes and preserve validation error types/item indices.
+- Add five importable workflows, English/French setup guides, regression tests and real n8n execution tests against a local API simulator.
+- Registry sync removes the retired public Feature Requests resource (list/submit/upvote). Replace feature suggestions with Feedback → Send Product Feedback, category `idea`. Other resource/operation identifiers are unchanged.
+- Support requests derive the sender from the authenticated profile and work with both the previous and current support API contracts, without repeating an email send.
+
 ## 0.3.2 — 2026-09-16
 
 - Synchronize generated operations with the September 16, 2026 Aurentia registry: 90 resources and 1,687 operations.

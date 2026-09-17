@@ -8,13 +8,9 @@ import type {
 	IPollFunctions,
 	JsonObject,
 } from 'n8n-workflow';
-import { NodeApiError } from 'n8n-workflow';
+import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
-type AurentiaContext =
-	| IExecuteFunctions
-	| ILoadOptionsFunctions
-	| IPollFunctions
-	| IHookFunctions;
+type AurentiaContext = IExecuteFunctions | ILoadOptionsFunctions | IPollFunctions | IHookFunctions;
 
 /**
  * Resolve which credential this node instance uses, based on the
@@ -83,12 +79,13 @@ export async function aurentiaApiRequest(
 }
 
 function mapAurentiaError(context: AurentiaContext, error: JsonObject): NodeApiError {
-	const httpCode = String((error as IDataObject).httpCode ?? '');
+	const apiError = new NodeApiError(context.getNode(), error);
+	const httpCode = String((error as IDataObject).httpCode ?? apiError.httpCode ?? '');
 	const overrides: Record<string, { message: string; description: string }> = {
 		'401': {
 			message: 'Authentication did not succeed',
 			description:
-				'Check your Aurentia API key, or generate a new one under Settings > Integrations in Aurentia. Note that generating a new key revokes the old one.',
+				'Reconnect your Aurentia OAuth2 credential, or check your API key under Settings > Integrations in Aurentia.',
 		},
 		'402': {
 			message: 'Not enough Aurentia credits',
@@ -101,8 +98,7 @@ function mapAurentiaError(context: AurentiaContext, error: JsonObject): NodeApiE
 		},
 		'404': {
 			message: 'Resource not found in Aurentia',
-			description:
-				'Check the ID — the item may have been deleted or belongs to another project.',
+			description: 'Check the ID — the item may have been deleted or belongs to another project.',
 		},
 		'409': {
 			message: 'The request conflicts with existing data',
@@ -115,12 +111,93 @@ function mapAurentiaError(context: AurentiaContext, error: JsonObject): NodeApiE
 		},
 	};
 	const override = overrides[httpCode];
-	return override
-		? new NodeApiError(context.getNode(), error, override)
-		: new NodeApiError(context.getNode(), error);
+	// n8n returns an existing NodeApiError unchanged when wrapped a second time.
+	if (override) {
+		apiError.message = override.message;
+		apiError.description = override.description;
+	}
+	return apiError;
 }
 
-/** Paginate a page/limit endpoint (contacts, deals, posts) until `total` is reached. */
+/** Read every page, failing explicitly if the server returns an incomplete list. */
+async function requestList(
+	context: AurentiaContext,
+	endpoint: string,
+	qs: IDataObject,
+	returnAll: boolean,
+	limit: number,
+	kind: 'page' | 'offset',
+): Promise<IDataObject[]> {
+	if (!returnAll && (!Number.isInteger(limit) || limit < 1)) {
+		throw new NodeOperationError(context.getNode(), 'Limit must be a positive whole number');
+	}
+	const pageSize = Math.min(returnAll ? Infinity : limit, kind === 'page' ? 100 : 500);
+	const all: IDataObject[] = [];
+	const pages = new Set<string>();
+	for (let page = 1; page <= 10000; page++) {
+		const offset = (page - 1) * pageSize;
+		const res = await aurentiaApiRequest.call(
+			context,
+			'GET',
+			endpoint,
+			{},
+			{
+				...qs,
+				...(kind === 'page' ? { page } : { offset }),
+				limit: pageSize,
+			},
+		);
+		const items = res?.[kind === 'page' ? 'data' : 'records'];
+		const total = res?.total;
+		if (
+			!Array.isArray(items) ||
+			items.some((item) => !item || typeof item !== 'object' || Array.isArray(item)) ||
+			(total !== undefined &&
+				(typeof total !== 'number' || !Number.isSafeInteger(total) || total < 0))
+		) {
+			throw new NodeOperationError(context.getNode(), 'Aurentia returned an invalid list', {
+				description:
+					'The list could not be read completely. Retry the operation; no polling progress has been saved.',
+			});
+		}
+		if (items.length === 0) {
+			if (typeof total === 'number' && offset < total) {
+				throw new NodeOperationError(context.getNode(), 'Aurentia returned an incomplete list', {
+					description:
+						'A page is missing. Retry the operation; no polling progress has been saved.',
+				});
+			}
+			return all;
+		}
+		const signature = JSON.stringify(items.map((item) => item.id ?? item));
+		if (pages.has(signature)) {
+			throw new NodeOperationError(context.getNode(), 'Aurentia repeated a page of results', {
+				description:
+					'Pagination stopped to avoid an endless loop. Retry the operation; no polling progress has been saved.',
+			});
+		}
+		pages.add(signature);
+		all.push(...(items as IDataObject[]));
+		if (!returnAll && all.length >= limit) return all.slice(0, limit);
+		if (typeof total === 'number' && offset + items.length >= total) return all;
+		if (typeof total === 'number' && items.length < pageSize) {
+			throw new NodeOperationError(context.getNode(), 'Aurentia returned an incomplete list', {
+				description:
+					'A page contains fewer items than expected. Retry the operation; no polling progress has been saved.',
+			});
+		}
+	}
+	throw new NodeOperationError(
+		context.getNode(),
+		'The Aurentia list is too large for one execution',
+		{
+			description:
+				'Choose a smaller project or table. The 10,000-page limit was reached; no polling progress has been saved.',
+		},
+	);
+}
+
+/** Paginate page/limit endpoints (contacts, deals, posts). */
 export async function aurentiaApiRequestPaged(
 	this: AurentiaContext,
 	endpoint: string,
@@ -128,27 +205,10 @@ export async function aurentiaApiRequestPaged(
 	returnAll: boolean,
 	limit: number,
 ): Promise<IDataObject[]> {
-	const pageSize = returnAll ? 100 : Math.min(limit, 100);
-	const all: IDataObject[] = [];
-	let page = 1;
-	for (;;) {
-		const res = await aurentiaApiRequest.call(
-			this,
-			'GET',
-			endpoint,
-			{},
-			{ ...qs, page, limit: pageSize },
-		);
-		const items = (res.data as IDataObject[]) ?? [];
-		all.push(...items);
-		const total = typeof res.total === 'number' ? res.total : all.length;
-		if (!returnAll && all.length >= limit) return all.slice(0, limit);
-		if (all.length >= total || items.length === 0) return all;
-		page++;
-	}
+	return requestList(this, endpoint, qs, returnAll, limit, 'page');
 }
 
-/** Paginate the offset/limit records endpoint (bases). */
+/** Paginate offset/limit records endpoints (bases). */
 export async function aurentiaRecordsRequestPaged(
 	this: AurentiaContext,
 	tableId: string,
@@ -156,24 +216,12 @@ export async function aurentiaRecordsRequestPaged(
 	returnAll: boolean,
 	limit: number,
 ): Promise<IDataObject[]> {
-	const pageSize = returnAll ? 500 : Math.min(limit, 500);
-	const all: IDataObject[] = [];
-	let offset = 0;
-	for (;;) {
-		const res = await aurentiaApiRequest.call(
-			this,
-			'GET',
-			`/api/aurentia/bases/tables/${tableId}/records`,
-			{},
-			{ ...qs, offset, limit: pageSize },
-		);
-		// C18: the records endpoint returns `data: { records: [...], total }`
-		// (NOT `{ data, total }` like the page/limit endpoints).
-		const items = (res.records as IDataObject[]) ?? [];
-		all.push(...items);
-		const total = typeof res.total === 'number' ? res.total : all.length;
-		if (!returnAll && all.length >= limit) return all.slice(0, limit);
-		if (all.length >= total || items.length === 0) return all;
-		offset += pageSize;
-	}
+	return requestList(
+		this,
+		`/api/aurentia/bases/tables/${encodeURIComponent(tableId)}/records`,
+		qs,
+		returnAll,
+		limit,
+		'offset',
+	);
 }

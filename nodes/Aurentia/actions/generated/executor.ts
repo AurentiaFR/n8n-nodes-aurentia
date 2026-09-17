@@ -1,7 +1,7 @@
 /**
  * Generic executor for the AUTO-GENERATED resources.
  *
- * Hand-written (NOT generated): the ~766 generated operations are pure data
+ * Hand-written (NOT generated): the generated operations are pure data
  * (routeSpec + INodeProperties). This one function reads the parameter values
  * for the selected operation, substitutes path params, applies query params,
  * assembles the body, and calls the shared transport — mirroring exactly the
@@ -9,15 +9,15 @@
  * so the n8n node and the MCP/agents/bots behave identically:
  *
  *   - Path params: `{key}` in `routeSpec.path` is replaced by the value of the
- *     property named `key` (URL-encoded by the URL builder in the transport).
+ *     property named `key` (URL-encoded before calling the transport).
  *   - Query params: `routeSpec.queryParams` entries are `inputKey:queryKey`
  *     (bare when identical). The property named `inputKey` is sent under the
  *     query-string name `queryKey`. Empty values are omitted.
  *   - Body (POST/PATCH/PUT/DELETE-with-body): every remaining property that is
- *     NOT a path param and NOT a query param, plus the merged "Additional
+ *     NOT a path param and NOT a query param, including the "Additional
  *     Fields" collection, plus the static `routeSpec.body` (static wins).
  *   - `json`-typed properties (arrays/objects) are parsed with `jsonParse`, with
- *     a clean NodeOperationError on invalid JSON. Empty values are omitted.
+ *     a clean NodeOperationError on invalid JSON, also inside collections.
  */
 import type { IDataObject, IExecuteFunctions, INodeProperties } from 'n8n-workflow';
 import { jsonParse, NodeOperationError } from 'n8n-workflow';
@@ -39,10 +39,11 @@ function readValue(
 	ctx: IExecuteFunctions,
 	i: number,
 	prop: INodeProperties,
+	raw: unknown,
 ): unknown {
-	const raw = ctx.getNodeParameter(prop.name, i, undefined);
 	if (prop.type === 'json') {
-		if (raw === undefined || raw === null || raw === '') return undefined;
+		if (raw === undefined || raw === '') return undefined;
+		if (raw === null) return null;
 		if (typeof raw === 'object') return raw;
 		try {
 			return jsonParse(String(raw));
@@ -92,19 +93,29 @@ export async function executeGenerated(
 
 	const { routeSpec } = op;
 
-	// Classify the top-level properties by role. The "Additional Fields"
-	// collection (optional props) is handled separately from `additionalFields`.
-	const pathParamNames = new Set(
-		[...routeSpec.path.matchAll(/\{(\w+)\}/g)].map((m) => m[1]),
-	);
+	// Read each declared input once, wherever the generator placed it. Optional
+	// inputs live inside a collection, including query parameters and JSON.
+	const values: IDataObject = {};
+	for (const prop of op.properties) {
+		if (prop.name === 'additionalFields') {
+			const additional = this.getNodeParameter('additionalFields', i, {}) as IDataObject;
+			for (const field of (prop.options ?? []) as INodeProperties[]) {
+				if (!Object.prototype.hasOwnProperty.call(additional, field.name)) continue;
+				const value = readValue(this, i, field, additional[field.name]);
+				if (value !== undefined) values[field.name] = value as IDataObject[string];
+			}
+		} else {
+			const value = readValue(this, i, prop, this.getNodeParameter(prop.name, i, ''));
+			if (!isEmpty(value)) values[prop.name] = value as IDataObject[string];
+		}
+	}
+
+	const pathParamNames = new Set([...routeSpec.path.matchAll(/\{(\w+)\}/g)].map((m) => m[1]));
 	const queryPairs = routeSpec.queryParams.map(splitQueryParam);
 	const queryInputNames = new Set(queryPairs.map(([inputKey]) => inputKey));
-
-	// Substitute path params.
 	let path = routeSpec.path;
-	const topLevelProps = op.properties.filter((p) => p.name !== 'additionalFields');
 	for (const name of pathParamNames) {
-		const value = this.getNodeParameter(name, i, '') as string;
+		const value = values[name];
 		if (isEmpty(value)) {
 			throw new NodeOperationError(
 				this.getNode(),
@@ -112,48 +123,46 @@ export async function executeGenerated(
 				{ itemIndex: i },
 			);
 		}
-		path = path.replace(`{${name}}`, encodeURIComponent(String(value)));
+		path = path.split(`{${name}}`).join(encodeURIComponent(String(value)));
 	}
 
-	// Build query string.
 	const qs: IDataObject = {};
 	for (const [inputKey, queryKey] of queryPairs) {
-		const prop = topLevelProps.find((p) => p.name === inputKey);
-		const value = prop ? readValue(this, i, prop) : this.getNodeParameter(inputKey, i, undefined);
-		if (!isEmpty(value)) {
-			qs[queryKey] = value as IDataObject[string];
-		}
+		// Match MCP's URLSearchParams semantics, including comma-separated arrays.
+		if (!isEmpty(values[inputKey])) qs[queryKey] = String(values[inputKey]);
 	}
 
-	// Build body for write methods (everything not consumed as path/query).
 	const body: IDataObject = {};
-	if (routeSpec.method !== 'GET') {
-		for (const prop of topLevelProps) {
-			if (pathParamNames.has(prop.name) || queryInputNames.has(prop.name)) continue;
-			const value = readValue(this, i, prop);
-			if (!isEmpty(value)) body[prop.name] = value as IDataObject[string];
+	for (const [key, value] of Object.entries(values)) {
+		if (pathParamNames.has(key) || queryInputNames.has(key)) continue;
+		if (routeSpec.method === 'GET') {
+			if (!isEmpty(value)) qs[key] = String(value);
+		} else {
+			// An explicitly selected optional empty string/null clears a field.
+			// Absent collection fields remain absent; false and zero are preserved.
+			body[key] = value;
 		}
-
-		// Merge the "Additional Fields" collection (optional props), omitting
-		// empty values. Collection values arrive already parsed by n8n.
-		const additional = this.getNodeParameter('additionalFields', i, {}) as IDataObject;
-		for (const [key, value] of Object.entries(additional)) {
-			if (!isEmpty(value)) body[key] = value;
+	}
+	if (routeSpec.method !== 'GET' && routeSpec.body) {
+		Object.assign(body, routeSpec.body);
+	}
+	// Older API deployments require sender fields; newer ones derive them
+	// server-side and ignore these keys. Use the authenticated profile in both
+	// cases, without asking for identity again or retrying a message send.
+	if (routeSpec.method === 'POST' && path === '/api/help/support-request') {
+		const profile = await aurentiaApiRequest.call(this, 'GET', '/api/account/profile');
+		if (typeof profile.email !== 'string' || !profile.email.trim()) {
+			throw new NodeOperationError(this.getNode(), 'Your account email could not be read', {
+				description: 'Check your Aurentia profile and reconnect the credential before retrying.',
+				itemIndex: i,
+			});
 		}
-
-		// Static author-defined body fields win over caller input (they define
-		// the semantic identity of the operation, e.g. { action: 'star' }).
-		if (routeSpec.body) {
-			for (const [key, value] of Object.entries(routeSpec.body)) {
-				body[key] = value as IDataObject[string];
-			}
-		}
-	} else {
-		// GET can still carry optional filters via "Additional Fields" → query.
-		const additional = this.getNodeParameter('additionalFields', i, {}) as IDataObject;
-		for (const [key, value] of Object.entries(additional)) {
-			if (!isEmpty(value)) qs[key] = value as IDataObject[string];
-		}
+		body.fromEmail = profile.email.trim();
+		const name = [profile.firstName, profile.lastName]
+			.filter((part): part is string => typeof part === 'string' && Boolean(part.trim()))
+			.map((part) => part.trim())
+			.join(' ');
+		body.fromName = (name || body.fromEmail).slice(0, 100);
 	}
 
 	return aurentiaApiRequest.call(this, routeSpec.method, path, body, qs);

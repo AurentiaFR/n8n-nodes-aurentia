@@ -10,6 +10,8 @@ Aurentia is the AI-native business OS for entrepreneurs — CRM, tasks, database
 [Operations](#operations)
 [Credentials](#credentials)
 [Compatibility](#compatibility)
+[Ready-to-import workflows](docs/WORKFLOWS.md) · [Guide français](docs/WORKFLOWS.fr.md)
+
 [Usage](#usage)
 [AI Agent tool usage](#ai-agent-tool-usage)
 [Trigger](#trigger)
@@ -42,7 +44,7 @@ Seven hand-built resources with the richest UX (searchable resource pickers, "Si
 
 ### Full Aurentia coverage
 
-Beyond the curated core, the node exposes **the entire Aurentia API** — every capability available to Aurentia's own AI agents and bots is available here too. These operations are generated from Aurentia's internal tool registry, so the node always mirrors the live product. Current coverage: **58 additional resources, 766 operations**, including:
+Beyond the curated core, the node exposes **the Aurentia tool registry** used by its AI agents and bots. These operations are generated from Aurentia's internal tool registry, so rebuilding and publishing a release synchronizes its catalog with the product. Registry coverage is checked by `npm run coverage:audit`; it is not a claim that every operation has been tested against a live account. Available domains include:
 
 Agents · Assistant & conversations · Automations · Booking & calendar · Brand DNA & brand identity · Clips · Close (sales calls) · Collaborators · CRM (advanced) · Dashboard · Drive · Email · Finance & forecasting · Forms · Import · Integrations · Marketplace · Missions · Modules · Notes · Notifications · Playbooks · Projects (advanced, incl. create) · Prospection · Quotes & contracts · Recommended tools · Resources · Routines · Site builder · Social media (advanced) · Tasks (advanced) · Tools · Whiteboards · Workspace databases · and more.
 
@@ -58,7 +60,7 @@ You need an Aurentia account. The node offers two authentication methods (select
 2. Generate an API key (starts with `aur_`). It is shown once — copy it.
 3. In n8n, create an **Aurentia API** credential and paste the key.
 
-The **Base URL** defaults to `https://app.aurentia.fr` and normally does not need changing (use `http://app.localhost:3000` only for local development).
+The **Base URL** defaults to `https://entrepreneurs.aurentia.fr` and normally does not need changing (use `http://app.localhost:3000` only for local development).
 
 ### OAuth2 (no key to copy/paste)
 
@@ -69,7 +71,7 @@ Both methods carry the same permissions — an Aurentia credential can access ev
 
 ## Compatibility
 
-Tested against n8n **2.x**. Requires Node.js 22+.
+The workflow templates are exercised in n8n **2.39.7** against a local API simulator (API-key and OAuth bearer credentials). Requires Node.js 22+.
 
 For **AI Agent tool usage**: on n8n 2.x no extra configuration is needed. On n8n 1.x (>= 1.79), set `N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true` on the instance.
 
@@ -103,7 +105,9 @@ The **Aurentia Trigger** node polls Aurentia and starts your workflow on:
 
 - New Contact, New Deal, New Task, New Base Record, Post Published.
 
-Polling means latency equals your poll interval; each poll inspects the most recent items and de-duplicates against what it has already emitted. Items created and deleted between two polls are not seen.
+Polling latency depends on your interval and the time needed to read the source. Activation establishes a baseline; later polls read **all pages** and emit unseen IDs. Failed/incomplete scans never advance progress. The ID ledger is retained across polls and resets when you change the watched scope. Manual tests return the latest sample without changing progress.
+
+API requests scale with source size and stored state scales with observed IDs. Items created and deleted between polls remain invisible, and already observed post IDs are not emitted again on republication. See [polling and retry behavior](docs/WORKFLOWS.md#polling-and-retries).
 
 ## Resources
 
@@ -118,7 +122,9 @@ npm run dev          # builds + runs a local n8n on :5678 with the node loaded (
 npm run lint         # official n8n community-node linter
 npm run build        # compile + copy icons into dist/
 npm run generate     # regenerate the full-coverage operations from the Aurentia tool registry
-npm run generate:check   # generate + determinism + build + validate + executor tests
+npm run generate:check   # determinism + build + catalog + all unit/contract tests
+npm test                # run after build; includes trigger and template regressions
+npm run test:e2e         # real n8n engine + local HTTP simulator (downloads n8n if needed)
 ```
 
 The curated resources live in `nodes/Aurentia/actions/<resource>/`; the generated ones in `nodes/Aurentia/actions/generated/` (do not edit by hand — run `npm run generate`).

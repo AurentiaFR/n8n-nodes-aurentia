@@ -1,6 +1,6 @@
 {
 	"name": "@aurentiaai/n8n-nodes-aurentia",
-	"version": "0.3.2",
+	"version": "0.4.0",
 	"description": "n8n community node for Aurentia — the AI-native business OS for entrepreneurs (CRM, tasks, databases, social media, projects)",
 	"license": "MIT",
 	"homepage": "https://aurentia.fr",
@@ -45,10 +45,15 @@
 		"test:executor": "node scripts/test-executor.mjs",
 		"test:invariants": "node scripts/test-generated-invariants.mjs",
 		"release": "n8n-node release",
-		"prepublishOnly": "n8n-node prerelease"
+		"prepublishOnly": "n8n-node prerelease",
+		"test:runtime": "node --test scripts/test-runtime.mjs scripts/test-workflows.mjs",
+		"test": "npm run test:executor && npm run test:invariants && npm run test:runtime",
+		"test:e2e": "node scripts/test-e2e.mjs"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"examples",
+		"docs"
 	],
 	"n8n": {
 		"n8nNodesApiVersion": 1,

@@ -1,0 +1,218 @@
+{
+  "name": "Aurentia — Lead form → contact → deal → task",
+  "nodes": [
+    {
+      "id": "ac8015fd-eb65-52f2-a88a-9e2305229735",
+      "name": "Lead form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "formTitle": "Contact / Prise de contact",
+        "formDescription": "Tell us about your project / Parlez-nous de votre projet",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Company"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "webhookId": "49ba5015-e652-5f03-8194-062db6cb4a90"
+    },
+    {
+      "id": "6d60ae00-5bed-5ea0-9c8a-aa56ea7dedea",
+      "name": "Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "79f6cfd9-4030-5485-a08f-f813de287095",
+              "name": "projectId",
+              "value": "00000000-0000-0000-0000-000000000001",
+              "type": "string"
+            },
+            {
+              "id": "ce950513-ad17-5d1c-85c4-0752cc59bba2",
+              "name": "boardId",
+              "value": "00000000-0000-0000-0000-000000000002",
+              "type": "string"
+            },
+            {
+              "id": "a9cae339-44e8-5a44-b3ac-1f45609b76b9",
+              "name": "columnId",
+              "value": "00000000-0000-0000-0000-000000000003",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "a7646244-3078-5bec-9345-f7f09ae408ef",
+      "name": "Create contact",
+      "type": "@aurentiaai/n8n-nodes-aurentia.aurentia",
+      "typeVersion": 1,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "authentication": "apiKey",
+        "resource": "contact",
+        "operation": "create",
+        "projectId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Configuration').first().json.projectId }}"
+        },
+        "firstName": "={{ $('Lead form').first().json.Name }}",
+        "company": "={{ $('Lead form').first().json.Company || '' }}",
+        "additionalFields": {
+          "email": "={{ $('Lead form').first().json.Email }}"
+        }
+      }
+    },
+    {
+      "id": "1ee2c832-dc60-5a9a-a1f5-f558ab5bbbd2",
+      "name": "Create deal",
+      "type": "@aurentiaai/n8n-nodes-aurentia.aurentia",
+      "typeVersion": 1,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "authentication": "apiKey",
+        "resource": "deal",
+        "operation": "create",
+        "projectId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Configuration').first().json.projectId }}"
+        },
+        "contactId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "title": "={{ 'Follow up / Recontacter : ' + $('Lead form').first().json.Name }}",
+        "additionalFields": {}
+      }
+    },
+    {
+      "id": "33db2c74-5578-579e-819b-0ae31cd08523",
+      "name": "Create follow-up task",
+      "type": "@aurentiaai/n8n-nodes-aurentia.aurentia",
+      "typeVersion": 1,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "authentication": "apiKey",
+        "resource": "task",
+        "operation": "create",
+        "boardId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Configuration').first().json.boardId }}"
+        },
+        "columnId": "={{ $('Configuration').first().json.columnId }}",
+        "title": "={{ 'Follow up / Recontacter : ' + $('Lead form').first().json.Name }}",
+        "additionalFields": {
+          "description": "={{ 'Contact: ' + $('Create contact').first().json.id + '\\nDeal: ' + $json.id }}"
+        }
+      }
+    },
+    {
+      "id": "6d3898fe-88e9-56e4-8d25-6d8fa67e4908",
+      "name": "Read me / À lire",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -360
+      ],
+      "parameters": {
+        "content": "## Setup / Configuration\nSelect an Aurentia credential on all 3 action nodes. Replace project/board/column IDs in Configuration, then test the form. One submission creates one contact, deal and task. Replaying a successful submission creates duplicates.\n\nSélectionnez vos identifiants Aurentia sur les 3 actions, puis renseignez projet, tableau et colonne dans Configuration. Testez le formulaire. Rejouer une soumission réussie crée des doublons.",
+        "width": 640,
+        "height": 320
+      }
+    }
+  ],
+  "connections": {
+    "Lead form": {
+      "main": [
+        [
+          {
+            "node": "Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuration": {
+      "main": [
+        [
+          {
+            "node": "Create contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create contact": {
+      "main": [
+        [
+          {
+            "node": "Create deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create deal": {
+      "main": [
+        [
+          {
+            "node": "Create follow-up task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "pinData": {},
+  "tags": []
+}
