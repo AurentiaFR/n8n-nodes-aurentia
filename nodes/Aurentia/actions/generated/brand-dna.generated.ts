@@ -160,15 +160,23 @@ export const brandDnaResource: GeneratedResource = {
 		{
 			value: 'downloadPressKitPdf',
 			name: 'Download Press Kit PDF',
-			action: 'Render the SAVED press kit as an A4 PDF (attachment)',
-			description: 'Render the SAVED press kit as an A4 PDF (attachment). FREE, no credit: the generation was already billed, downloading the same deliverable again is not re-charged. Fails with 404 if no press kit was generated yet — call `get_press_kit` first. Requires the `view` permission on the brand.',
-			routeSpec: {"method":"GET","path":"/api/aurentia/brand-dna/press-kit/pdf","queryParams":["project_id:projectId"]},
+			action: 'Render ONE press release (by `note_id`, from `get_press_kit`) as an A4 PDF (attachment), as it currently stands in the editor',
+			description: 'Render ONE press release (by `note_id`, from `get_press_kit`) as an A4 PDF (attachment), as it currently stands in the editor. FREE, no credit. Fails with 404 if the ID is not a press release of this project, 400 if the document is empty. Requires the `view` permission on the brand. (Historic tool name.)',
+			routeSpec: {"method":"GET","path":"/api/aurentia/brand-dna/press-kit/pdf","queryParams":["project_id:projectId","note_id:noteId"]},
 			properties: [
 				{
 					displayName: 'Project ID',
 					name: 'project_id',
 					type: 'string',
 					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Note ID',
+					name: 'note_id',
+					type: 'string',
+					required: true,
+					description: 'Press release ID (from get_press_kit)',
 					default: '',
 				}
 			],
@@ -215,8 +223,8 @@ export const brandDnaResource: GeneratedResource = {
 		{
 			value: 'generatePressKit',
 			name: 'Generate Press Kit',
-			action: 'Generate a PRESS KIT (dossier de presse) in markdown from the project\'s brand DNA and brand kit — boilerplate, story, key facts, quotes, contact',
-			description: 'Generate a PRESS KIT (dossier de presse) in markdown from the project\'s brand DNA and brand kit — boilerplate, story, key facts, quotes, contact. COSTS 150 CREDITS per call (PRESS_KIT_CREDITS, priced 2026-09-06), refunded if the model produces nothing. The markdown IS STORED on the brand and survives a reload: ALWAYS call `get_press_kit` first and reuse what comes back — regenerating costs the full 150 credits again and produces a different text. Only generate when there is none, or when the person explicitly asks for a new one. Make sure `get_brand_dna` is reasonably filled first: an empty DNA gives a generic kit for the same price. Requires the `generate` permission on the project\'s brand.',
+			action: 'Write ONE PRESS RELEASE (communiqué de presse) from an announcement, using the project\'s brand DNA as context — standard structure: headline, lead, body, quote, boilerplate, press contact',
+			description: 'Write ONE PRESS RELEASE (communiqué de presse) from an announcement, using the project\'s brand DNA as context — standard structure: headline, lead, body, quote, boilerplate, press contact. COSTS 50 CREDITS per call (PRESS_RELEASE_CREDITS, priced 2026-09-25), refunded if nothing is delivered. Each call CREATES A NEW editable document (a note `kind=press_release`) — it NEVER overwrites an existing release; returns `{ noteId, title }`. `announcement` is required (what is being announced, any length); `facts` (dates, figures, partners, quotes — never invented by the model) and `targetMedia` are optional. Call `get_press_kit` first: if a release for the same announcement already exists, edit it (`update_note` on its ID) instead of paying for a new one. Requires the `generate` permission on the project\'s brand. (Historic tool name: it used to produce a single press kit.)',
 			routeSpec: {"method":"POST","path":"/api/aurentia/brand-dna/press-kit","queryParams":[]},
 			properties: [
 				{
@@ -225,6 +233,37 @@ export const brandDnaResource: GeneratedResource = {
 					type: 'string',
 					required: true,
 					default: '',
+				},
+				{
+					displayName: 'Announcement',
+					name: 'announcement',
+					type: 'string',
+					required: true,
+					description: 'What is being announced (required, max 2000 chars)',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Facts',
+							name: 'facts',
+							type: 'string',
+							description: 'Verifiable facts: dates, figures, places, partners, quotes (optional, max 2000 chars)',
+							default: '',
+						},
+						{
+							displayName: 'Target Media',
+							name: 'targetMedia',
+							type: 'string',
+							description: 'Target media / readership, e.g. local press, tech blogs (optional, max 500 chars)',
+							default: '',
+						},
+					],
 				}
 			],
 		},
@@ -247,8 +286,8 @@ export const brandDnaResource: GeneratedResource = {
 		{
 			value: 'getPressKit',
 			name: 'Get Press Kit',
-			action: 'The PRESS KIT already generated and SAVED on the project\'s brand (markdown + generation date), or `{ pressKit: null }` if none was ever produced',
-			description: 'The PRESS KIT already generated and SAVED on the project\'s brand (markdown + generation date), or `{ pressKit: null }` if none was ever produced. FREE, no credit: read this BEFORE `generate_press_kit`, which bills 150 credits for a brand-new text. Requires the `view` permission on the project\'s brand.',
+			action: 'The project\'s PRESS RELEASES (communiqués de presse): `{ pressReleases: [{ ID, title, createdAt, updatedAt }] }`, most recent first, `[]` if none',
+			description: 'The project\'s PRESS RELEASES (communiqués de presse): `{ pressReleases: [{ ID, title, createdAt, updatedAt }] }`, most recent first, `[]` if none. FREE, no credit: read this BEFORE `generate_press_kit`, which bills 50 credits per new release. Each ID is a note: read its full text with `get_note`, edit it with `update_note`, export it with `download_press_kit_pdf`. Requires the `view` permission on the project\'s brand. (Historic tool name: it used to return a single press kit.)',
 			routeSpec: {"method":"GET","path":"/api/aurentia/brand-dna/press-kit","queryParams":["project_id:projectId"]},
 			properties: [
 				{

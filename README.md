@@ -134,3 +134,7 @@ The curated resources live in `nodes/Aurentia/actions/<resource>/`; the generate
 ### 0.1.0
 
 - Initial release. Two nodes (**Aurentia**, **Aurentia Trigger**), API key + OAuth2 authentication, curated core (7 resources) plus full generated coverage (58 resources / 766 operations), `usableAsTool` support.
+
+### Usage measurement
+
+Requests from this node identify the integration as `n8n` and classify their purpose as `operation`, `poll` or `setup`. Aurentia records this only after successful Bearer authentication, without workflow names, payloads or credentials. These are API requests, not successful workflows: pagination and polling can create multiple requests. Older clients remain visible with an unspecified purpose. No additional network request or LLM invocation is added by the node.

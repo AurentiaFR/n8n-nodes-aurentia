@@ -57,6 +57,7 @@ export async function aurentiaApiRequest(
 		headers: {
 			'Content-Type': 'application/json',
 			'X-Aurentia-Integration': 'n8n',
+			'X-Aurentia-Request-Purpose': 'getInputData' in this ? 'operation' : '__emit' in this ? 'poll' : 'setup',
 		},
 		qs,
 		json: true,

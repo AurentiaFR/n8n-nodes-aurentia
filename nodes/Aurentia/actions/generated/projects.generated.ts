@@ -64,7 +64,7 @@ export const projectsResource: GeneratedResource = {
 					name: 'instanceKey',
 					type: 'string',
 					required: true,
-					description: 'Instance UUID, or null',
+					description: 'Instance UUID, or null; always null for modele-economique (one business model per project)',
 					default: '',
 				},
 				{
@@ -1275,7 +1275,7 @@ export const projectsResource: GeneratedResource = {
 							displayName: 'Instance Label',
 							name: 'instanceLabel',
 							type: 'string',
-							description: 'Label for this run when the category is generated several times (e.g. one per market), max 200 characters',
+							description: 'Label for a repeatable category run (e.g. one per market), max 200 characters; omit for modele-economique, which is project-level',
 							default: '',
 						},
 					],
@@ -1309,7 +1309,7 @@ export const projectsResource: GeneratedResource = {
 					name: 'instanceKey',
 					type: 'string',
 					required: true,
-					description: 'Instance UUID, or null',
+					description: 'Instance UUID, or null; always null for modele-economique (one business model per project)',
 					default: '',
 				},
 				{
@@ -1517,7 +1517,7 @@ export const projectsResource: GeneratedResource = {
 							displayName: 'Instance Key',
 							name: 'instanceKey',
 							type: 'string',
-							description: 'Instance UUID when the category is repeatable; omit or null otherwise',
+							description: 'Instance UUID when the category is repeatable; omit or null for modele-economique and other project-level categories',
 							default: '',
 						},
 						{

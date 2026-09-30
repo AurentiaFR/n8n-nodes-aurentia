@@ -498,6 +498,7 @@ export const assistantResource: GeneratedResource = {
 								{ name: 'Phoning', value: 'phoning' },
 								{ name: 'Plan', value: 'plan' },
 								{ name: 'Previsionnel', value: 'previsionnel' },
+								{ name: 'Private Vault', value: 'privateVault' },
 								{ name: 'Projects', value: 'projects' },
 								{ name: 'Prospection', value: 'prospection' },
 								{ name: 'Reseau', value: 'reseau' },

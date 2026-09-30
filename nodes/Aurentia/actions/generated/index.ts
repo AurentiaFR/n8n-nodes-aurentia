@@ -74,6 +74,7 @@ import { ragResource } from './rag.generated';
 import { recommendedToolsResource } from './recommended-tools.generated';
 import { routingResource } from './routing.generated';
 import { schedulingResource } from './scheduling.generated';
+import { sharedAccessResource } from './shared-access.generated';
 import { sharingPreferencesResource } from './sharing-preferences.generated';
 import { signaturesResource } from './signatures.generated';
 import { siteWebResource } from './site-web.generated';
@@ -168,6 +169,7 @@ export const GENERATED_RESOURCES: GeneratedResource[] = [
 	recommendedToolsResource,
 	routingResource,
 	schedulingResource,
+	sharedAccessResource,
 	sharingPreferencesResource,
 	signaturesResource,
 	siteWebResource,

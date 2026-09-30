@@ -38,6 +38,7 @@ export function pollingContext(params, request, state = {}, mode = 'trigger') {
 		return options?.extractValue && typeof value === 'object' ? value.value : value;
 	};
 	context.getWorkflowStaticData = () => state;
+	context.__emit = () => undefined;
 	context.getMode = () => mode;
 	return { context, requests, state };
 }

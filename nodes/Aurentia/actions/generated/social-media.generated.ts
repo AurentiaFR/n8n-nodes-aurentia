@@ -907,6 +907,33 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'copyCarousel',
+			name: 'Copy Carousel',
+			action: 'Make an independent editable copy',
+			description: 'Make an independent editable copy. No AI charge. No associated post is copied.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Action',
+					name: 'action',
+					type: 'options',
+					required: true,
+					default: 'copy',
+					options: [
+						{ name: 'Copy', value: 'copy' },
+					],
+				}
+			],
+		},
+		{
 			value: 'createAutoReply',
 			name: 'Create Auto Reply',
 			action: 'Create a new project-scoped DM auto-reply rule',
@@ -1605,8 +1632,8 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'createPostFromCarousel',
 			name: 'Create Post From Carousel',
-			action: '« Publier avec ce carrousel » : crée un post BROUILLON au format carrousel à partir d\'un carrousel rendu — plateformes = les réseaux cibles du carrousel, légende = la caption IA du carrousel, médias = toutes les slides rendues',
-			description: '« Publier avec ce carrousel » : crée un post BROUILLON au format carrousel à partir d\'un carrousel rendu — plateformes = les réseaux cibles du carrousel, légende = la caption IA du carrousel, médias = toutes les slides rendues. Rend `{ postId }`. Appelle-le quand l\'utilisateur veut poster le carrousel qu\'il vient de valider ; ensuite, relis le post (`get_post`), ajuste la légende si besoin (`update_post`), puis programme (`schedule_post`) ou publie (`publish_post_now`) — cet outil NE publie PAS. Impose un carrousel en statut `ready` avec au moins une image rendue et un projet associé (400 sinon). Si l\'utilisateur a DÉJÀ un post en cours et veut y greffer le carrousel, utilise `attach_carousel_to_post` à la place. La légende est marquée d\'origine IA (AI Act art. 50).',
+			action: 'Create or retrieve one draft from the approved current formats',
+			description: 'Create or retrieve one draft from the approved current formats. Set reuseSource to attach to the editable source post. Existing captions are preserved. No publication.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels/{id}/create-post","queryParams":[]},
 			properties: [
 				{
@@ -1614,8 +1641,37 @@ export const socialMediaResource: GeneratedResource = {
 					name: 'id',
 					type: 'string',
 					required: true,
-					description: 'UUID du carrousel rendu (statut ready)',
+					description: 'The ID for this operation',
 					default: '',
+				},
+				{
+					displayName: 'Expected Revision',
+					name: 'expectedRevision',
+					type: 'number',
+					required: true,
+					default: 0,
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Caption',
+							name: 'caption',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Reuse Source',
+							name: 'reuseSource',
+							type: 'boolean',
+							description: 'Whether to enable reuse source',
+							default: false,
+						},
+					],
 				}
 			],
 		},
@@ -2383,8 +2439,8 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'deployCarousel',
 			name: 'Deploy Carousel',
-			action: 'Deploy an already-validated carousel by declining it into the other image formats — one format per network',
-			description: 'Deploy an already-validated carousel by declining it into the other image formats — one format per network. Free — no credits, no AI call.',
+			action: 'Render the approved version into all target network formats',
+			description: 'Render the approved version into all target network formats. Free and idempotent.',
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels/{id}/deploy","queryParams":[]},
 			properties: [
 				{
@@ -2636,6 +2692,54 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'exportSavedCarousel',
+			name: 'Export Saved Carousel',
+			action: 'Export approved saved carousel formats as PDF or a ZIP of PNG slides',
+			description: 'Export approved saved carousel formats as PDF or a ZIP of PNG slides. Current revision only; no AI charge. Returns a download URL.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels/pdf","queryParams":[]},
+			properties: [
+				{
+					displayName: 'Carousel ID',
+					name: 'carouselId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Revision',
+					name: 'revision',
+					type: 'number',
+					required: true,
+					default: 0,
+				},
+				{
+					displayName: 'Ratio',
+					name: 'ratio',
+					type: 'options',
+					required: true,
+					default: '1:1',
+					options: [
+						{ name: '1:1', value: '1:1' },
+						{ name: '1.91:1', value: '1.91:1' },
+						{ name: '2:3', value: '2:3' },
+						{ name: '4:5', value: '4:5' },
+						{ name: '9:16', value: '9:16' },
+					],
+				},
+				{
+					displayName: 'Format',
+					name: 'format',
+					type: 'options',
+					required: true,
+					default: 'pdf',
+					options: [
+						{ name: 'PDF', value: 'pdf' },
+						{ name: 'Png', value: 'png' },
+					],
+				}
+			],
+		},
+		{
 			value: 'fetchRssFeedNow',
 			name: 'Fetch Rss Feed Now',
 			action: 'Trigger an immediate project-scoped RSS fetch (max 25 items)',
@@ -2763,14 +2867,6 @@ export const socialMediaResource: GeneratedResource = {
 			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels","queryParams":[]},
 			properties: [
 				{
-					displayName: 'Brief',
-					name: 'brief',
-					type: 'string',
-					required: true,
-					description: 'What the carousel should communicate',
-					default: '',
-				},
-				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
 					type: 'collection',
@@ -2783,6 +2879,13 @@ export const socialMediaResource: GeneratedResource = {
 							type: 'boolean',
 							description: 'Whether to enable aurentia footer',
 							default: false,
+						},
+						{
+							displayName: 'Brief',
+							name: 'brief',
+							type: 'string',
+							description: 'What the carousel should communicate. Required only when no `source` is given (or when source.type is inline).',
+							default: '',
 						},
 						{
 							displayName: 'Locale',
@@ -2800,6 +2903,13 @@ export const socialMediaResource: GeneratedResource = {
 							type: 'string',
 							description: 'Identifiant du Thème dont le carrousel hérite réseaux, palette, gabarits et slides épinglées',
 							default: '',
+						},
+						{
+							displayName: 'Source',
+							name: 'source',
+							type: 'json',
+							description: 'Where the carousel comes from. Send a REFERENCE, never the content: the server re-reads the post or the idea itself, in your scope. Omit it and the free-text `brief` is used, exactly as before. (provide a JSON object)',
+							default: '{}',
 						},
 						{
 							displayName: 'Source Asset IDs',
@@ -4336,6 +4446,56 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getSocialConnectionContext',
+			name: 'Get Social Connection Context',
+			action: 'Read existing business facts before connecting social accounts or asking onboarding questions',
+			description: 'Read existing business facts before connecting social accounts or asking onboarding questions. Returns activity, offer, audience, positioning and catalogue prices when known. Prices are not average customer spend or revenue. Free, read-only.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/bundle-social/connect","queryParams":["projectId"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					description: 'Authorized scope UUID',
+					default: '',
+				}
+			],
+		},
+		{
+			value: 'getSocialContact',
+			name: 'Get Social Contact',
+			action: 'Read one social CRM contact with paginated inbound and outbound interaction history',
+			description: 'Read one social CRM contact with paginated inbound and outbound interaction history. Pro or Scale required. Reuse nextCursor to continue.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/contacts/{id}","queryParams":["cursor"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'Social contact UUID from list_social_contacts',
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Cursor',
+							name: 'cursor',
+							type: 'string',
+							description: 'NextCursor returned by the previous page',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'getSocialInsights',
 			name: 'Get Social Insights',
 			action: 'READS the latest stored AI "what is working" analysis: summary, best platform, winning patterns, recommendations, plus `windowDays` (the window it actually analysed) and `generatedAt`',
@@ -4639,12 +4799,92 @@ export const socialMediaResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'listCarouselSources',
+			name: 'List Carousel Sources',
+			action: 'Read scoped carousel sources and their stable references',
+			description: 'Read scoped carousel sources and their stable references',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/carousels/sources","queryParams":["projectId","type","search","limit","cursor","postId","completionId","itemKey"]},
+			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Completion ID',
+							name: 'completionId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Cursor',
+							name: 'cursor',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Item Key',
+							name: 'itemKey',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Limit',
+							name: 'limit',
+							type: 'number',
+							description: 'Max number of results to return',
+							typeOptions: { minValue: 1 },
+							default: 50,
+						},
+						{
+							displayName: 'Post ID',
+							name: 'postId',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Search',
+							name: 'search',
+							type: 'string',
+							default: '',
+						},
+						{
+							displayName: 'Type',
+							name: 'type',
+							type: 'options',
+							default: 'idea',
+							options: [
+								{ name: 'Idea', value: 'idea' },
+								{ name: 'Post', value: 'post' },
+							],
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'listCarousels',
 			name: 'List Carousels',
-			action: 'List the caller\'s AI-generated carousels (most recent first)',
-			description: 'List the caller\'s AI-generated carousels (most recent first)',
-			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/carousels","queryParams":["limit"]},
+			action: 'Read scoped carousel library, with search and offset pagination',
+			description: 'Read scoped carousel library, with search and offset pagination',
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/carousels","queryParams":["projectId","limit","offset","search"]},
 			properties: [
+				{
+					displayName: 'Project ID',
+					name: 'projectId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
 				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
@@ -4659,6 +4899,18 @@ export const socialMediaResource: GeneratedResource = {
 							description: 'Max number of results to return',
 							typeOptions: { minValue: 1 },
 							default: 50,
+						},
+						{
+							displayName: 'Offset',
+							name: 'offset',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Search',
+							name: 'search',
+							type: 'string',
+							default: '',
 						},
 					],
 				}
@@ -5191,7 +5443,7 @@ export const socialMediaResource: GeneratedResource = {
 			name: 'List Social Contacts',
 			action: 'Le CRM SOCIAL d\'un compte Aurentia : les personnes qui interagissent avec les comptes reliés (commentateurs récurrents, auteurs de DM, mentions), avec leur `ID`, leur plateforme, leur pseudo, leur `lead_score`, leur `state` et la date de dernière interaction',
 			description: 'Le CRM SOCIAL d\'un compte Aurentia : les personnes qui interagissent avec les comptes reliés (commentateurs récurrents, auteurs de DM, mentions), avec leur `ID`, leur plateforme, leur pseudo, leur `lead_score`, leur `state` et la date de dernière interaction. C\'EST LE SEUL OUTIL QUI REND L\'IDENTIFIANT que `update_social_contact` et `promote_social_contact_to_crm` exigent : appelle-le avant l\'un ou l\'autre, ne devine jamais un UUID de contact social. `state` filtre (`new` = jamais trié, `active` = suivi, `ignored` = écarté), `platform` restreint à un réseau, `sort` ordonne par `lead_score` (défaut, les plus chauds d\'abord) ou `last_seen_at` (les plus récents). Pagination par curseur : `limit` (1-100, défaut 30) et `cursor` = le `nextCursor` de la page précédente — un curseur inventé est refusé en 400, ne le fabrique pas. Ces contacts vivent dans l\'univers social ; ceux du CRM commercial se lisent avec `list_contacts`.',
-			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/contacts","queryParams":["platform","state","sort","cursor","limit"]},
+			routeSpec: {"method":"GET","path":"/api/aurentia/social-media/contacts","queryParams":["platform","state","sort","cursor","limit","search","segment"]},
 			properties: [
 				{
 					displayName: 'Additional Fields',
@@ -5221,6 +5473,25 @@ export const socialMediaResource: GeneratedResource = {
 							type: 'string',
 							description: 'Clé minuscule du réseau (instagram, linkedin, tiktok…) pour ne garder que celui-là',
 							default: '',
+						},
+						{
+							displayName: 'Search',
+							name: 'search',
+							type: 'string',
+							description: 'Search a name or handle',
+							default: '',
+						},
+						{
+							displayName: 'Segment',
+							name: 'segment',
+							type: 'options',
+							description: 'Interest score >= 80, not yet in CRM, or already in CRM',
+							default: 'hot',
+							options: [
+								{ name: 'Hot', value: 'hot' },
+								{ name: 'Pending', value: 'pending' },
+								{ name: 'Promoted', value: 'promoted' },
+							],
 						},
 						{
 							displayName: 'Sort',
@@ -6039,6 +6310,83 @@ export const socialMediaResource: GeneratedResource = {
 					required: true,
 					description: 'UUID du projet CRM de destination',
 					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Existing Contact ID',
+							name: 'existingContactId',
+							type: 'string',
+							description: 'Optional existing CRM contact UUID in the destination project/agency; enrich and link it without creating a duplicate',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'proposeCarouselCaption',
+			name: 'Propose Carousel Caption',
+			action: 'Generate a caption proposal with the canonical social writing service (1 credit)',
+			description: 'Generate a caption proposal with the canonical social writing service (1 credit). Never replaces a post. Poll the returned generationId.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/social-media/carousels/{id}","queryParams":[]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					description: 'The ID for this operation',
+					default: '',
+				},
+				{
+					displayName: 'Action',
+					name: 'action',
+					type: 'options',
+					required: true,
+					default: 'caption',
+					options: [
+						{ name: 'Caption', value: 'caption' },
+					],
+				},
+				{
+					displayName: 'Operation ID',
+					name: 'operationId',
+					type: 'string',
+					required: true,
+					description: 'UUID reused verbatim after network errors',
+					default: '',
+				},
+				{
+					displayName: 'Revision',
+					name: 'revision',
+					type: 'number',
+					required: true,
+					default: 0,
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Locale',
+							name: 'locale',
+							type: 'options',
+							default: 'en',
+							options: [
+								{ name: 'En', value: 'en' },
+								{ name: 'Fr', value: 'fr' },
+							],
+						},
+					],
 				}
 			],
 		},
@@ -9068,8 +9416,8 @@ export const socialMediaResource: GeneratedResource = {
 		{
 			value: 'updateCarouselDesigns',
 			name: 'Update Carousel Designs',
-			action: 'Sauvegarde des slides éditées d\'un carrousel et le RE-REND immédiatement (statut `rendering` puis `ready`, ou `failed` avec `status_error`)',
-			description: 'Sauvegarde des slides éditées d\'un carrousel et le RE-REND immédiatement (statut `rendering` puis `ready`, ou `failed` avec `status_error`). Appelle-le pour corriger un texte de slide, changer un titre, retirer une slide, après avoir lu le carrousel avec `get_carousel`. `designs` est le tableau COMPLET des slides, dans la forme exacte rendue par `get_carousel` (`designs`), modifié — ne renvoie pas un sous-ensemble, tout ce qui manque est perdu. `theme` (facultatif) remplace le thème visuel ; omis, le thème courant est conservé. Gratuit (aucun crédit, aucun appel IA), mais soumis au rate-limit `ai` : n\'enchaîne pas les sauvegardes slide par slide, regroupe les corrections en un appel. Ne l\'utilise pas pour changer le brief ou les réseaux cibles : c\'est une nouvelle génération.',
+			action: 'Save complete edited slides, source and networks after get_carousel',
+			description: 'Save complete edited slides, source and networks after get_carousel. Free. Revision conflict never overwrites another edit; approval is invalidated.',
 			routeSpec: {"method":"PATCH","path":"/api/aurentia/social-media/carousels/{id}","queryParams":[]},
 			properties: [
 				{
@@ -9077,7 +9425,7 @@ export const socialMediaResource: GeneratedResource = {
 					name: 'id',
 					type: 'string',
 					required: true,
-					description: 'UUID du carrousel',
+					description: 'The ID for this operation',
 					default: '',
 				},
 				{
@@ -9085,8 +9433,15 @@ export const socialMediaResource: GeneratedResource = {
 					name: 'designs',
 					type: 'json',
 					required: true,
-					description: 'Tableau complet des slides, même forme que `designs` rendu par get_carousel. (provide a JSON array).',
+					description: 'Provide a JSON array',
 					default: '[]',
+				},
+				{
+					displayName: 'Expected Revision',
+					name: 'expectedRevision',
+					type: 'number',
+					required: true,
+					default: 0,
 				},
 				{
 					displayName: 'Additional Fields',
@@ -9096,10 +9451,24 @@ export const socialMediaResource: GeneratedResource = {
 					default: {},
 					options: [
 						{
+							displayName: 'Source',
+							name: 'source',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Target Networks',
+							name: 'targetNetworks',
+							type: 'json',
+							description: 'Provide a JSON array',
+							default: '[]',
+						},
+						{
 							displayName: 'Theme',
 							name: 'theme',
 							type: 'json',
-							description: 'Thème visuel (facultatif, même forme que `theme` de get_carousel). (provide a JSON object).',
+							description: 'Provide a JSON object',
 							default: '{}',
 						},
 					],

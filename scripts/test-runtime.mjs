@@ -331,3 +331,17 @@ test('already wrapped HTTP errors still get an actionable credit message', async
 		/Not enough Aurentia credits/,
 	);
 });
+
+test('usage attribution separates operations, polling and configuration without workflow data', async () => {
+ const operation = executionContext({ authentication: 'apiKey' });
+ const poll = pollingContext({}, async () => ({ success: true, data: {} }));
+ const setup = executionContext({});
+ delete setup.context.getInputData;
+ setup.context.getWorkflowStaticData = () => ({}); // Shared base method, not evidence of polling.
+ for (const [fixture, purpose] of [[operation, 'operation'], [poll, 'poll'], [setup, 'setup']]) {
+  await aurentiaApiRequest.call(fixture.context, 'GET', '/api/aurentia/me');
+  assert.deepEqual(fixture.requests[0].headers, {
+   'Content-Type': 'application/json', 'X-Aurentia-Integration': 'n8n', 'X-Aurentia-Request-Purpose': purpose,
+  });
+ }
+});

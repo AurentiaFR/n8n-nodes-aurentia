@@ -49,7 +49,7 @@ export class AurentiaApi implements ICredentialType {
 			baseURL: '={{$credentials.baseUrl}}',
 			url: '/api/aurentia/me',
 			method: 'GET',
-			headers: { 'X-Aurentia-Integration': 'n8n' },
+			headers: { 'X-Aurentia-Integration': 'n8n', 'X-Aurentia-Request-Purpose': 'setup' },
 		},
 	};
 }

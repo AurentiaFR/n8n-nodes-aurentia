@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.4 — 2026-09-30
+
+- Regenerate the Aurentia registry surface: 90 generated resources and 1,705 operations, including the owner-authorized Shared Access settings resource.
+- Refresh module generation guidance and existing brand, clips and social operations. No existing operation is removed.
+
 ## 0.4.3 — 2026-09-17
 
 - Isolate n8n execution stdout from npm diagnostics and parse the execution object even when shutdown logs follow it. Keep failure details visible in CI and use the same registry configuration in CI and publishing. Runtime behavior is unchanged; previous 0.4.x attempts stopped before npm upload.

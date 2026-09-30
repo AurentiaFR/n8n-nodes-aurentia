@@ -6,6 +6,54 @@ export const clipsResource: GeneratedResource = {
 	displayName: 'Clips',
 	operations: [
 		{
+			value: 'approveVideoEditingProposals',
+			name: 'Approve Video Editing Proposals',
+			action: 'Render exactly the selected proposals from the current reviewed version',
+			description: 'Render exactly the selected proposals from the current reviewed version. selectedIds are proposal IDs, not clip IDs. Use only after the user selects proposals; autonomous sessions advance without this extra step.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/clips/editing","queryParams":[],"body":{"action":"approve"}},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Revision',
+					name: 'revision',
+					type: 'number',
+					required: true,
+					description: 'Current revision from get_video_editing_session or list_video_editing_profiles. Never invent it.',
+					default: 0,
+				},
+				{
+					displayName: 'Selected IDs',
+					name: 'selectedIds',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON array',
+					default: '[]',
+				}
+			],
+		},
+		{
+			value: 'confirmClipSourceUpload',
+			name: 'Confirm Clip Source Upload',
+			action: 'Confirm completed file upload and start analysis WITHOUT rendering',
+			description: 'Confirm completed file upload and start analysis WITHOUT rendering. Then start_video_editing_session can wait for transcription. Never confirm before the bytes were uploaded.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/clips/sources","queryParams":[],"body":{"action":"confirm","renderClips":false,"transcribeOnly":true}},
+			properties: [
+				{
+					displayName: 'Source ID',
+					name: 'sourceId',
+					type: 'string',
+					required: true,
+					default: '',
+				}
+			],
+		},
+		{
 			value: 'createClipVariants',
 			name: 'Create Clip Variants',
 			action: 'Aurentia Clips A/B: generate 1-4 variants of a clip on the hook / length / format axes (e.g',
@@ -31,6 +79,23 @@ export const clipsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'createVideoEditingProfile',
+			name: 'Create Video Editing Profile',
+			action: 'Save a reusable named video editing style ONLY when asked to remember a style',
+			description: 'Save a reusable named video editing style ONLY when asked to remember a style. One-off feedback must not change saved profiles. Settings cover framing, pacing, captions, cuts, zooms, transitions, B-roll and owned music. musicAssetId is an owned completed audio generation ID from list_video_editing_profiles.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/clips/styles","queryParams":[],"body":{"action":"create"}},
+			properties: [
+				{
+					displayName: 'Profile',
+					name: 'profile',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
+				}
+			],
+		},
+		{
 			value: 'deleteVideoClip',
 			name: 'Delete Video Clip',
 			action: 'Delete a generated clip, definitively — there is no bin and no restore',
@@ -44,6 +109,30 @@ export const clipsResource: GeneratedResource = {
 					required: true,
 					description: 'Clip ID (from list_video_clips)',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'deleteVideoEditingProfile',
+			name: 'Delete Video Editing Profile',
+			action: 'Delete the named saved style when explicitly requested',
+			description: 'Delete the named saved style when explicitly requested. Existing montages keep their settings snapshot and remain usable.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/clips/styles","queryParams":[],"body":{"action":"delete"}},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Revision',
+					name: 'revision',
+					type: 'number',
+					required: true,
+					description: 'Current revision from get_video_editing_session or list_video_editing_profiles. Never invent it.',
+					default: 0,
 				}
 			],
 		},
@@ -133,6 +222,38 @@ export const clipsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'getVideoEditingSession',
+			name: 'Get Video Editing Session',
+			action: 'Read the editing session, immutable versions, timecoded proposals, rendered clip URLs, selected profile and review link',
+			description: 'Read the editing session, immutable versions, timecoded proposals, rendered clip URLs, selected profile and review link. While planning/rendering poll this tool; review means present proposals and ask for selection unless the user requested autonomous mode. Ready means show playable previews/downloads and invite optional feedback. Keep the session ID for the next turn.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/clips/editing","queryParams":["id","version"]},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Version',
+							name: 'version',
+							type: 'number',
+							description: 'Optional historical version to play or download',
+							default: 0,
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'importClipSourceFromUrl',
 			name: 'Import Clip Source From URL',
 			action: 'Import a PUBLIC video by URL as a new Clips source — YouTube, Vimeo, Loom, Google Drive share links or a direct MP4 URL',
@@ -154,6 +275,44 @@ export const clipsResource: GeneratedResource = {
 					required: true,
 					description: 'Public YouTube / Vimeo / Loom / Drive / MP4 URL',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'importVideoEditingSource',
+			name: 'Import Video Editing Source',
+			action: 'Import a public YouTube, Vimeo, Loom, Drive or MP4 URL for interactive video editing',
+			description: 'Import a public YouTube, Vimeo, Loom, Drive or MP4 URL for interactive video editing. Analyze and transcribe only; no generic clips are rendered. Then call start_video_editing_session with the creative brief and selected style. In autonomous mode, continue without intermediate creative questions. Import is billed by actual source duration.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/clips/sources","queryParams":[],"body":{"action":"import_url","renderClips":false,"transcribeOnly":true}},
+			properties: [
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Source URL',
+					name: 'sourceUrl',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							default: '',
+						},
+					],
 				}
 			],
 		},
@@ -266,6 +425,54 @@ export const clipsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'listVideoEditingProfiles',
+			name: 'List Video Editing Profiles',
+			action: 'List saved video editing styles and owned music assets',
+			description: 'List saved video editing styles and owned music assets. With prompt, rank styles by relevance. If the user names a profile, choose that exact profile. If unclear, suggest suitable styles; if told to proceed autonomously, select the best match without questions. Never ask again for preferences already in a profile.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/clips/styles","queryParams":["prompt"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Prompt',
+							name: 'prompt',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'listVideoEditingSessions',
+			name: 'List Video Editing Sessions',
+			action: 'Resume saved video editing conversations, optionally for one source',
+			description: 'Resume saved video editing conversations, optionally for one source. Read the chosen session before editing it. User comments and profile snapshots persist between conversations.',
+			routeSpec: {"method":"GET","path":"/api/aurentia/clips/editing","queryParams":["sourceId"]},
+			properties: [
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Source ID',
+							name: 'sourceId',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'pickClipVariantWinner',
 			name: 'Pick Clip Variant Winner',
 			action: 'Aurentia Clips A/B: rank the published variants of a clip by real ingested performance (views + engagement) and mark the winner',
@@ -279,6 +486,44 @@ export const clipsResource: GeneratedResource = {
 					required: true,
 					description: 'The clip ID for this operation',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'prepareClipSourceUpload',
+			name: 'Prepare Clip Source Upload',
+			action: 'Prepare a signed upload URL for a local video',
+			description: 'Prepare a signed upload URL for a local video. Upload the actual file bytes to the returned URL, then call confirm_clip_source_upload. If this MCP client cannot access file bytes, return the Aurentia upload link instead of claiming the file was uploaded. durationSeconds must be measured from the video.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/clips/sources","queryParams":[],"body":{"action":"upload"}},
+			properties: [
+				{
+					displayName: 'Title',
+					name: 'title',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Duration Seconds',
+					name: 'durationSeconds',
+					type: 'number',
+					required: true,
+					default: 0,
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Project ID',
+							name: 'projectId',
+							type: 'string',
+							default: '',
+						},
+					],
 				}
 			],
 		},
@@ -426,6 +671,93 @@ export const clipsResource: GeneratedResource = {
 			],
 		},
 		{
+			value: 'retryVideoEditingSession',
+			name: 'Retry Video Editing Session',
+			action: 'Retry a failed editing session after addressing the reported blocker',
+			description: 'Retry a failed editing session after addressing the reported blocker. Keeps completed videos and stored proposals. Never retry a healthy running session.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/clips/editing","queryParams":[],"body":{"action":"retry"}},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Revision',
+					name: 'revision',
+					type: 'number',
+					required: true,
+					description: 'Current revision from get_video_editing_session or list_video_editing_profiles. Never invent it.',
+					default: 0,
+				}
+			],
+		},
+		{
+			value: 'reviseVideoEditingSession',
+			name: 'Revise Video Editing Session',
+			action: 'Apply user feedback to an existing montage, creating a new version without overwriting previous videos or saved styles',
+			description: 'Apply user feedback to an existing montage, creating a new version without overwriting previous videos or saved styles. instruction is the full comment. targetProposalId restricts the change to one proposed clip; atMs locates a comment in that output, NOT in source time. Autonomous/preview mode renders the revision directly; review mode proposes it first. Preserve already validated choices. If the user now asks to continue without questions, set mode=autonomous; it applies to this revision and subsequent feedback.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/clips/editing","queryParams":[],"body":{"action":"feedback"}},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Revision',
+					name: 'revision',
+					type: 'number',
+					required: true,
+					description: 'Current revision from get_video_editing_session or list_video_editing_profiles. Never invent it.',
+					default: 0,
+				},
+				{
+					displayName: 'Instruction',
+					name: 'instruction',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'At Ms',
+							name: 'atMs',
+							type: 'number',
+							default: 0,
+						},
+						{
+							displayName: 'Mode',
+							name: 'mode',
+							type: 'options',
+							default: 'autonomous',
+							options: [
+								{ name: 'Autonomous', value: 'autonomous' },
+								{ name: 'Preview', value: 'preview' },
+								{ name: 'Review', value: 'review' },
+							],
+						},
+						{
+							displayName: 'Target Proposal ID',
+							name: 'targetProposalId',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
 			value: 'scheduleVideoClip',
 			name: 'Schedule Video Clip',
 			action: 'Aurentia Clips: schedule a ready clip to the given platforms at a future time via Bundle.social (dispatch contract)',
@@ -455,6 +787,111 @@ export const clipsResource: GeneratedResource = {
 					required: true,
 					description: 'ISO 8601 datetime',
 					default: '',
+				}
+			],
+		},
+		{
+			value: 'startVideoEditingSession',
+			name: 'Start Video Editing Session',
+			action: 'Start a persistent video editing conversation from an uploaded/imported source',
+			description: 'Start a persistent video editing conversation from an uploaded/imported source. Pass the COMPLETE creative brief or supplied storyboard in prompt. intent=clips finds standalone shorts; intent=montage assembles passages in a chosen order. Default mode=review returns timecoded proposals before rendering. mode=preview produces previews directly. If the user says "se débrouiller", "sans questions", "I am leaving, do it", use mode=autonomous with the selected profileId: DO NOT ask creative questions or request intermediate approval, proceed to finished previews. Prompt overrides profile; explicit overrides have highest priority. This authorizes editing, NEVER social publication. requestId must be a new UUID per new request, reused on network retry. The job continues after the chat closes. Poll get_video_editing_session and show reviewUrl. Never claim ready before ready. Import URLs with renderClips=false; files via prepare_clip_source_upload and confirm_clip_source_upload.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/clips/editing","queryParams":[],"body":{"action":"create"}},
+			properties: [
+				{
+					displayName: 'Request ID',
+					name: 'requestId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Source ID',
+					name: 'sourceId',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Prompt',
+					name: 'prompt',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Additional Fields',
+					name: 'additionalFields',
+					type: 'collection',
+					placeholder: 'Add Field',
+					default: {},
+					options: [
+						{
+							displayName: 'Intent',
+							name: 'intent',
+							type: 'options',
+							default: 'clips',
+							options: [
+								{ name: 'Clips', value: 'clips' },
+								{ name: 'Montage', value: 'montage' },
+							],
+						},
+						{
+							displayName: 'Mode',
+							name: 'mode',
+							type: 'options',
+							default: 'autonomous',
+							options: [
+								{ name: 'Autonomous', value: 'autonomous' },
+								{ name: 'Preview', value: 'preview' },
+								{ name: 'Review', value: 'review' },
+							],
+						},
+						{
+							displayName: 'Overrides',
+							name: 'overrides',
+							type: 'json',
+							description: 'Provide a JSON object',
+							default: '{}',
+						},
+						{
+							displayName: 'Profile ID',
+							name: 'profileId',
+							type: 'string',
+							default: '',
+						},
+					],
+				}
+			],
+		},
+		{
+			value: 'updateVideoEditingProfile',
+			name: 'Update Video Editing Profile',
+			action: 'Update a saved video editing style on an explicit lasting preference request',
+			description: 'Update a saved video editing style on an explicit lasting preference request. Read its current revision first. A conflict means re-read, never blindly retry with a guessed revision.',
+			routeSpec: {"method":"POST","path":"/api/aurentia/clips/styles","queryParams":[],"body":{"action":"update"}},
+			properties: [
+				{
+					displayName: 'ID',
+					name: 'id',
+					type: 'string',
+					required: true,
+					default: '',
+				},
+				{
+					displayName: 'Revision',
+					name: 'revision',
+					type: 'number',
+					required: true,
+					description: 'Current revision from get_video_editing_session or list_video_editing_profiles. Never invent it.',
+					default: 0,
+				},
+				{
+					displayName: 'Profile',
+					name: 'profile',
+					type: 'json',
+					required: true,
+					description: 'Provide a JSON object',
+					default: '{}',
 				}
 			],
 		}
